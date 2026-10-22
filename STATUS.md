@@ -6,7 +6,7 @@ Updated before every commit. One feature at a time: **plan → approve → build
 
 ## Now
 
-**Feature 3 — App shell and design system** · Planning
+**Next feature** · Planning
 
 ## Next up
 
@@ -22,8 +22,8 @@ Legend: ✅ done · 🔍 in review · 🛠 building · ⏳ not started
 | --- | --- | --- | --- | --- |
 | 0 | Prototype baseline | ✅ | `64f7db9` | Pipeline, 9 visual types, fact-check, CLI, design docs |
 | 1 | Project setup | ✅ | `ce4623c` | apps/web, apps/worker, packages/shared, Biome, `pnpm dev` / `pnpm check` |
-| 2 | Database and shared schemas | ✅ | (this commit) | packages/db (7 MVP collections), enums + job schemas in shared, `db:*` scripts, seed data |
-| 3 | App shell and design system | 🛠 | | Tailwind, tokens, Sora/Inter, sidebar layout |
+| 2 | Database and shared schemas | ✅ | `261315b` | packages/db (7 MVP collections), enums + job schemas in shared, `db:*` scripts, seed data |
+| 3 | App shell and design system | ✅ | (this commit) | Tailwind v4 + shadcn/ui, tokens, Sora/Inter, sidebar + mobile menu, `/design` style tile |
 | 4 | Homepage with the waitlist | ⏳ | | Port design/homepage (GSAP + Lenis) |
 | 5 | Sign-in (Better Auth, Google) with the invite gate | ⏳ | | |
 
@@ -60,6 +60,7 @@ Legend: ✅ done · 🔍 in review · 🛠 building · ⏳ not started
 
 | Date | Decision |
 | --- | --- |
+| 2026-10-23 | Small features may be merged with neighbours into one build step (user preference) |
 | 2026-10-23 | Build feature by feature; one commit per approved feature; STATUS.md updated before each commit and push |
 | 2026-10-23 | Biome for lint + format (not ESLint + Prettier). `noNonNullAssertion` off (works with strict index typing); array-index keys and SVG titles allowed in video frames |
 | 2026-10-23 | TypeScript 7 kept — verified with Next.js 16.4 build |
@@ -67,11 +68,15 @@ Legend: ✅ done · 🔍 in review · 🛠 building · ⏳ not started
 | 2026-10-23 | Enums live once in `@clipwise/shared` (Zod + Mongoose); visual enums stay in `@clipwise/video` |
 | 2026-10-23 | `workspaces.stripeCustomerId` unique index is partial (strings only), not sparse — sparse would block a second workspace with `null` |
 | 2026-10-23 | DB tests use mongodb-memory-server (in-memory, no Atlas needed) |
+| 2026-10-23 | UI: Tailwind v4 + shadcn/ui (Radix base). Light only; `dark:` bound to a `.dark` class so the OS dark setting doesn't leak in |
+| 2026-10-23 | Mobile: top bar + menu button opens the sidebar. Calendar and Brand kit shown greyed with "Soon" |
+| 2026-10-23 | `/design` style tile is dev-only (404 in production) |
 | 2026-10-23 | Next.js 16 changed APIs: read `node_modules/next/dist/docs/` before writing Next code (see `apps/web/AGENTS.md`) |
 
 ## Open items
 
 - Stitch: editor screens' Storyboard | Edit tab edit may not have applied — will be built in code (Feature 9) regardless.
 - ElevenLabs free plan is non-commercial — upgrade before real users (Feature 16).
+- Sidebar user and usage meter show placeholder values until sign-in (Feature 5) and limits (Feature 13).
 - Set `ADMIN_EMAILS` in `.env` before Feature 5 (sign-in), then re-run `pnpm db:seed` to create the admin invite.
 - No GitHub remote yet — needed by Feature 16 (deploy). Commits are local until then.

@@ -21,7 +21,7 @@ Needs Node 22 (`nvm use` reads `.nvmrc`) and pnpm.
 
 | Command | What it does |
 | --- | --- |
-| `pnpm dev` | Web app on http://localhost:3000 and the worker, together |
+| `pnpm dev` | Web app on http://localhost:3000 and the worker, together. Design system at http://localhost:3000/design (dev only) |
 | `pnpm check` | Lint + typecheck + tests. Run before every commit |
 | `pnpm format` | Auto-fix formatting and import order (Biome) |
 | `pnpm db:status` | Show the database name and how many records each collection has |
@@ -35,6 +35,10 @@ Needs Node 22 (`nvm use` reads `.nvmrc`) and pnpm.
 
 ```
 apps/web            Next.js app (App Router) — homepage, dashboard, editor, server actions
+                      app/(app)/        signed-in pages inside the sidebar shell (create, videos, settings)
+                      components/ui/    shadcn/ui primitives restyled to the Clipwise theme (Radix)
+                      components/app/   Clipwise components: sidebar, logo, status badge, segmented, chips…
+                      app/globals.css   design tokens (Paper, ink, lime, teal; Sora + Inter)
 apps/worker         Node.js worker — runs AI, voice and render jobs from the queue
 apps/cli            prototype `clipwise` command
 packages/pipeline   stage functions (script, fact-check, voice, align, render) + run orchestrator
@@ -43,6 +47,8 @@ packages/db         MongoDB (Mongoose) models, connection, db:* scripts, migrati
 packages/shared     code used by web, worker and db: enums, API result shape, error codes, input and job schemas
 design/             homepage prototype, Stitch prompts, API design
 ```
+
+UI: Tailwind CSS v4, shadcn/ui (Radix), Lucide icons, Sora + Inter via next/font. Light theme only for now; dark: styles apply only under a `.dark` class.
 
 Tooling: TypeScript 7, Biome (lint + format), Vitest, pnpm workspaces. Database tests run on an in-memory MongoDB (downloaded once, ~100 MB), so `pnpm check` needs no Atlas connection. Each package has its own `tsconfig.json` extending `tsconfig.base.json`.
 

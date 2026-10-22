@@ -1,17 +1,22 @@
-import { Format, Voices } from "@clipwise/shared";
+import Link from "next/link";
+import { Logo } from "@/components/app/logo";
+import { Button } from "@/components/ui/button";
 
-// Placeholder until the app shell and homepage (Features 3 and 4).
+// Placeholder until the real homepage (Feature 4).
 export default function Home() {
   return (
-    <main className="placeholder">
-      <h1>Clipwise</h1>
-      <p>Project setup is running. The real app arrives feature by feature.</p>
-      <dl>
-        <dt>Formats</dt>
-        <dd>{Format.options.join(" · ")}</dd>
-        <dt>Voices</dt>
-        <dd>{Voices.map((v) => v.name).join(" · ")}</dd>
-      </dl>
+    <main className="mx-auto flex min-h-screen max-w-xl flex-col justify-center gap-6 px-4">
+      <Logo />
+      <h1 className="text-h1">Turn any idea into a short video.</h1>
+      <p className="text-ink-2">The homepage arrives in Feature 4. Meanwhile, look around the app shell.</p>
+      <div className="flex gap-3">
+        <Button asChild>
+          <Link href="/create">Open the app</Link>
+        </Button>
+        <Button asChild variant="secondary">
+          <Link href="/design">Design system</Link>
+        </Button>
+      </div>
     </main>
   );
 }
