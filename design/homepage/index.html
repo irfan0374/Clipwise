@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+
+<html class="scroll-smooth" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Clipwise — Turn any idea into short videos</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Sora:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "error": "#ba1a1a",
+            "on-secondary-fixed-variant": "#005048",
+            "primary-fixed-dim": "#aad600",
+            "inverse-primary": "#aad600",
+            "on-tertiary-container": "#02726a",
+            "inverse-on-surface": "#f3f0ef",
+            "tertiary-container": "#9df3e9",
+            "on-secondary-fixed": "#00201c",
+            "tertiary-fixed-dim": "#80d5cb",
+            "on-primary-container": "#566d00",
+            "primary-container": "#c6f432",
+            "outline": "#747962",
+            "primary-fixed": "#c5f331",
+            "on-surface": "#1c1b1b",
+            "on-error": "#ffffff",
+            "on-secondary-container": "#006f64",
+            "surface-variant": "#e5e2e1",
+            "surface-container-lowest": "#ffffff",
+            "on-surface-variant": "#444934",
+            "on-tertiary": "#ffffff",
+            "on-tertiary-fixed": "#00201d",
+            "surface-container": "#f0edec",
+            "secondary-fixed-dim": "#4fdbc8",
+            "surface-dim": "#dcd9d9",
+            "on-primary": "#ffffff",
+            "secondary": "#006b5f",
+            "on-secondary": "#ffffff",
+            "secondary-container": "#6df5e1",
+            "error-container": "#ffdad6",
+            "outline-variant": "#c4c9ae",
+            "tertiary-fixed": "#9cf2e8",
+            "surface-container-low": "#f6f3f2",
+            "surface-tint": "#506600",
+            "inverse-surface": "#313030",
+            "surface-container-high": "#ebe7e7",
+            "surface-bright": "#fcf9f8",
+            "background": "#fcf9f8",
+            "secondary-fixed": "#71f8e4",
+            "on-primary-fixed-variant": "#3b4d00",
+            "primary": "#506600",
+            "on-tertiary-fixed-variant": "#00504a",
+            "tertiary": "#006a63",
+            "surface-container-highest": "#e5e2e1",
+            "surface": "#fcf9f8",
+            "on-primary-fixed": "#161f00",
+            "on-error-container": "#93000a",
+            "on-background": "#1c1b1b"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-sm": "0.5rem",
+            "gutter": "1rem",
+            "margin-lg": "3rem",
+            "margin-md": "2rem",
+            "space-md": "1rem",
+            "space-lg": "1.5rem",
+            "gutter-md": "1.5rem",
+            "space-xl": "2rem",
+            "margin": "1rem",
+            "space-xs": "0.25rem"
+          },
+          "fontFamily": {
+            "display-mobile": ["Sora"],
+            "body-sm": ["Inter"],
+            "label-sm": ["Inter"],
+            "code-stat": ["Inter"],
+            "body-md": ["Inter"],
+            "headline-md": ["Sora"],
+            "body-lg": ["Inter"],
+            "headline-lg": ["Sora"],
+            "headline-lg-mobile": ["Sora"],
+            "label-md": ["Inter"],
+            "display": ["Sora"],
+            "body-md-medium": ["Inter"],
+            "headline-sm": ["Sora"]
+          },
+          "fontSize": {
+            "display-mobile": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.025em", "fontWeight": "700" }],
+            "body-sm": ["13px", { "lineHeight": "18px", "fontWeight": "400" }],
+            "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+            "code-stat": ["13px", { "lineHeight": "18px", "fontWeight": "500" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "headline-lg-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "500" }],
+            "display": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.03em", "fontWeight": "700" }],
+            "body-md-medium": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+            "headline-sm": ["18px", { "lineHeight": "26px", "letterSpacing": "-0.01em", "fontWeight": "600" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    body {
+      background-color: #F6F7F2;
+      color: #0F0F0F;
+      font-family: 'Inter', sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    .font-sora {
+      font-family: 'Sora', sans-serif;
+    }
+    .lime-glow {
+      box-shadow: 0 0 24px rgba(198, 244, 50, 0.45);
+    }
+    .lime-glow-subtle {
+      box-shadow: 0 4px 16px rgba(198, 244, 50, 0.28);
+    }
+    .dot-pattern {
+      background-image: radial-gradient(#D6D8CE 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-[#F6F7F2] text-[#0F0F0F] selection:bg-[#C6F432] selection:text-[#0F0F0F] relative">
+<!-- ================= 1. FLOATING NAVIGATION BAR ================= -->
+<header class="fixed top-6 left-0 right-0 z-50 px-4 flex justify-center pointer-events-none">
+<nav class="pointer-events-auto w-full max-w-5xl h-14 bg-white/95 backdrop-blur-md border border-[#E7E7E0] rounded-full px-5 flex items-center justify-between shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
+<!-- Brand Logo -->
+<a class="flex items-center gap-2.5 group" href="#">
+<div class="w-8 h-8 rounded-lg bg-[#C6F432] flex items-center justify-center text-[#0F0F0F] transition-transform duration-150 group-hover:scale-105">
+<svg class="w-4 h-4 fill-current ml-0.5" viewbox="0 0 24 24">
+<path d="M5 3l14 9-14 9V3z"></path>
+</svg>
+</div>
+<span class="font-sora font-bold text-headline-sm tracking-tight text-[#0F0F0F]">Clipwise</span>
+</a>
+<!-- Middle Links -->
+<div class="hidden md:flex items-center gap-8 text-body-md font-medium text-[#5C5C57]">
+<a class="hover:text-[#0F0F0F] transition-colors" href="#features">Features</a>
+<a class="hover:text-[#0F0F0F] transition-colors" href="#how-it-works">How it works</a>
+<a class="hover:text-[#0F0F0F] transition-colors" href="#styles">Formats</a>
+<a class="hover:text-[#0F0F0F] transition-colors" href="#pricing">Pricing</a>
+</div>
+<!-- Action Cluster -->
+<div class="flex items-center gap-3">
+<a class="hidden sm:inline-block text-body-md font-medium text-[#0F0F0F] px-3.5 py-1.5 hover:text-[#5C5C57] transition-colors" href="#">
+          Sign in
+        </a>
+<a class="h-9 px-4 rounded-full bg-[#C6F432] hover:bg-[#B6E22A] text-[#0F0F0F] text-body-md font-semibold inline-flex items-center justify-center transition-all duration-150 lime-glow-subtle active:scale-[0.98]" href="#early-access">
+          Get early access
+        </a>
+</div>
+</nav>
+</header>
+<!-- ================= 2. HERO SECTION ================= -->
+<section class="relative pt-36 pb-24 px-6 md:px-margin-lg max-w-7xl mx-auto overflow-visible dot-pattern">
+<!-- Ambient radial glow behind hero -->
+<div class="absolute top-1/4 left-1/3 w-[520px] h-[520px] bg-[#C6F432]/15 blur-[120px] rounded-full pointer-events-none -z-10"></div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center min-h-[620px]">
+<!-- Left Column: Copy & CTAs -->
+<div class="lg:col-span-7 flex flex-col items-start justify-center">
+<!-- Private Beta Pill -->
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#CCFBF1] text-[#0F766E] text-label-sm font-semibold mb-6 border border-[#14B8A6]/20">
+<span class="w-2 h-2 rounded-full bg-[#14B8A6] animate-pulse"></span>
+          Now in private beta
+        </div>
+<!-- Headline -->
+<h1 class="font-sora text-[48px] sm:text-[64px] lg:text-[76px] leading-[1.05] font-bold tracking-[-0.035em] text-[#0F0F0F] mb-6">
+          Turn any idea into scroll-stopping <span class="inline-block bg-[#C6F432] text-[#0F0F0F] px-4 py-0.5 rounded-2xl shadow-sm" id="cycle-word">Reels</span>
+</h1>
+<!-- Subline -->
+<p class="text-body-lg text-[#5C5C57] max-w-xl mb-9 leading-relaxed">
+          Type an idea. Clipwise writes it, voices it, animates it and adds captions. Ready to post in minutes.
+        </p>
+<!-- CTA Row -->
+<div class="flex flex-wrap items-center gap-4 mb-10 w-full sm:w-auto">
+<a class="h-12 px-7 rounded-xl bg-[#C6F432] hover:bg-[#B6E22A] text-[#0F0F0F] font-sora font-semibold text-body-md inline-flex items-center justify-center transition-all duration-150 lime-glow active:scale-[0.98]" href="#early-access">
+            Get early access
+          </a>
+<button class="h-12 px-6 rounded-xl bg-white border border-[#E7E7E0] hover:bg-[#F6F7F2] text-[#0F0F0F] font-medium text-body-md inline-flex items-center justify-center gap-2.5 transition-all shadow-sm">
+<svg class="w-4 h-4 text-[#0F0F0F]" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<polygon points="5 3 19 12 5 21 5 3"></polygon>
+</svg>
+            Watch it work
+          </button>
+</div>
+<!-- Specs Strip -->
+<div class="flex items-center gap-2 text-label-sm font-semibold tracking-wide text-[#8A8A84] border-t border-[#E7E7E0] pt-4 w-full">
+<span>Reels</span>
+<span class="text-[#C4C9AE]">·</span>
+<span>Shorts</span>
+<span class="text-[#C4C9AE]">·</span>
+<span>TikTok</span>
+<span class="text-[#C4C9AE]">·</span>
+<span class="text-[#0F0F0F]">9:16</span>
+<span class="text-[#C4C9AE]">·</span>
+<span class="text-[#0F0F0F]">1080p</span>
+</div>
+</div>
+<!-- Right Column: STRICTLY THE ONLY 9:16 PHONE MOCKUP WITH EXPLODED UI -->
+<div class="lg:col-span-5 relative flex items-center justify-center py-6">
+<!-- Connecting SVG lines container -->
+<svg class="absolute inset-0 w-full h-full pointer-events-none hidden sm:block z-0" xmlns="http://www.w3.org/2000/svg">
+<!-- Card 1 link -->
+<line stroke="#C4C9AE" stroke-dasharray="3 3" stroke-width="1.2" x1="120" x2="220" y1="80" y2="130"></line>
+<!-- Card 2 link -->
+<line stroke="#C4C9AE" stroke-dasharray="3 3" stroke-width="1.2" x1="390" x2="310" y1="90" y2="140"></line>
+<!-- Card 3 link -->
+<line stroke="#C4C9AE" stroke-dasharray="3 3" stroke-width="1.2" x1="100" x2="200" y1="410" y2="380"></line>
+<!-- Card 4 link -->
+<line stroke="#C4C9AE" stroke-dasharray="3 3" stroke-width="1.2" x1="410" x2="320" y1="310" y2="300"></line>
+<!-- Card 5 link -->
+<line stroke="#C4C9AE" stroke-dasharray="3 3" stroke-width="1.2" x1="400" x2="310" y1="440" y2="420"></line>
+</svg>
+<!-- The ONLY 9:16 Phone Mockup -->
+<div class="relative z-10 w-[290px] h-[520px] bg-[#0F0F0F] rounded-[36px] p-3 border-4 border-[#242424] shadow-[0_24px_50px_rgba(0,0,0,0.18)] flex flex-col justify-between overflow-hidden">
+<!-- Phone Speaker Notch Bar -->
+<div class="w-full flex justify-center pt-1 pb-2">
+<div class="w-16 h-4 bg-[#1C1B1B] rounded-full flex items-center justify-center">
+<div class="w-2.5 h-2.5 rounded-full bg-[#2C2C2C] mr-2"></div>
+<div class="w-6 h-1 rounded-full bg-[#2C2C2C]"></div>
+</div>
+</div>
+<!-- Inside Screen Content (Dark Dynamic Video Canvas) -->
+<div class="relative flex-1 bg-gradient-to-b from-[#181818] via-[#121212] to-[#0A0A0A] rounded-[24px] p-4 flex flex-col justify-between overflow-hidden border border-[#2D2D2D]">
+<!-- Minimal top status -->
+<div class="flex items-center justify-between text-[10px] text-[#8A8A84] font-medium tracking-wide">
+<span class="flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-[#C6F432]"></span>
+                LIVE PREVIEW
+              </span>
+<span>00:03.20</span>
+</div>
+<!-- Kinetic Vector Wave Art in Center of Video -->
+<div class="relative w-full h-44 my-auto flex items-center justify-center">
+<div class="absolute w-36 h-36 rounded-full border border-[#C6F432]/20 animate-spin" style="animation-duration: 20s;"></div>
+<div class="absolute w-24 h-24 rounded-full border border-[#14B8A6]/30"></div>
+<!-- Geometric wave shape -->
+<svg class="w-48 h-28 text-[#C6F432]" fill="none" viewbox="0 0 200 100">
+<path d="M10 50 Q 50 10, 100 50 T 190 50" stroke="#C6F432" stroke-linecap="round" stroke-width="3"></path>
+<path d="M10 50 Q 50 85, 100 50 T 190 50" stroke="#14B8A6" stroke-dasharray="4 4" stroke-width="1.5"></path>
+<circle cx="100" cy="50" fill="#FFFFFF" r="5"></circle>
+</svg>
+</div>
+<!-- Kinetic Subtitle at Phone Bottom -->
+<div class="bg-black/60 backdrop-blur-md rounded-xl p-3 border border-white/10 text-center">
+<p class="font-sora text-sm leading-snug text-white font-medium">
+                Engineered for <span class="text-[#C6F432] font-bold underline decoration-2 underline-offset-2">momentum</span>
+</p>
+</div>
+</div>
+<!-- Phone Home Indicator Bar -->
+<div class="w-full flex justify-center py-1.5">
+<div class="w-24 h-1 bg-white/20 rounded-full"></div>
+</div>
+</div>
+<!-- Floating UI Card 1 (Top Left): Hook Script -->
+<div class="absolute -top-3 -left-6 sm:-left-12 z-20 bg-white border border-[#E7E7E0] p-3 rounded-xl shadow-md max-w-[190px]">
+<div class="flex items-center gap-1.5 text-label-sm font-semibold text-[#8A8A84] mb-1">
+<span class="w-1.5 h-1.5 rounded-full bg-[#0F0F0F]"></span>
+            Scene 1 · Hook
+          </div>
+<p class="text-xs text-[#0F0F0F] font-medium leading-tight">
+            “Stop losing viewers in the first 2 seconds.”
+          </p>
+</div>
+<!-- Floating UI Card 2 (Top Right): Word Sync -->
+<div class="absolute top-8 -right-4 sm:-right-10 z-20 bg-white border border-[#E7E7E0] px-3 py-2 rounded-xl shadow-md flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-[#14B8A6]"></div>
+<div class="text-left">
+<div class="text-[10px] font-semibold text-[#8A8A84] uppercase tracking-wider">Captions synced</div>
+<div class="text-xs font-sora font-semibold text-[#0F0F0F]">00:03.20</div>
+</div>
+</div>
+<!-- Floating UI Card 3 (Bottom Left): Audio Waveform Track -->
+<div class="absolute bottom-16 -left-8 sm:-left-14 z-20 bg-white border border-[#E7E7E0] p-2.5 rounded-xl shadow-md flex flex-col gap-1.5">
+<div class="flex items-center justify-between text-[11px] font-medium text-[#5C5C57]">
+<span>Voice: Liam</span>
+<span class="text-[#0F766E] text-[10px] font-semibold bg-[#CCFBF1] px-1.5 py-0.2 rounded">Preview</span>
+</div>
+<div class="flex items-end gap-0.5 h-5 px-1 bg-[#F6F7F2] rounded p-1">
+<div class="w-1 bg-[#0F0F0F] h-2 rounded-full"></div>
+<div class="w-1 bg-[#0F0F0F] h-4 rounded-full"></div>
+<div class="w-1 bg-[#0F0F0F] h-3 rounded-full"></div>
+<div class="w-1 bg-[#C6F432] h-5 rounded-full"></div>
+<div class="w-1 bg-[#0F0F0F] h-4 rounded-full"></div>
+<div class="w-1 bg-[#0F0F0F] h-2 rounded-full"></div>
+<div class="w-1 bg-[#0F0F0F] h-3 rounded-full"></div>
+<div class="w-1 bg-[#0F0F0F] h-1 rounded-full"></div>
+</div>
+</div>
+<!-- Floating UI Card 4 (Right Center): Scene Timeline Blocks -->
+<div class="absolute top-1/2 -right-6 sm:-right-14 -translate-y-1/2 z-20 bg-white border border-[#E7E7E0] p-2 rounded-xl shadow-md flex flex-col gap-1">
+<span class="text-[10px] font-semibold text-[#8A8A84] uppercase tracking-wide">Pacing map</span>
+<div class="flex items-center gap-1">
+<span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#0F0F0F] text-white">Hook</span>
+<span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#F0F1EA] text-[#0F0F0F]">Concept</span>
+<span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#F0F1EA] text-[#0F0F0F]">Proof</span>
+<span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#F0F1EA] text-[#0F0F0F]">CTA</span>
+</div>
+</div>
+<!-- Floating UI Card 5 (Bottom Right): Render Progress -->
+<div class="absolute -bottom-4 -right-4 sm:-right-8 z-20 bg-white border border-[#E7E7E0] p-3 rounded-xl shadow-md w-44">
+<div class="flex items-center justify-between text-xs font-semibold mb-1.5">
+<span class="text-[#0F0F0F]">Rendering</span>
+<span class="text-[#0F766E] font-sora">72%</span>
+</div>
+<div class="w-full h-1.5 bg-[#E7E7E0] rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-[#C6F432] to-[#14B8A6] rounded-full" style="width: 72%;"></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- ================= 3. HOW IT WORKS (WIDE WORKBENCH PANEL) ================= -->
+<!-- STRICT CONSTRAINT: NO PHONE MOCKUP HERE -->
+<section class="py-24 px-6 md:px-margin-lg max-w-7xl mx-auto" id="how-it-works">
+<!-- Section Header -->
+<div class="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
+<div>
+<div class="text-label-sm font-semibold tracking-wider text-[#8A8A84] uppercase mb-2">How it works</div>
+<h2 class="font-sora text-headline-lg md:text-[40px] font-bold tracking-tight text-[#0F0F0F]">
+          From idea to video in one flow
+        </h2>
+</div>
+<!-- Stage Pill Group -->
+<div class="inline-flex p-1 bg-white border border-[#E7E7E0] rounded-xl text-body-sm font-medium text-[#5C5C57]">
+<span class="px-3 py-1 rounded-lg bg-[#0F0F0F] text-white">01 Write</span>
+<span class="px-3 py-1 rounded-lg text-[#5C5C57]">02 Build</span>
+<span class="px-3 py-1 rounded-lg text-[#5C5C57]">03 Post</span>
+</div>
+</div>
+<!-- The Singular Wide Workbench Panel -->
+<div class="bg-white border border-[#E7E7E0] rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.03)] overflow-hidden">
+<!-- Top Window Titlebar -->
+<div class="h-11 bg-[#FAFAF8] border-b border-[#E7E7E0] px-4 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-2.5 h-2.5 rounded-full bg-[#E7E7E0]"></div>
+<div class="w-2.5 h-2.5 rounded-full bg-[#E7E7E0]"></div>
+<div class="w-2.5 h-2.5 rounded-full bg-[#E7E7E0]"></div>
+<span class="ml-2 text-xs font-medium text-[#8A8A84]">running-shoes-launch</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-[#CCFBF1] text-[#0F766E]">Building</span>
+</div>
+</div>
+<!-- Workbench Internal 3-Pane Layout -->
+<div class="grid grid-cols-1 lg:grid-cols-12 min-h-[460px]">
+<!-- PANE 1: Script Prompt Engine (30% - lg:col-span-4) -->
+<div class="lg:col-span-4 p-6 border-b lg:border-b-0 lg:border-r border-[#E7E7E0] flex flex-col justify-between bg-[#FDFDFB]">
+<div>
+<div class="flex items-center justify-between mb-3">
+<span class="text-xs font-sora font-semibold text-[#0F0F0F]">Prompt &amp; Narrative Intent</span>
+<span class="text-[11px] text-[#8A8A84]">AI script</span>
+</div>
+<!-- Textarea Box -->
+<div class="bg-white border border-[#E7E7E0] rounded-xl p-3.5 focus-within:border-[#14B8A6] focus-within:ring-2 focus-within:ring-[#14B8A6]/20 transition-all">
+<p class="text-body-md text-[#0F0F0F] font-normal leading-relaxed">
+                Launch video for our new lightweight running shoes. Open with an arresting speed hook, transition into carbon-plate specs, and close on early access coupon code.
+                <span class="inline-block w-1.5 h-4 bg-[#14B8A6] ml-1 animate-pulse align-middle"></span>
+</p>
+</div>
+<!-- Parameters Pills -->
+<div class="mt-4 flex flex-wrap gap-2">
+<span class="px-2.5 py-1 bg-white border border-[#E7E7E0] rounded-lg text-xs font-medium text-[#5C5C57]">Tag: E-commerce</span>
+<span class="px-2.5 py-1 bg-white border border-[#E7E7E0] rounded-lg text-xs font-medium text-[#5C5C57]">Tone: High Velocity</span>
+<span class="px-2.5 py-1 bg-white border border-[#E7E7E0] rounded-lg text-xs font-medium text-[#5C5C57]">Duration: 30s</span>
+</div>
+</div>
+<!-- Bottom Action -->
+<div class="pt-6">
+<button class="w-full h-10 bg-[#0F0F0F] hover:bg-[#222222] text-white rounded-lg text-body-md font-medium flex items-center justify-center gap-2 transition-colors">
+<svg class="w-4 h-4 text-[#C6F432]" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+</svg>
+              Write my video
+            </button>
+</div>
+</div>
+<!-- PANE 2: Multi-Track Timeline Editor (48% - lg:col-span-5) -->
+<div class="lg:col-span-5 p-6 border-b lg:border-b-0 lg:border-r border-[#E7E7E0] flex flex-col justify-between relative bg-white overflow-hidden">
+<!-- Timeline Controls Header -->
+<div>
+<div class="flex items-center justify-between pb-3 border-b border-[#E7E7E0] mb-4">
+<div class="flex items-center gap-2">
+<button class="w-7 h-7 rounded bg-[#F6F7F2] flex items-center justify-center text-[#0F0F0F] hover:bg-[#EAECE3]">
+<svg class="w-3.5 h-3.5 fill-current" viewbox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+</button>
+<span class="text-xs font-mono font-semibold text-[#0F0F0F]">00:11.40 / 00:30.00</span>
+</div>
+<span class="text-[11px] font-medium text-[#8A8A84]">Synced to the voice</span>
+</div>
+<!-- Timeline Canvas with Vertical Playhead -->
+<div class="relative flex flex-col gap-3 py-2">
+<!-- VERTICAL ELECTRIC LIME PLAYHEAD -->
+<div class="absolute top-0 bottom-0 left-[44%] w-[2px] bg-[#C6F432] z-30 pointer-events-none flex flex-col items-center">
+<div class="px-1.5 py-0.5 bg-[#0F0F0F] text-[#C6F432] text-[9px] font-mono font-bold rounded-sm shadow -mt-2">
+                  00:11.40
+                </div>
+</div>
+<!-- TRACK 1: Video Scene Segments -->
+<div>
+<div class="text-[10px] font-bold text-[#8A8A84] uppercase tracking-wider mb-1">Scenes</div>
+<div class="grid grid-cols-12 gap-1 h-14 bg-[#F6F7F2] p-1 rounded-lg border border-[#E7E7E0]">
+<div class="col-span-3 bg-white border border-[#E7E7E0] rounded p-1.5 flex flex-col justify-between">
+<span class="text-[10px] font-semibold text-[#0F0F0F]">Hook</span>
+<span class="text-[9px] text-[#8A8A84]">0s–3s</span>
+</div>
+<div class="col-span-3 bg-white border border-[#E7E7E0] rounded p-1.5 flex flex-col justify-between">
+<span class="text-[10px] font-semibold text-[#0F0F0F]">Feature</span>
+<span class="text-[9px] text-[#8A8A84]">3s–11s</span>
+</div>
+<div class="col-span-3 bg-white border border-[#E7E7E0] rounded p-1.5 flex flex-col justify-between">
+<span class="text-[10px] font-semibold text-[#0F0F0F]">Proof</span>
+<span class="text-[9px] text-[#8A8A84]">11s–20s</span>
+</div>
+<div class="col-span-3 bg-white border border-[#E7E7E0] rounded p-1.5 flex flex-col justify-between">
+<span class="text-[10px] font-semibold text-[#0F0F0F]">Offer CTA</span>
+<span class="text-[9px] text-[#8A8A84]">20s–30s</span>
+</div>
+</div>
+</div>
+<!-- TRACK 2: Audio Synthesis Track -->
+<div>
+<div class="text-[10px] font-bold text-[#8A8A84] uppercase tracking-wider mb-1">Voice</div>
+<div class="h-10 bg-[#F6F7F2] rounded-lg border border-[#E7E7E0] px-2 flex items-center">
+<!-- SVG clean continuous waveform -->
+<svg class="w-full h-6 text-[#0F0F0F]" preserveaspectratio="none" viewbox="0 0 500 40">
+<path d="M3 18.0V22.0 M9 11.9V28.1 M15 7.6V32.4 M21 4.6V35.4 M27 3.2V36.8 M33 3.5V36.5 M39 5.5V34.5 M45 9.2V30.8 M51 14.3V25.7 M57 14.3V25.7 M63 10.0V30.0 M69 7.5V32.5 M75 6.7V33.3 M81 7.4V32.6 M87 9.3V30.7 M93 12.0V28.0 M99 15.0V25.0 M105 17.9V22.1 M111 16.4V23.6 M117 17.0V23.0 M123 16.6V23.4 M129 14.4V25.6 M135 12.8V27.2 M141 12.3V27.7 M147 13.1V26.9 M153 15.6V24.4 M159 15.1V24.9 M165 10.9V29.1 M171 7.4V32.6 M177 5.0V35.0 M183 4.1V35.9 M189 4.8V35.2 M195 7.3V32.7 M201 11.6V28.4 M207 17.5V22.5 M213 11.2V28.8 M219 7.2V32.8 M225 4.9V35.1 M231 4.3V35.7 M237 5.4V34.6 M243 7.9V32.1 M249 11.4V28.6 M255 15.6V24.4 M261 15.5V24.5 M267 13.3V26.7 M273 12.8V27.2 M279 13.6V26.4 M285 15.4V24.6 M291 17.9V22.1 M297 16.2V23.8 M303 16.1V23.9 M309 17.7V22.3 M315 14.5V25.5 M321 11.4V28.6 M327 8.7V31.3 M333 6.8V33.2 M339 6.3V33.7 M345 7.3V32.7 M351 10.1V29.9 M357 14.7V25.3 M363 13.8V26.2 M369 8.8V31.2 M375 5.3V34.7 M381 3.4V36.6 M387 3.3V36.7 M393 4.9V35.1 M399 8.0V32.0 M405 12.4V27.6 M411 17.3V22.7 M417 12.5V27.5 M423 9.9V30.1 M429 9.1V30.9 M435 9.6V30.4 M441 11.3V28.7 M447 13.5V26.5 M453 15.9V24.1 M459 17.6V22.4 M465 17.6V22.4 M471 15.9V24.1 M477 13.6V26.4 M483 11.4V28.6 M489 9.9V30.1 M495 9.5V30.5" fill="none" stroke="#0F0F0F" stroke-width="2.4" stroke-linecap="round"></path>
+</svg>
+</div>
+</div>
+<!-- TRACK 3: Karaoke Captions Track -->
+<div>
+<div class="text-[10px] font-bold text-[#8A8A84] uppercase tracking-wider mb-1">Captions</div>
+<div class="flex items-center gap-1.5 h-9 bg-[#F6F7F2] p-1 rounded-lg border border-[#E7E7E0] overflow-x-auto">
+<span class="px-2 py-0.5 rounded text-xs bg-white text-[#5C5C57]">Featherweight</span>
+<span class="px-2 py-0.5 rounded text-xs bg-[#C6F432] text-[#0F0F0F] font-bold shadow-xs">propulsion</span>
+<span class="px-2 py-0.5 rounded text-xs bg-white text-[#5C5C57]">under</span>
+<span class="px-2 py-0.5 rounded text-xs bg-white text-[#5C5C57]">your</span>
+<span class="px-2 py-0.5 rounded text-xs bg-white text-[#5C5C57]">feet</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Timeline Footer Info -->
+<div class="pt-4 flex items-center justify-between text-xs text-[#8A8A84] border-t border-[#E7E7E0]">
+<span>Preview is free</span>
+<span>3 tracks in sync</span>
+</div>
+</div>
+<!-- PANE 3: Inspector & Export Settings (22% - lg:col-span-3) -->
+<div class="lg:col-span-3 p-6 flex flex-col justify-between bg-[#FAFAF8]">
+<div>
+<div class="text-xs font-sora font-semibold text-[#0F0F0F] mb-4">Export Properties</div>
+<div class="flex flex-col gap-3.5">
+<!-- Setting 1 -->
+<div>
+<span class="text-[11px] text-[#8A8A84] block mb-1">Aspect Ratio</span>
+<div class="flex items-center justify-between p-2 bg-white border border-[#E7E7E0] rounded-lg text-xs font-semibold">
+<span class="flex items-center gap-1.5">
+<span class="w-2.5 h-4 border border-[#0F0F0F] rounded-[2px] inline-block"></span>
+                    9:16 Vertical
+                  </span>
+<span class="text-[#8A8A84]">Default</span>
+</div>
+</div>
+<!-- Setting 2 -->
+<div>
+<span class="text-[11px] text-[#8A8A84] block mb-1">Output Resolution</span>
+<div class="p-2 bg-white border border-[#E7E7E0] rounded-lg text-xs font-semibold text-[#0F0F0F]">
+                  1080 × 1920 · 30fps
+                </div>
+</div>
+<!-- Setting 3 -->
+<div>
+<span class="text-[11px] text-[#8A8A84] block mb-1">Voice</span>
+<div class="p-2 bg-white border border-[#E7E7E0] rounded-lg text-xs font-semibold text-[#0F0F0F]">
+                  Liam · Energetic
+                </div>
+</div>
+<!-- Grounding Verified Pill -->
+<div class="mt-2 p-2.5 bg-[#CCFBF1]/70 border border-[#14B8A6]/30 rounded-lg flex items-center gap-2">
+<svg class="w-4 h-4 text-[#0F766E] shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+<path d="m9 12 2 2 4-4"></path>
+</svg>
+<div class="text-[11px] text-[#0F766E] font-medium leading-tight">
+                  Every claim checked before the voice is recorded.
+                </div>
+</div>
+</div>
+</div>
+<!-- Export CTA -->
+<div class="pt-6">
+<button class="w-full h-10 bg-[#C6F432] hover:bg-[#B6E22A] text-[#0F0F0F] font-sora font-semibold text-xs rounded-lg transition-all lime-glow-subtle">
+              Render video
+            </button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- ================= 4. ANY IDEA, ANY STYLE (SPLIT TYPOGRAPHIC FORMAT SELECTOR) ================= -->
+<!-- STRICT CONSTRAINT: NO PHONE MOCKUPS HERE - ABSTRACT 16:10 / 4:3 HIGH-CRAFT CANVAS -->
+<section class="py-24 px-6 md:px-margin-lg max-w-7xl mx-auto border-t border-[#E7E7E0]/60" id="styles">
+<!-- Section Title -->
+<div class="max-w-2xl mb-14">
+<div class="text-label-sm font-semibold tracking-wider text-[#8A8A84] uppercase mb-2">Formats</div>
+<h2 class="font-sora text-headline-lg md:text-[40px] font-bold tracking-tight text-[#0F0F0F] mb-3">
+        Any idea, any style
+      </h2>
+<p class="text-body-lg text-[#5C5C57]">
+        Promos, explainers, stories and more. Each format gets its own pacing, layouts and captions.
+      </p>
+</div>
+<!-- Split Layout -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+<!-- Left: Giant Typographic List -->
+<div class="lg:col-span-5 flex flex-col gap-5">
+<!-- Active Item: Product promos -->
+<div class="group cursor-pointer">
+<div class="flex items-center gap-3">
+<span class="text-2xl text-[#C6F432] font-bold">→</span>
+<span class="font-sora text-[38px] md:text-[44px] font-bold tracking-tight text-[#0F0F0F]">
+              Product promos
+            </span>
+</div>
+<p class="text-body-md text-[#5C5C57] mt-1.5 ml-8 max-w-sm">
+            High-energy cuts, dynamic price badges, spec overlays, and conversion-focused callouts.
+          </p>
+</div>
+<!-- Inactive Items -->
+<div class="flex items-center gap-3 cursor-pointer group">
+<span class="text-2xl text-transparent group-hover:text-[#A8A8A2] font-bold">→</span>
+<span class="font-sora text-[38px] md:text-[44px] font-bold tracking-tight text-[#A8A8A2] group-hover:text-[#5C5C57] transition-colors">
+            Explainers
+          </span>
+</div>
+<div class="flex items-center gap-3 cursor-pointer group">
+<span class="text-2xl text-transparent group-hover:text-[#A8A8A2] font-bold">→</span>
+<span class="font-sora text-[38px] md:text-[44px] font-bold tracking-tight text-[#A8A8A2] group-hover:text-[#5C5C57] transition-colors">
+            Stories
+          </span>
+</div>
+<div class="flex items-center gap-3 cursor-pointer group">
+<span class="text-2xl text-transparent group-hover:text-[#A8A8A2] font-bold">→</span>
+<span class="font-sora text-[38px] md:text-[44px] font-bold tracking-tight text-[#A8A8A2] group-hover:text-[#5C5C57] transition-colors">
+            Top tips
+          </span>
+</div>
+<div class="flex items-center gap-3 cursor-pointer group">
+<span class="text-2xl text-transparent group-hover:text-[#A8A8A2] font-bold">→</span>
+<span class="font-sora text-[38px] md:text-[44px] font-bold tracking-tight text-[#A8A8A2] group-hover:text-[#5C5C57] transition-colors">
+            News recaps
+          </span>
+</div>
+<div class="flex items-center gap-3 cursor-pointer group">
+<span class="text-2xl text-transparent group-hover:text-[#A8A8A2] font-bold">→</span>
+<span class="font-sora text-[38px] md:text-[44px] font-bold tracking-tight text-[#A8A8A2] group-hover:text-[#5C5C57] transition-colors">
+            Quotes
+          </span>
+</div>
+</div>
+<!-- Right: Pure 16:10 Architectural Canvas Card (NO PHONE MOCKUP) -->
+<div class="lg:col-span-7">
+<div class="bg-white border border-[#E7E7E0] rounded-2xl p-6 sm:p-8 aspect-[16/10] shadow-[0_4px_24px_rgba(0,0,0,0.03)] flex flex-col justify-between relative overflow-hidden group">
+<!-- Background Abstract Bauhaus Graphics (Non-phone) -->
+<div class="absolute -right-10 -bottom-10 w-80 h-80 rounded-full border-[32px] border-[#F6F7F2] -z-0"></div>
+<div class="absolute right-24 top-10 w-36 h-36 bg-[#C6F432]/25 rounded-2xl rotate-12 -z-0"></div>
+<!-- Canvas Top Row -->
+<div class="flex items-center justify-between z-10">
+<div class="flex items-center gap-2">
+<span class="px-2.5 py-1 rounded bg-[#0F0F0F] text-white text-[11px] font-mono uppercase tracking-wider font-semibold">FORMAT · PRODUCT PROMO</span>
+<span class="text-xs text-[#8A8A84] font-medium">Fast cuts</span>
+</div>
+<div class="px-2.5 py-1 rounded-full bg-[#C6F432] text-[#0F0F0F] text-xs font-bold font-sora shadow-xs">
+              -30% EARLY BIRD
+            </div>
+</div>
+<!-- Canvas Middle Composition: Bold Geometric Display -->
+<div class="z-10 my-auto py-4">
+<div class="text-xs font-mono font-semibold text-[#14B8A6] uppercase tracking-widest mb-1">
+              NEW DROP
+            </div>
+<h3 class="font-sora text-3xl sm:text-5xl font-bold tracking-tighter text-[#0F0F0F] leading-none mb-4">
+              Velocity Phantom X
+            </h3>
+<div class="flex items-baseline gap-3">
+<span class="text-2xl font-sora font-extrabold text-[#0F0F0F]">$189</span>
+<span class="text-sm line-through text-[#8A8A84]">$270</span>
+<span class="text-xs text-[#0F766E] font-semibold bg-[#CCFBF1] px-2 py-0.5 rounded">
+                Free shipping
+              </span>
+</div>
+</div>
+<!-- Canvas Bottom Metadata Strip -->
+<div class="z-10 pt-4 border-t border-[#E7E7E0] flex items-center justify-between text-xs text-[#5C5C57]">
+<div class="flex items-center gap-4">
+<span>Scene duration: 4.8s</span>
+<span>Transition: Snap</span>
+<span>Voice: Liam</span>
+</div>
+<div class="flex items-center gap-1 font-mono text-[#0F0F0F] font-semibold">
+<span>PREVIEW</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- ================= 5. FEATURES (ASYMMETRIC BENTO GRID) ================= -->
+<!-- STRICT CONSTRAINTS: NO EMOJIS, NO VIEW COUNTS, NO PHONE MOCKUPS -->
+<section class="py-24 px-6 md:px-margin-lg max-w-7xl mx-auto" id="features">
+<div class="max-w-xl mb-12">
+<div class="text-label-sm font-semibold tracking-wider text-[#8A8A84] uppercase mb-2">Features</div>
+<h2 class="font-sora text-headline-lg md:text-[40px] font-bold tracking-tight text-[#0F0F0F]">
+        Everything a short video needs
+      </h2>
+</div>
+<!-- Bento Grid Container -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<!-- BENTO 1: Large 2-column span -> Kinetic Motion -->
+<div class="lg:col-span-2 bg-white border border-[#E7E7E0] rounded-2xl p-8 flex flex-col justify-between shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
+<div>
+<div class="w-10 h-10 rounded-xl bg-[#F6F7F2] border border-[#E7E7E0] flex items-center justify-center text-[#0F0F0F] mb-5">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+<polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+<line x1="12" x2="12" y1="22.08" y2="12"></line>
+</svg>
+</div>
+<h3 class="font-sora text-xl font-bold text-[#0F0F0F] mb-2">Every scene animated</h3>
+<p class="text-body-md text-[#5C5C57] max-w-md">
+            No static slideshows. Each scene gets a moving illustration: orbits, charts, flows and more.
+          </p>
+</div>
+<!-- 4-part vector graphic grid demo inside Bento 1 -->
+<div class="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-3">
+<div class="bg-[#F6F7F2] border border-[#E7E7E0] rounded-xl p-3 flex flex-col items-center justify-center text-center">
+<div class="w-8 h-8 rounded-full border border-dashed border-[#0F0F0F] flex items-center justify-center mb-2">
+<div class="w-2.5 h-2.5 rounded-full bg-[#C6F432]"></div>
+</div>
+<span class="text-xs font-semibold text-[#0F0F0F]">Orbital Node</span>
+</div>
+<div class="bg-[#F6F7F2] border border-[#E7E7E0] rounded-xl p-3 flex flex-col items-center justify-center text-center">
+<div class="flex items-end gap-1 h-8 mb-2">
+<div class="w-1.5 h-3 bg-[#0F0F0F] rounded-t"></div>
+<div class="w-1.5 h-6 bg-[#C6F432] rounded-t"></div>
+<div class="w-1.5 h-4 bg-[#0F0F0F] rounded-t"></div>
+</div>
+<span class="text-xs font-semibold text-[#0F0F0F]">Metric Ramp</span>
+</div>
+<div class="bg-[#F6F7F2] border border-[#E7E7E0] rounded-xl p-3 flex flex-col items-center justify-center text-center">
+<svg class="w-8 h-8 text-[#14B8A6] mb-2" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M2 12h20M12 2v20"></path>
+</svg>
+<span class="text-xs font-semibold text-[#0F0F0F]">Split Grid</span>
+</div>
+<div class="bg-[#F6F7F2] border border-[#E7E7E0] rounded-xl p-3 flex flex-col items-center justify-center text-center">
+<svg class="w-8 h-8 text-[#0F0F0F] mb-2" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M5 12h14M12 5l7 7-7 7"></path>
+</svg>
+<span class="text-xs font-semibold text-[#0F0F0F]">Flow Shift</span>
+</div>
+</div>
+</div>
+<!-- BENTO 2: Natural AI Voices -->
+<div class="bg-white border border-[#E7E7E0] rounded-2xl p-8 flex flex-col justify-between shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
+<div>
+<div class="w-10 h-10 rounded-xl bg-[#F6F7F2] border border-[#E7E7E0] flex items-center justify-center text-[#0F0F0F] mb-5">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+<path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+<line x1="12" x2="12" y1="19" y2="23"></line>
+<line x1="8" x2="16" y1="23" y2="23"></line>
+</svg>
+</div>
+<h3 class="font-sora text-xl font-bold text-[#0F0F0F] mb-2">Natural AI voices</h3>
+<p class="text-body-md text-[#5C5C57]">
+            Pick a voice that fits your brand. Timing is tuned to your video length.
+          </p>
+</div>
+<div class="mt-6 flex flex-col gap-2">
+<!-- Voice chip 1 (active) -->
+<div class="p-2.5 rounded-xl bg-[#0F0F0F] text-white flex items-center justify-between text-xs">
+<span class="font-medium">Liam · Energetic</span>
+<span class="px-1.5 py-0.5 rounded bg-[#C6F432] text-[#0F0F0F] font-bold text-[10px]">SELECTED</span>
+</div>
+<!-- Voice chip 2 -->
+<div class="p-2.5 rounded-xl bg-[#F6F7F2] border border-[#E7E7E0] text-[#0F0F0F] flex items-center justify-between text-xs">
+<span class="font-medium">Jessica · Expressive</span>
+<span class="text-[#8A8A84] text-[10px]">Preview</span>
+</div>
+<!-- Voice chip 3 -->
+<div class="p-2.5 rounded-xl bg-[#F6F7F2] border border-[#E7E7E0] text-[#0F0F0F] flex items-center justify-between text-xs">
+<span class="font-medium">George · Storyteller</span>
+<span class="text-[#8A8A84] text-[10px]">Preview</span>
+</div>
+</div>
+</div>
+<!-- BENTO 3: Captions that pop -->
+<div class="bg-white border border-[#E7E7E0] rounded-2xl p-8 flex flex-col justify-between shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
+<div>
+<div class="w-10 h-10 rounded-xl bg-[#F6F7F2] border border-[#E7E7E0] flex items-center justify-center text-[#0F0F0F] mb-5">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<polyline points="4 7 4 4 20 4 20 7"></polyline>
+<line x1="9" x2="15" y1="20" y2="20"></line>
+<line x1="12" x2="12" y1="4" y2="20"></line>
+</svg>
+</div>
+<h3 class="font-sora text-xl font-bold text-[#0F0F0F] mb-2">Captions that pop</h3>
+<p class="text-body-md text-[#5C5C57]">
+            Word-by-word captions, perfectly synced to the voice.
+          </p>
+</div>
+<div class="mt-6 p-4 rounded-xl bg-[#0F0F0F] text-white flex items-center justify-center text-center">
+<p class="font-sora text-sm font-semibold tracking-wide">
+            Stop wasting <span class="bg-[#C6F432] text-[#0F0F0F] px-2 py-0.5 rounded font-bold">hours</span> editing manually.
+          </p>
+</div>
+</div>
+<!-- BENTO 4: Your brand everywhere -->
+<div class="bg-white border border-[#E7E7E0] rounded-2xl p-8 flex flex-col justify-between shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
+<div>
+<div class="w-10 h-10 rounded-xl bg-[#F6F7F2] border border-[#E7E7E0] flex items-center justify-center text-[#0F0F0F] mb-5">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="10"></circle>
+<path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path>
+<path d="M2 12h20"></path>
+</svg>
+</div>
+<h3 class="font-sora text-xl font-bold text-[#0F0F0F] mb-2">Your brand everywhere</h3>
+<p class="text-body-md text-[#5C5C57]">
+            Set your colours, fonts and logo once. Clipwise applies them to every video.
+          </p>
+</div>
+<div class="mt-6 bg-[#F6F7F2] border border-[#E7E7E0] rounded-xl p-3.5">
+<div class="flex items-center gap-2 mb-3">
+<div class="w-6 h-6 rounded-full bg-[#C6F432] border border-black/10"></div>
+<div class="w-6 h-6 rounded-full bg-[#14B8A6] border border-black/10"></div>
+<div class="w-6 h-6 rounded-full bg-[#0F0F0F]"></div>
+<div class="w-6 h-6 rounded-full bg-white border border-[#E7E7E0]"></div>
+<span class="text-[11px] font-mono text-[#8A8A84] ml-auto">Brand kit</span>
+</div>
+<div class="flex justify-between items-center text-xs text-[#0F0F0F] border-t border-[#E7E7E0] pt-2">
+<span class="font-sora font-bold">Sora Bold</span>
+<span class="text-[#8A8A84]">+</span>
+<span class="font-sans font-medium">Inter Regular</span>
+</div>
+</div>
+</div>
+<!-- BENTO 5: Facts double-checked -->
+<div class="bg-white border border-[#E7E7E0] rounded-2xl p-8 flex flex-col justify-between shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
+<div>
+<div class="w-10 h-10 rounded-xl bg-[#CCFBF1] text-[#0F766E] flex items-center justify-center mb-5">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+</svg>
+</div>
+<h3 class="font-sora text-xl font-bold text-[#0F0F0F] mb-2">Facts double-checked</h3>
+<p class="text-body-md text-[#5C5C57]">
+            A second AI pass checks every claim and number before the voice is recorded.
+          </p>
+</div>
+<div class="mt-6 flex flex-col gap-2 text-xs">
+<div class="flex items-center gap-2 text-[#0F766E] font-medium">
+<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+<span>Claims checked</span>
+</div>
+<div class="flex items-center gap-2 text-[#0F766E] font-medium">
+<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+<span>Wrong numbers fixed</span>
+</div>
+<div class="flex items-center gap-2 text-[#0F766E] font-medium">
+<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+<span>Doubtful stats removed</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- ================= 6. FINAL CTA (DARK GLOWING BANNER) ================= -->
+<!-- STRICT CONSTRAINTS: NO PHONE MOCKUPS HERE - CLEAN DARK WORKSPACE PANEL -->
+<section class="py-20 px-6 md:px-margin-lg max-w-7xl mx-auto" id="early-access">
+<div class="relative bg-[#0F0F0F] rounded-[32px] p-10 md:p-16 overflow-hidden shadow-2xl">
+<!-- Top-right radiant lime blur orb -->
+<div class="absolute -top-24 -right-24 w-96 h-96 bg-[#C6F432]/20 rounded-full blur-3xl pointer-events-none"></div>
+<div class="relative z-10 max-w-2xl">
+<!-- Badge -->
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-[#C6F432] text-label-sm font-semibold mb-6 border border-white/10">
+<span class="w-2 h-2 rounded-full bg-[#C6F432]"></span>
+          Private beta
+        </div>
+<h2 class="font-sora text-4xl sm:text-6xl font-bold tracking-tight text-white mb-4">
+          Ideas in. Videos out.
+        </h2>
+<p class="text-body-lg text-[#8A8A84] mb-8 max-w-lg leading-relaxed">
+          Turn any idea into a ready-to-post Reel, Short or TikTok in minutes.
+        </p>
+<!-- Clean Email Capture Form -->
+<form class="flex flex-col sm:flex-row items-stretch gap-3 max-w-md" onsubmit="event.preventDefault();">
+<input class="flex-1 h-12 px-4 rounded-xl bg-[#1C1B1B] border border-[#333333] text-white placeholder-[#5C5C57] focus:outline-none focus:ring-2 focus:ring-[#14B8A6] text-body-md" placeholder="name@company.com" required="" type="email"/>
+<button class="h-12 px-6 rounded-xl bg-[#C6F432] hover:bg-[#B6E22A] text-[#0F0F0F] font-sora font-semibold text-body-md inline-flex items-center justify-center transition-all duration-150 lime-glow shrink-0 active:scale-[0.98]" type="submit">
+            Get early access
+          </button>
+</form>
+<div class="mt-4 flex items-center gap-4 text-xs text-[#5C5C57]">
+<span>Invite-only beta</span>
+<span>·</span>
+<span>No credit card required</span>
+</div>
+</div>
+</div>
+</section>
+<!-- ================= 7. MINIMAL FOOTER ================= -->
+<footer class="max-w-7xl mx-auto px-6 md:px-margin-lg py-12 border-t border-[#E7E7E0] flex flex-col md:flex-row items-center justify-between gap-6">
+<!-- Left Logo & Tagline -->
+<div class="flex items-center gap-3">
+<div class="w-6 h-6 rounded bg-[#C6F432] flex items-center justify-center text-[#0F0F0F]">
+<svg class="w-3 h-3 fill-current ml-0.5" viewbox="0 0 24 24">
+<path d="M5 3l14 9-14 9V3z"></path>
+</svg>
+</div>
+<span class="font-sora font-bold text-sm text-[#0F0F0F]">Clipwise</span>
+<span class="text-xs text-[#8A8A84] border-l border-[#E7E7E0] pl-3">Ideas in. Videos out.</span>
+</div>
+<!-- Center Links -->
+<div class="flex items-center gap-6 text-xs font-medium text-[#5C5C57]">
+<a class="hover:text-[#0F0F0F] transition-colors" href="#features">Features</a>
+<a class="hover:text-[#0F0F0F] transition-colors" href="#how-it-works">How it works</a>
+<a class="hover:text-[#0F0F0F] transition-colors" href="#styles">Formats</a>
+<a class="hover:text-[#0F0F0F] transition-colors" href="#early-access">Pricing</a>
+</div>
+<!-- Right Copyright -->
+<div class="text-xs text-[#8A8A84]">
+      © 2026 Clipwise
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.3.4/dist/lenis.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.1/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.1/dist/ScrollTrigger.min.js"></script>
+<style>
+  .cw-nav-scrolled { transform: scale(0.97); box-shadow: 0 8px 24px rgba(15,15,15,0.06); background: rgba(255,255,255,0.82); backdrop-filter: blur(12px); }
+  .cw-nav { transition: transform .3s ease, box-shadow .3s ease, background .3s ease; }
+  #cycle-word { display: inline-flex; overflow: hidden; vertical-align: bottom; white-space: nowrap; }
+  #cycle-word .cw-w { display: inline-block; }
+  .cw-active-pill { background: #0F0F0F !important; color: #fff !important; }
+</style>
+<script>
+// Clipwise homepage motion: Lenis smooth scroll + GSAP. Works on Stitch's exported markup by finding
+// elements through their text, so a re-export keeps working as long as the copy stays the same.
+(() => {
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (!window.gsap || reduce) return;
+  gsap.registerPlugin(ScrollTrigger);
+
+  // ---------- helpers ----------
+  const byText = (text, root = document) =>
+    document.evaluate(`.//*[normalize-space(text())=${JSON.stringify(text)}]`, root, null, 9, null).singleNodeValue;
+  const ancestorContaining = (node, other) => {
+    let el = node;
+    while (el && !el.contains(other)) el = el.parentElement;
+    return el;
+  };
+  /** Runs `start` while `el` is on screen and `stop` when it leaves, so loops don't burn CPU off-screen. */
+  const whileVisible = (el, start, stop) =>
+    ScrollTrigger.create({ trigger: el, start: "top bottom", end: "bottom top", onToggle: (s) => (s.isActive ? start() : stop()) });
+  const loop = (fn, ms) => {
+    let id = null;
+    return { start: () => { if (!id) id = setInterval(fn, ms); }, stop: () => { clearInterval(id); id = null; } };
+  };
+
+  // ---------- smooth scroll ----------
+  document.documentElement.classList.remove("scroll-smooth");
+  const lenis = new Lenis({ lerp: 0.1 });
+  lenis.on("scroll", ScrollTrigger.update);
+  gsap.ticker.add((t) => lenis.raf(t * 1000));
+  gsap.ticker.lagSmoothing(0);
+  document.querySelectorAll('a[href^="#"]').forEach((a) =>
+    a.addEventListener("click", (e) => {
+      const target = a.getAttribute("href").length > 1 && document.querySelector(a.getAttribute("href"));
+      if (target) { e.preventDefault(); lenis.scrollTo(target, { offset: -90 }); }
+    }),
+  );
+
+  // ---------- navbar ----------
+  const nav = document.querySelector("header nav");
+  if (nav) {
+    nav.classList.add("cw-nav");
+    ScrollTrigger.create({ start: 40, onUpdate: (s) => nav.classList.toggle("cw-nav-scrolled", s.scroll() > 40) });
+    gsap.from(nav, { y: -30, opacity: 0, duration: 0.8, ease: "power3.out" });
+  }
+
+  // ---------- hero ----------
+  const hero = document.querySelector("header").nextElementSibling;
+  const h1 = hero.querySelector("h1");
+  gsap.from(h1.parentElement.children, { y: 32, opacity: 0, duration: 0.9, stagger: 0.09, ease: "power3.out", delay: 0.1 });
+
+  // Cycling word: Reels -> Shorts -> TikToks, pill resizes to fit.
+  const pill = document.getElementById("cycle-word");
+  if (pill) {
+    const words = ["Reels", "Shorts", "TikToks"];
+    let i = 0;
+    pill.innerHTML = `<span class="cw-w">${words[0]}</span>`;
+    setInterval(() => {
+      i = (i + 1) % words.length;
+      const from = pill.offsetWidth;
+      const old = pill.querySelector(".cw-w");
+      gsap.to(old, {
+        yPercent: -110, opacity: 0, duration: 0.35, ease: "power2.in",
+        onComplete: () => {
+          old.textContent = words[i];
+          pill.style.width = "auto";
+          const to = pill.offsetWidth;
+          pill.style.width = `${from}px`;
+          gsap.to(pill, { width: to, duration: 0.45, ease: "power3.out", onComplete: () => (pill.style.width = "auto") });
+          gsap.fromTo(old, { yPercent: 110, opacity: 0 }, { yPercent: 0, opacity: 1, duration: 0.45, ease: "power3.out" });
+        },
+      });
+    }, 2400);
+  }
+
+  // Phone + floating UI fragments.
+  const lines = hero.querySelector("svg line")?.closest("svg");
+  const rightCol = lines?.parentElement;
+  if (rightCol) {
+    const kids = [...rightCol.children];
+    const phone = kids.find((k) => k.textContent.includes("LIVE PREVIEW"));
+    const cards = kids.filter((k) => k !== phone && k !== lines);
+    gsap.from(phone, { y: 70, opacity: 0, scale: 0.94, duration: 1.1, ease: "power3.out", delay: 0.25 });
+    gsap.from(cards, { scale: 0.85, opacity: 0, duration: 0.7, stagger: 0.1, ease: "back.out(1.6)", delay: 0.6 });
+    gsap.from(lines, { opacity: 0, duration: 1, delay: 1.1 });
+    cards.forEach((c, n) => gsap.to(c, { y: n % 2 ? 8 : -8, duration: 2.4 + n * 0.35, yoyo: true, repeat: -1, ease: "sine.inOut", delay: 1.2 }));
+    gsap.to(phone, { y: -6, duration: 3, yoyo: true, repeat: -1, ease: "sine.inOut", delay: 1.3 });
+    // Parallax: the composition drifts up slower than the page.
+    gsap.to(rightCol, { yPercent: -8, ease: "none", scrollTrigger: { trigger: hero, start: "top top", end: "bottom top", scrub: true } });
+
+    // Phone captions cycle, one word highlighted.
+    const capP = byText("Engineered for", phone)?.closest("p") ?? [...phone.querySelectorAll("p")].find((p) => p.textContent.includes("Engineered for"));
+    const hl = capP?.querySelector("span");
+    if (capP && hl) {
+      const hlClass = hl.className;
+      const caps = [["Engineered for", "momentum"], ["Made to be", "watched"], ["Ideas in,", "videos out"]];
+      let c = 0;
+      setInterval(() => {
+        c = (c + 1) % caps.length;
+        gsap.to(capP, { opacity: 0, y: 6, duration: 0.25, onComplete: () => {
+          capP.innerHTML = `${caps[c][0]} <span class="${hlClass}">${caps[c][1]}</span>`;
+          gsap.to(capP, { opacity: 1, y: 0, duration: 0.35, ease: "power2.out" });
+        } });
+      }, 2600);
+    }
+
+    // Phone timecode ticks.
+    const tc = byText("00:03.20", phone);
+    if (tc) { const t = { s: 0 }; gsap.to(t, { s: 15, duration: 15, ease: "none", repeat: -1, onUpdate: () => (tc.textContent = `00:${String(Math.floor(t.s)).padStart(2, "0")}.${String(Math.floor((t.s % 1) * 100)).padStart(2, "0")}`) }); }
+
+    // Render progress card loops 0 -> 100%.
+    const bar = rightCol.querySelector('[style*="width: 72%"]');
+    const pct = byText("72%", rightCol);
+    if (bar && pct) {
+      const p = { v: 0 };
+      gsap.to(p, { v: 100, duration: 4.5, ease: "power1.inOut", repeat: -1, repeatDelay: 1.2, onUpdate: () => { bar.style.width = `${p.v}%`; pct.textContent = `${Math.round(p.v)}%`; } });
+    }
+
+    // Voice waveform bars bounce.
+    const voiceCard = cards.find((c) => c.textContent.includes("Voice: Liam"));
+    const bars = voiceCard ? [...voiceCard.children].at(-1)?.children : null;
+    if (bars) [...bars].forEach((b, n) => gsap.to(b, { scaleY: 0.35, transformOrigin: "50% 50%", duration: 0.35 + (n % 4) * 0.12, yoyo: true, repeat: -1, ease: "sine.inOut", delay: n * 0.05 }));
+  }
+
+  // ---------- how it works ----------
+  const how = document.getElementById("how-it-works");
+  if (how) {
+    const panel = how.lastElementChild;
+    gsap.from(how.firstElementChild, { y: 30, opacity: 0, duration: 0.8, ease: "power3.out", scrollTrigger: { trigger: how, start: "top 80%" } });
+    gsap.from(panel, { y: 60, opacity: 0, scale: 0.98, duration: 1, ease: "power3.out", scrollTrigger: { trigger: how, start: "top 75%" } });
+
+    // Prompt types itself once.
+    const prompt = [...how.querySelectorAll("p")].find((p) => p.textContent.includes("Launch video for our new"));
+    const textNode = prompt && [...prompt.childNodes].find((n) => n.nodeType === 3 && n.textContent.trim());
+    if (textNode) {
+      const full = textNode.textContent.trim();
+      textNode.textContent = "";
+      const t = { n: 0 };
+      gsap.to(t, { n: full.length, duration: full.length * 0.022, ease: "none", scrollTrigger: { trigger: panel, start: "top 70%" }, onUpdate: () => (textNode.textContent = `${full.slice(0, Math.round(t.n))} `) });
+    }
+
+    // Playhead sweeps the 30s timeline; scenes, caption chips and stage pills follow it.
+    const label = byText("00:11.40", panel);
+    const playhead = label?.parentElement;
+    const lane = playhead?.parentElement;
+    const clock = byText("00:11.40 / 00:30.00", panel);
+    const scenes = ["Hook", "Feature", "Proof", "Offer CTA"].map((w) => byText(w, panel)?.parentElement);
+    const ranges = [[0, 3], [3, 11], [11, 20], [20, 30]];
+    const chipWords = ["Featherweight", "propulsion", "under", "your", "feet"].map((w) => byText(w, panel));
+    const onChip = chipWords[1]?.className, offChip = chipWords[0]?.className;
+    const stages = ["01 Write", "02 Build", "03 Post"].map((w) => byText(w, how));
+    const onStage = stages[0]?.className, offStage = stages[1]?.className;
+    if (playhead && lane) {
+      const fmt = (s) => `00:${String(Math.floor(s)).padStart(2, "0")}.${String(Math.floor((s % 1) * 100)).padStart(2, "0")}`;
+      const t = { s: 0 };
+      const sweep = gsap.to(t, {
+        s: 30, duration: 12, ease: "none", repeat: -1, paused: true,
+        onUpdate: () => {
+          playhead.style.left = `${(t.s / 30) * 100}%`;
+          label.textContent = fmt(t.s);
+          if (clock) clock.textContent = `${fmt(t.s)} / 00:30.00`;
+          scenes.forEach((el, k) => el && (el.style.boxShadow = t.s >= ranges[k][0] && t.s < ranges[k][1] ? "0 0 0 2px #C6F432" : ""));
+          const ci = Math.min(chipWords.length - 1, Math.floor(t.s / 6));
+          chipWords.forEach((el, k) => el && (el.className = k === ci ? onChip : offChip));
+          const si = Math.min(2, Math.floor(t.s / 10));
+          stages.forEach((el, k) => el && (el.className = k === si ? onStage : offStage));
+        },
+      });
+      whileVisible(panel, () => sweep.play(), () => sweep.pause());
+    }
+  }
+
+  // ---------- formats ----------
+  const styles = document.getElementById("styles");
+  if (styles) {
+    gsap.from(styles.firstElementChild, { y: 30, opacity: 0, duration: 0.8, ease: "power3.out", scrollTrigger: { trigger: styles, start: "top 80%" } });
+    const names = ["Product promos", "Explainers", "Stories", "Top tips", "News recaps", "Quotes"];
+    const spans = names.map((n) => byText(n, styles));
+    const arrows = spans.map((s) => s?.previousElementSibling);
+    const desc = spans[0]?.parentElement?.nextElementSibling;
+    const onSpan = spans[0]?.className, offSpan = spans[1]?.className;
+    const onArrow = arrows[0]?.className, offArrow = arrows[1]?.className;
+    const descs = [
+      "High-energy cuts, price badges, spec overlays and a clear call to action.",
+      "One idea per scene, animated diagrams and fact-checked numbers.",
+      "Slow build, cliffhanger hooks and captions that keep people watching.",
+      "Snappy numbered lists made to be saved and shared.",
+      "The week's biggest updates, summed up in under a minute.",
+      "Big type, calm pacing and your brand on every frame.",
+    ];
+    const formats = [
+      ["FORMAT · PRODUCT PROMO", "Fast cuts", "-30% EARLY BIRD", "NEW DROP", "Velocity Phantom X", "$189", "$270", "Free shipping", "Scene duration: 4.8s", "Transition: Snap", "Voice: Liam"],
+      ["FORMAT · EXPLAINER", "Clear steps", "FACT-CHECKED", "SCIENCE IN 60", "How GPS finds you", "4", "", "satellites needed", "Scene duration: 6s", "Transition: Fade", "Voice: George"],
+      ["FORMAT · STORYTIME", "Slow build", "PART 1", "TRUE STORY", "The day I lost my passport", "3 AM", "", "Tokyo station", "Scene duration: 7s", "Transition: Push", "Voice: Jessica"],
+      ["FORMAT · TOP TIPS", "Snappy list", "SAVE THIS", "TOP 5", "Sleep better tonight", "#1", "", "No screens after 10", "Scene duration: 5s", "Transition: Slide", "Voice: Liam"],
+      ["FORMAT · NEWS RECAP", "Quick facts", "THIS WEEK", "RECAP", "This week in 60 seconds", "3", "", "big updates", "Scene duration: 6s", "Transition: Cut", "Voice: Jessica"],
+      ["FORMAT · QUOTE", "Calm pacing", "DAILY", "MONDAY MOTIVATION", "Small steps, every day.", "", "", "Share-ready", "Scene duration: 8s", "Transition: Fade", "Voice: George"],
+    ];
+    const slots = formats[0].map((txt) => byText(txt, styles));
+    const card = slots[0] && slots[9] ? ancestorContaining(slots[0], slots[9]) : null;
+    const preview = card?.parentElement;
+    let active = 0;
+    const setActive = (k) => {
+      if (k === active || !card) return;
+      spans.forEach((s, j) => s && (s.className = j === k ? onSpan : offSpan));
+      arrows.forEach((a, j) => a && (a.className = j === k ? onArrow : offArrow));
+      if (desc && spans[k]) {
+        spans[k].parentElement.after(desc);
+        desc.textContent = descs[k];
+        gsap.fromTo(desc, { opacity: 0, y: -6 }, { opacity: 1, y: 0, duration: 0.35 });
+      }
+      gsap.to(card, { opacity: 0, y: 12, duration: 0.2, ease: "power2.in", onComplete: () => {
+        slots.forEach((el, j) => { if (!el) return; el.textContent = formats[k][j]; el.style.visibility = formats[k][j] ? "" : "hidden"; });
+        gsap.to(card, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" });
+      } });
+      active = k;
+    };
+    let paused = false, resume;
+    spans.forEach((s, k) => {
+      const row = s?.parentElement;
+      if (!row) return;
+      row.style.cursor = "pointer";
+      row.addEventListener("mouseenter", () => { paused = true; clearTimeout(resume); setActive(k); });
+      row.addEventListener("mouseleave", () => { resume = setTimeout(() => (paused = false), 4000); });
+    });
+    const auto = loop(() => !paused && setActive((active + 1) % formats.length), 3200);
+    whileVisible(styles, auto.start, auto.stop);
+    if (card) {
+      const shapes = [...card.children].slice(0, 2);
+      gsap.to(shapes[0], { rotation: 12, y: -10, duration: 4, yoyo: true, repeat: -1, ease: "sine.inOut" });
+      gsap.to(shapes[1], { scale: 1.08, duration: 3.2, yoyo: true, repeat: -1, ease: "sine.inOut" });
+      gsap.from(preview, { x: 60, opacity: 0, duration: 1, ease: "power3.out", scrollTrigger: { trigger: styles, start: "top 70%" } });
+    }
+    gsap.from(spans.map((s) => s?.parentElement).filter(Boolean), { x: -30, opacity: 0, duration: 0.6, stagger: 0.07, ease: "power3.out", scrollTrigger: { trigger: styles, start: "top 70%" } });
+  }
+
+  // ---------- features ----------
+  const features = document.getElementById("features");
+  if (features) {
+    gsap.from(features.firstElementChild, { y: 30, opacity: 0, duration: 0.8, ease: "power3.out", scrollTrigger: { trigger: features, start: "top 80%" } });
+    const grid = features.lastElementChild;
+    ScrollTrigger.batch([...grid.children], { start: "top 85%", once: true, onEnter: (els) => gsap.from(els, { y: 40, opacity: 0, duration: 0.8, stagger: 0.1, ease: "power3.out" }) });
+
+    // Mini graphics in "Every scene animated".
+    const tile = (name) => byText(name, features)?.parentElement;
+    const orbit = tile("Orbital Node")?.firstElementChild;
+    if (orbit) gsap.to(orbit, { rotation: 360, duration: 6, repeat: -1, ease: "none" });
+    const ramp = tile("Metric Ramp")?.firstElementChild;
+    if (ramp) [...ramp.children].forEach((b, n) => gsap.to(b, { scaleY: 0.4, transformOrigin: "50% 100%", duration: 0.8, yoyo: true, repeat: -1, ease: "sine.inOut", delay: n * 0.2 }));
+    const split = tile("Split Grid")?.querySelector("svg");
+    if (split) gsap.to(split, { rotation: 90, duration: 1.2, yoyo: true, repeat: -1, repeatDelay: 0.8, ease: "power2.inOut" });
+    const flow = tile("Flow Shift")?.querySelector("svg");
+    if (flow) gsap.to(flow, { x: 8, duration: 0.7, yoyo: true, repeat: -1, ease: "sine.inOut" });
+
+    // Voice chips: selection moves down the list.
+    const chips = ["Liam · Energetic", "Jessica · Expressive", "George · Storyteller"].map((n) => byText(n, features)?.parentElement);
+    if (chips.every(Boolean)) {
+      const onChip = chips[0].className, offChip = chips[1].className;
+      const onBadge = chips[0].lastElementChild.className, offBadge = chips[1].lastElementChild.className;
+      let v = 0;
+      const cycle = loop(() => {
+        v = (v + 1) % 3;
+        chips.forEach((c, k) => { c.className = k === v ? onChip : offChip; c.lastElementChild.className = k === v ? onBadge : offBadge; c.lastElementChild.textContent = k === v ? "SELECTED" : "Preview"; });
+      }, 2000);
+      whileVisible(features, cycle.start, cycle.stop);
+    }
+
+    // Karaoke caption: highlight walks through the words.
+    const capLine = [...features.querySelectorAll("p")].find((p) => p.textContent.includes("Stop wasting"));
+    const capHl = capLine?.querySelector("span");
+    if (capLine && capHl) {
+      const hlClass = capHl.className;
+      const words = capLine.textContent.trim().split(/\s+/);
+      capLine.innerHTML = words.map((w) => `<span class="cw-k">${w}</span>`).join(" ");
+      const ks = [...capLine.querySelectorAll(".cw-k")];
+      let w = -1;
+      const walk = loop(() => { w = (w + 1) % ks.length; ks.forEach((el, k) => (el.className = k === w ? `cw-k ${hlClass}` : "cw-k")); }, 420);
+      whileVisible(capLine, walk.start, walk.stop);
+    }
+
+    // Brand swatches pulse; fact checks tick in one by one.
+    const brandRow = byText("Brand kit", features)?.parentElement;
+    if (brandRow) gsap.to([...brandRow.children].slice(0, 4), { scale: 1.15, duration: 0.5, stagger: 0.15, yoyo: true, repeat: -1, repeatDelay: 1.2, ease: "power2.inOut" });
+    const checks = ["Claims checked", "Wrong numbers fixed", "Doubtful stats removed"].map((t) => byText(t, features)?.parentElement).filter(Boolean);
+    if (checks.length) gsap.from(checks, { x: -16, opacity: 0, duration: 0.5, stagger: 0.35, ease: "power2.out", scrollTrigger: { trigger: checks[0], start: "top 85%" } });
+  }
+
+  // ---------- final call to action ----------
+  const cta = document.getElementById("early-access");
+  if (cta) {
+    const panel = cta.firstElementChild;
+    gsap.from(panel, { scale: 0.94, opacity: 0, duration: 1, ease: "power3.out", scrollTrigger: { trigger: cta, start: "top 80%" } });
+    const h2 = panel.querySelector("h2");
+    if (h2) {
+      h2.innerHTML = h2.textContent.trim().split(" ").map((w) => `<span style="display:inline-block;overflow:hidden;vertical-align:bottom"><span class="cw-r" style="display:inline-block">${w}</span></span>`).join(" ");
+      gsap.from(h2.querySelectorAll(".cw-r"), { yPercent: 110, duration: 0.8, stagger: 0.08, ease: "power3.out", scrollTrigger: { trigger: cta, start: "top 70%" } });
+    }
+    const orb = panel.firstElementChild;
+    gsap.to(orb, { scale: 1.25, opacity: 0.7, duration: 3.5, yoyo: true, repeat: -1, ease: "sine.inOut" });
+    const btn = panel.querySelector('button[type="submit"]');
+    if (btn) gsap.to(btn, { boxShadow: "0 0 32px rgba(198,244,50,0.65)", duration: 1.4, yoyo: true, repeat: -1, ease: "sine.inOut" });
+  }
+})();
+
+</script>
+</body></html>

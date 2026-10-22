@@ -1,0 +1,23 @@
+{
+  "name": "clipwise",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "clipwise": "tsx apps/cli/src/index.ts",
+    "make": "tsx apps/cli/src/index.ts make",
+    "studio": "pnpm --filter @clipwise/video studio",
+    "test": "vitest run --root packages/pipeline",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "sample": "tsx packages/pipeline/scripts/render-sample.ts"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "@types/react": "^19.3.0",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.5"
+  }
+}

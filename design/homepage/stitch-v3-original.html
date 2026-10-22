@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+
+<html class="scroll-smooth" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Clipwise v3 — Precision Generative Video Engine</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Sora:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "error": "#ba1a1a",
+            "on-secondary-fixed-variant": "#005048",
+            "primary-fixed-dim": "#aad600",
+            "inverse-primary": "#aad600",
+            "on-tertiary-container": "#02726a",
+            "inverse-on-surface": "#f3f0ef",
+            "tertiary-container": "#9df3e9",
+            "on-secondary-fixed": "#00201c",
+            "tertiary-fixed-dim": "#80d5cb",
+            "on-primary-container": "#566d00",
+            "primary-container": "#c6f432",
+            "outline": "#747962",
+            "primary-fixed": "#c5f331",
+            "on-surface": "#1c1b1b",
+            "on-error": "#ffffff",
+            "on-secondary-container": "#006f64",
+            "surface-variant": "#e5e2e1",
+            "surface-container-lowest": "#ffffff",
+            "on-surface-variant": "#444934",
+            "on-tertiary": "#ffffff",
+            "on-tertiary-fixed": "#00201d",
+            "surface-container": "#f0edec",
+            "secondary-fixed-dim": "#4fdbc8",
+            "surface-dim": "#dcd9d9",
+            "on-primary": "#ffffff",
+            "secondary": "#006b5f",
+            "on-secondary": "#ffffff",
+            "secondary-container": "#6df5e1",
+            "error-container": "#ffdad6",
+            "outline-variant": "#c4c9ae",
+            "tertiary-fixed": "#9cf2e8",
+            "surface-container-low": "#f6f3f2",
+            "surface-tint": "#506600",
+            "inverse-surface": "#313030",
+            "surface-container-high": "#ebe7e7",
+            "surface-bright": "#fcf9f8",
+            "background": "#fcf9f8",
+            "secondary-fixed": "#71f8e4",
+            "on-primary-fixed-variant": "#3b4d00",
+            "primary": "#506600",
+            "on-tertiary-fixed-variant": "#00504a",
+            "tertiary": "#006a63",
+            "surface-container-highest": "#e5e2e1",
+            "surface": "#fcf9f8",
+            "on-primary-fixed": "#161f00",
+            "on-error-container": "#93000a",
+            "on-background": "#1c1b1b"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-sm": "0.5rem",
+            "gutter": "1rem",
+            "margin-lg": "3rem",
+            "margin-md": "2rem",
+            "space-md": "1rem",
+            "space-lg": "1.5rem",
+            "gutter-md": "1.5rem",
+            "space-xl": "2rem",
+            "margin": "1rem",
+            "space-xs": "0.25rem"
+          },
+          "fontFamily": {
+            "display-mobile": ["Sora"],
+            "body-sm": ["Inter"],
+            "label-sm": ["Inter"],
+            "code-stat": ["Inter"],
+            "body-md": ["Inter"],
+            "headline-md": ["Sora"],
+            "body-lg": ["Inter"],
+            "headline-lg": ["Sora"],
+            "headline-lg-mobile": ["Sora"],
+            "label-md": ["Inter"],
+            "display": ["Sora"],
+            "body-md-medium": ["Inter"],
+            "headline-sm": ["Sora"]
+          },
+          "fontSize": {
+            "display-mobile": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.025em", "fontWeight": "700" }],
+            "body-sm": ["13px", { "lineHeight": "18px", "fontWeight": "400" }],
+            "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+            "code-stat": ["13px", { "lineHeight": "18px", "fontWeight": "500" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "headline-lg-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "500" }],
+            "display": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.03em", "fontWeight": "700" }],
+            "body-md-medium": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+            "headline-sm": ["18px", { "lineHeight": "26px", "letterSpacing": "-0.01em", "fontWeight": "600" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    body {
+      background-color: #F6F7F2;
+      color: #0F0F0F;
+      font-family: 'Inter', sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    .font-sora {
+      font-family: 'Sora', sans-serif;
+    }
+    .lime-glow {
+      box-shadow: 0 0 24px rgba(198, 244, 50, 0.45);
+    }
+    .lime-glow-subtle {
+      box-shadow: 0 4px 16px rgba(198, 244, 50, 0.28);
+    }
+    .dot-pattern {
+      background-image: radial-gradient(#D6D8CE 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-[#F6F7F2] text-[#0F0F0F] selection:bg-[#C6F432] selection:text-[#0F0F0F] relative">
+<!-- ================= 1. FLOATING NAVIGATION BAR ================= -->
+<header class="fixed top-6 left-0 right-0 z-50 px-4 flex justify-center pointer-events-none">
+<nav class="pointer-events-auto w-full max-w-5xl h-14 bg-white/95 backdrop-blur-md border border-[#E7E7E0] rounded-full px-5 flex items-center justify-between shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
+<!-- Brand Logo -->
+<a class="flex items-center gap-2.5 group" href="#">
+<div class="w-8 h-8 rounded-lg bg-[#C6F432] flex items-center justify-center text-[#0F0F0F] transition-transform duration-150 group-hover:scale-105">
+<svg class="w-4 h-4 fill-current ml-0.5" viewbox="0 0 24 24">
+<path d="M5 3l14 9-14 9V3z"></path>
+</svg>
+</div>
+<span class="font-sora font-bold text-headline-sm tracking-tight text-[#0F0F0F]">Clipwise</span>
+</a>
+<!-- Middle Links -->
+<div class="hidden md:flex items-center gap-8 text-body-md font-medium text-[#5C5C57]">
+<a class="hover:text-[#0F0F0F] transition-colors" href="#features">Features</a>
+<a class="hover:text-[#0F0F0F] transition-colors" href="#how-it-works">How it works</a>
+<a class="hover:text-[#0F0F0F] transition-colors" href="#styles">Formats</a>
+<a class="hover:text-[#0F0F0F] transition-colors" href="#pricing">Pricing</a>
+</div>
+<!-- Action Cluster -->
+<div class="flex items-center gap-3">
+<a class="hidden sm:inline-block text-body-md font-medium text-[#0F0F0F] px-3.5 py-1.5 hover:text-[#5C5C57] transition-colors" href="#">
+          Sign in
+        </a>
+<a class="h-9 px-4 rounded-full bg-[#C6F432] hover:bg-[#B6E22A] text-[#0F0F0F] text-body-md font-semibold inline-flex items-center justify-center transition-all duration-150 lime-glow-subtle active:scale-[0.98]" href="#early-access">
+          Get early access
+        </a>
+</div>
+</nav>
+</header>
+<!-- ================= 2. HERO SECTION ================= -->
+<section class="relative pt-36 pb-24 px-6 md:px-margin-lg max-w-7xl mx-auto overflow-visible dot-pattern">
+<!-- Ambient radial glow behind hero -->
+<div class="absolute top-1/4 left-1/3 w-[520px] h-[520px] bg-[#C6F432]/15 blur-[120px] rounded-full pointer-events-none -z-10"></div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center min-h-[620px]">
+<!-- Left Column: Copy & CTAs -->
+<div class="lg:col-span-7 flex flex-col items-start justify-center">
+<!-- Private Beta Pill -->
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#CCFBF1] text-[#0F766E] text-label-sm font-semibold mb-6 border border-[#14B8A6]/20">
+<span class="w-2 h-2 rounded-full bg-[#14B8A6] animate-pulse"></span>
+          Now in private beta
+        </div>
+<!-- Headline -->
+<h1 class="font-sora text-[48px] sm:text-[64px] lg:text-[76px] leading-[1.05] font-bold tracking-[-0.035em] text-[#0F0F0F] mb-6">
+          Turn any idea into scroll-stopping <span class="inline-block bg-[#C6F432] text-[#0F0F0F] px-4 py-0.5 rounded-2xl shadow-sm">Reels</span>
+</h1>
+<!-- Subline -->
+<p class="text-body-lg text-[#5C5C57] max-w-xl mb-9 leading-relaxed">
+          Type an idea. Clipwise writes it, voices it, animates it and adds captions with deterministic frame pacing and native 60fps render cycles.
+        </p>
+<!-- CTA Row -->
+<div class="flex flex-wrap items-center gap-4 mb-10 w-full sm:w-auto">
+<a class="h-12 px-7 rounded-xl bg-[#C6F432] hover:bg-[#B6E22A] text-[#0F0F0F] font-sora font-semibold text-body-md inline-flex items-center justify-center transition-all duration-150 lime-glow active:scale-[0.98]" href="#early-access">
+            Get early access
+          </a>
+<button class="h-12 px-6 rounded-xl bg-white border border-[#E7E7E0] hover:bg-[#F6F7F2] text-[#0F0F0F] font-medium text-body-md inline-flex items-center justify-center gap-2.5 transition-all shadow-sm">
+<svg class="w-4 h-4 text-[#0F0F0F]" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<polygon points="5 3 19 12 5 21 5 3"></polygon>
+</svg>
+            Watch it work
+          </button>
+</div>
+<!-- Specs Strip -->
+<div class="flex items-center gap-2 text-label-sm font-semibold tracking-wide text-[#8A8A84] border-t border-[#E7E7E0] pt-4 w-full">
+<span>Reels</span>
+<span class="text-[#C4C9AE]">·</span>
+<span>Shorts</span>
+<span class="text-[#C4C9AE]">·</span>
+<span>TikTok</span>
+<span class="text-[#C4C9AE]">·</span>
+<span class="text-[#0F0F0F]">9:16</span>
+<span class="text-[#C4C9AE]">·</span>
+<span class="text-[#0F0F0F]">1080p 60fps</span>
+</div>
+</div>
+<!-- Right Column: STRICTLY THE ONLY 9:16 PHONE MOCKUP WITH EXPLODED UI -->
+<div class="lg:col-span-5 relative flex items-center justify-center py-6">
+<!-- Connecting SVG lines container -->
+<svg class="absolute inset-0 w-full h-full pointer-events-none hidden sm:block z-0" xmlns="http://www.w3.org/2000/svg">
+<!-- Card 1 link -->
+<line stroke="#C4C9AE" stroke-dasharray="3 3" stroke-width="1.2" x1="120" x2="220" y1="80" y2="130"></line>
+<!-- Card 2 link -->
+<line stroke="#C4C9AE" stroke-dasharray="3 3" stroke-width="1.2" x1="390" x2="310" y1="90" y2="140"></line>
+<!-- Card 3 link -->
+<line stroke="#C4C9AE" stroke-dasharray="3 3" stroke-width="1.2" x1="100" x2="200" y1="410" y2="380"></line>
+<!-- Card 4 link -->
+<line stroke="#C4C9AE" stroke-dasharray="3 3" stroke-width="1.2" x1="410" x2="320" y1="310" y2="300"></line>
+<!-- Card 5 link -->
+<line stroke="#C4C9AE" stroke-dasharray="3 3" stroke-width="1.2" x1="400" x2="310" y1="440" y2="420"></line>
+</svg>
+<!-- The ONLY 9:16 Phone Mockup -->
+<div class="relative z-10 w-[290px] h-[520px] bg-[#0F0F0F] rounded-[36px] p-3 border-4 border-[#242424] shadow-[0_24px_50px_rgba(0,0,0,0.18)] flex flex-col justify-between overflow-hidden">
+<!-- Phone Speaker Notch Bar -->
+<div class="w-full flex justify-center pt-1 pb-2">
+<div class="w-16 h-4 bg-[#1C1B1B] rounded-full flex items-center justify-center">
+<div class="w-2.5 h-2.5 rounded-full bg-[#2C2C2C] mr-2"></div>
+<div class="w-6 h-1 rounded-full bg-[#2C2C2C]"></div>
+</div>
+</div>
+<!-- Inside Screen Content (Dark Dynamic Video Canvas) -->
+<div class="relative flex-1 bg-gradient-to-b from-[#181818] via-[#121212] to-[#0A0A0A] rounded-[24px] p-4 flex flex-col justify-between overflow-hidden border border-[#2D2D2D]">
+<!-- Minimal top status -->
+<div class="flex items-center justify-between text-[10px] text-[#8A8A84] font-medium tracking-wide">
+<span class="flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-[#C6F432]"></span>
+                LIVE PREVIEW
+              </span>
+<span>00:03.20</span>
+</div>
+<!-- Kinetic Vector Wave Art in Center of Video -->
+<div class="relative w-full h-44 my-auto flex items-center justify-center">
+<div class="absolute w-36 h-36 rounded-full border border-[#C6F432]/20 animate-spin" style="animation-duration: 20s;"></div>
+<div class="absolute w-24 h-24 rounded-full border border-[#14B8A6]/30"></div>
+<!-- Geometric wave shape -->
+<svg class="w-48 h-28 text-[#C6F432]" fill="none" viewbox="0 0 200 100">
+<path d="M10 50 Q 50 10, 100 50 T 190 50" stroke="#C6F432" stroke-linecap="round" stroke-width="3"></path>
+<path d="M10 50 Q 50 85, 100 50 T 190 50" stroke="#14B8A6" stroke-dasharray="4 4" stroke-width="1.5"></path>
+<circle cx="100" cy="50" fill="#FFFFFF" r="5"></circle>
+</svg>
+</div>
+<!-- Kinetic Subtitle at Phone Bottom -->
+<div class="bg-black/60 backdrop-blur-md rounded-xl p-3 border border-white/10 text-center">
+<p class="font-sora text-sm leading-snug text-white font-medium">
+                Engineered for <span class="text-[#C6F432] font-bold underline decoration-2 underline-offset-2">momentum</span>
+</p>
+</div>
+</div>
+<!-- Phone Home Indicator Bar -->
+<div class="w-full flex justify-center py-1.5">
+<div class="w-24 h-1 bg-white/20 rounded-full"></div>
+</div>
+</div>
+<!-- Floating UI Card 1 (Top Left): Hook Script -->
+<div class="absolute -top-3 -left-6 sm:-left-12 z-20 bg-white border border-[#E7E7E0] p-3 rounded-xl shadow-md max-w-[190px]">
+<div class="flex items-center gap-1.5 text-label-sm font-semibold text-[#8A8A84] mb-1">
+<span class="w-1.5 h-1.5 rounded-full bg-[#0F0F0F]"></span>
+            Scene 1 · Hook
+          </div>
+<p class="text-xs text-[#0F0F0F] font-medium leading-tight">
+            “Stop losing viewers in the first 2 seconds.”
+          </p>
+</div>
+<!-- Floating UI Card 2 (Top Right): Word Sync -->
+<div class="absolute top-8 -right-4 sm:-right-10 z-20 bg-white border border-[#E7E7E0] px-3 py-2 rounded-xl shadow-md flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-[#14B8A6]"></div>
+<div class="text-left">
+<div class="text-[10px] font-semibold text-[#8A8A84] uppercase tracking-wider">Karaoke Sync</div>
+<div class="text-xs font-sora font-semibold text-[#0F0F0F]">00:03.20</div>
+</div>
+</div>
+<!-- Floating UI Card 3 (Bottom Left): Audio Waveform Track -->
+<div class="absolute bottom-16 -left-8 sm:-left-14 z-20 bg-white border border-[#E7E7E0] p-2.5 rounded-xl shadow-md flex flex-col gap-1.5">
+<div class="flex items-center justify-between text-[11px] font-medium text-[#5C5C57]">
+<span>Voice: Liam (UK)</span>
+<span class="text-[#0F766E] text-[10px] font-semibold bg-[#CCFBF1] px-1.5 py-0.2 rounded">48kHz</span>
+</div>
+<div class="flex items-end gap-0.5 h-5 px-1 bg-[#F6F7F2] rounded p-1">
+<div class="w-1 bg-[#0F0F0F] h-2 rounded-full"></div>
+<div class="w-1 bg-[#0F0F0F] h-4 rounded-full"></div>
+<div class="w-1 bg-[#0F0F0F] h-3 rounded-full"></div>
+<div class="w-1 bg-[#C6F432] h-5 rounded-full"></div>
+<div class="w-1 bg-[#0F0F0F] h-4 rounded-full"></div>
+<div class="w-1 bg-[#0F0F0F] h-2 rounded-full"></div>
+<div class="w-1 bg-[#0F0F0F] h-3 rounded-full"></div>
+<div class="w-1 bg-[#0F0F0F] h-1 rounded-full"></div>
+</div>
+</div>
+<!-- Floating UI Card 4 (Right Center): Scene Timeline Blocks -->
+<div class="absolute top-1/2 -right-6 sm:-right-14 -translate-y-1/2 z-20 bg-white border border-[#E7E7E0] p-2 rounded-xl shadow-md flex flex-col gap-1">
+<span class="text-[10px] font-semibold text-[#8A8A84] uppercase tracking-wide">Pacing map</span>
+<div class="flex items-center gap-1">
+<span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#0F0F0F] text-white">Hook</span>
+<span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#F0F1EA] text-[#0F0F0F]">Concept</span>
+<span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#F0F1EA] text-[#0F0F0F]">Proof</span>
+<span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#F0F1EA] text-[#0F0F0F]">CTA</span>
+</div>
+</div>
+<!-- Floating UI Card 5 (Bottom Right): Render Progress -->
+<div class="absolute -bottom-4 -right-4 sm:-right-8 z-20 bg-white border border-[#E7E7E0] p-3 rounded-xl shadow-md w-44">
+<div class="flex items-center justify-between text-xs font-semibold mb-1.5">
+<span class="text-[#0F0F0F]">Rendering</span>
+<span class="text-[#0F766E] font-sora">72%</span>
+</div>
+<div class="w-full h-1.5 bg-[#E7E7E0] rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-[#C6F432] to-[#14B8A6] rounded-full" style="width: 72%;"></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- ================= 3. HOW IT WORKS (WIDE WORKBENCH PANEL) ================= -->
+<!-- STRICT CONSTRAINT: NO PHONE MOCKUP HERE -->
+<section class="py-24 px-6 md:px-margin-lg max-w-7xl mx-auto" id="how-it-works">
+<!-- Section Header -->
+<div class="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
+<div>
+<div class="text-label-sm font-semibold tracking-wider text-[#8A8A84] uppercase mb-2">Deterministic Pipeline</div>
+<h2 class="font-sora text-headline-lg md:text-[40px] font-bold tracking-tight text-[#0F0F0F]">
+          From idea to video in one flow
+        </h2>
+</div>
+<!-- Stage Pill Group -->
+<div class="inline-flex p-1 bg-white border border-[#E7E7E0] rounded-xl text-body-sm font-medium text-[#5C5C57]">
+<span class="px-3 py-1 rounded-lg bg-[#0F0F0F] text-white">01 Write</span>
+<span class="px-3 py-1 rounded-lg text-[#5C5C57]">02 Build</span>
+<span class="px-3 py-1 rounded-lg text-[#5C5C57]">03 Post</span>
+</div>
+</div>
+<!-- The Singular Wide Workbench Panel -->
+<div class="bg-white border border-[#E7E7E0] rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.03)] overflow-hidden">
+<!-- Top Window Titlebar -->
+<div class="h-11 bg-[#FAFAF8] border-b border-[#E7E7E0] px-4 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-2.5 h-2.5 rounded-full bg-[#E7E7E0]"></div>
+<div class="w-2.5 h-2.5 rounded-full bg-[#E7E7E0]"></div>
+<div class="w-2.5 h-2.5 rounded-full bg-[#E7E7E0]"></div>
+<span class="ml-2 text-xs font-medium text-[#8A8A84]">workspace_canvas_v3.clip</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-[#CCFBF1] text-[#0F766E]">Compute Node Active</span>
+</div>
+</div>
+<!-- Workbench Internal 3-Pane Layout -->
+<div class="grid grid-cols-1 lg:grid-cols-12 min-h-[460px]">
+<!-- PANE 1: Script Prompt Engine (30% - lg:col-span-4) -->
+<div class="lg:col-span-4 p-6 border-b lg:border-b-0 lg:border-r border-[#E7E7E0] flex flex-col justify-between bg-[#FDFDFB]">
+<div>
+<div class="flex items-center justify-between mb-3">
+<span class="text-xs font-sora font-semibold text-[#0F0F0F]">Prompt &amp; Narrative Intent</span>
+<span class="text-[11px] text-[#8A8A84]">GPT-4o Vision Fine-tune</span>
+</div>
+<!-- Textarea Box -->
+<div class="bg-white border border-[#E7E7E0] rounded-xl p-3.5 focus-within:border-[#14B8A6] focus-within:ring-2 focus-within:ring-[#14B8A6]/20 transition-all">
+<p class="text-body-md text-[#0F0F0F] font-normal leading-relaxed">
+                Launch video for our new lightweight running shoes. Open with an arresting speed hook, transition into carbon-plate specs, and close on early access coupon code.
+                <span class="inline-block w-1.5 h-4 bg-[#14B8A6] ml-1 animate-pulse align-middle"></span>
+</p>
+</div>
+<!-- Parameters Pills -->
+<div class="mt-4 flex flex-wrap gap-2">
+<span class="px-2.5 py-1 bg-white border border-[#E7E7E0] rounded-lg text-xs font-medium text-[#5C5C57]">Tag: E-commerce</span>
+<span class="px-2.5 py-1 bg-white border border-[#E7E7E0] rounded-lg text-xs font-medium text-[#5C5C57]">Tone: High Velocity</span>
+<span class="px-2.5 py-1 bg-white border border-[#E7E7E0] rounded-lg text-xs font-medium text-[#5C5C57]">Duration: 30s</span>
+</div>
+</div>
+<!-- Bottom Action -->
+<div class="pt-6">
+<button class="w-full h-10 bg-[#0F0F0F] hover:bg-[#222222] text-white rounded-lg text-body-md font-medium flex items-center justify-center gap-2 transition-colors">
+<svg class="w-4 h-4 text-[#C6F432]" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+</svg>
+              Synthesize Script &amp; Storyboard
+            </button>
+</div>
+</div>
+<!-- PANE 2: Multi-Track Timeline Editor (48% - lg:col-span-5) -->
+<div class="lg:col-span-5 p-6 border-b lg:border-b-0 lg:border-r border-[#E7E7E0] flex flex-col justify-between relative bg-white overflow-hidden">
+<!-- Timeline Controls Header -->
+<div>
+<div class="flex items-center justify-between pb-3 border-b border-[#E7E7E0] mb-4">
+<div class="flex items-center gap-2">
+<button class="w-7 h-7 rounded bg-[#F6F7F2] flex items-center justify-center text-[#0F0F0F] hover:bg-[#EAECE3]">
+<svg class="w-3.5 h-3.5 fill-current" viewbox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+</button>
+<span class="text-xs font-mono font-semibold text-[#0F0F0F]">00:11.40 / 00:30.00</span>
+</div>
+<span class="text-[11px] font-medium text-[#8A8A84]">Snapping: Frame-exact</span>
+</div>
+<!-- Timeline Canvas with Vertical Playhead -->
+<div class="relative flex flex-col gap-3 py-2">
+<!-- VERTICAL ELECTRIC LIME PLAYHEAD -->
+<div class="absolute top-0 bottom-0 left-[44%] w-[2px] bg-[#C6F432] z-30 pointer-events-none flex flex-col items-center">
+<div class="px-1.5 py-0.5 bg-[#0F0F0F] text-[#C6F432] text-[9px] font-mono font-bold rounded-sm shadow -mt-2">
+                  00:11.40
+                </div>
+</div>
+<!-- TRACK 1: Video Scene Segments -->
+<div>
+<div class="text-[10px] font-bold text-[#8A8A84] uppercase tracking-wider mb-1">Track 1 · Kinetic Scenes</div>
+<div class="grid grid-cols-12 gap-1 h-14 bg-[#F6F7F2] p-1 rounded-lg border border-[#E7E7E0]">
+<div class="col-span-3 bg-white border border-[#E7E7E0] rounded p-1.5 flex flex-col justify-between">
+<span class="text-[10px] font-semibold text-[#0F0F0F]">Hook</span>
+<span class="text-[9px] text-[#8A8A84]">0s–3s</span>
+</div>
+<div class="col-span-3 bg-white border border-[#E7E7E0] rounded p-1.5 flex flex-col justify-between">
+<span class="text-[10px] font-semibold text-[#0F0F0F]">Feature</span>
+<span class="text-[9px] text-[#8A8A84]">3s–11s</span>
+</div>
+<div class="col-span-3 bg-white border border-[#E7E7E0] rounded p-1.5 flex flex-col justify-between">
+<span class="text-[10px] font-semibold text-[#0F0F0F]">Proof</span>
+<span class="text-[9px] text-[#8A8A84]">11s–20s</span>
+</div>
+<div class="col-span-3 bg-white border border-[#E7E7E0] rounded p-1.5 flex flex-col justify-between">
+<span class="text-[10px] font-semibold text-[#0F0F0F]">Offer CTA</span>
+<span class="text-[9px] text-[#8A8A84]">20s–30s</span>
+</div>
+</div>
+</div>
+<!-- TRACK 2: Audio Synthesis Track -->
+<div>
+<div class="text-[10px] font-bold text-[#8A8A84] uppercase tracking-wider mb-1">Track 2 · Master Waveform</div>
+<div class="h-10 bg-[#F6F7F2] rounded-lg border border-[#E7E7E0] px-2 flex items-center">
+<!-- SVG clean continuous waveform -->
+<svg class="w-full h-6 text-[#0F0F0F]" preserveaspectratio="none" viewbox="0 0 500 40">
+<path d="M 0 20 Q 20 5, 40 20 T 80 20 T 120 10 T 160 30 T 200 15 T 240 25 T 280 8 T 320 28 T 360 18 T 400 22 T 440 12 T 480 25 T 500 20" fill="none" stroke="#0F0F0F" stroke-width="1.7"></path>
+</svg>
+</div>
+</div>
+<!-- TRACK 3: Karaoke Captions Track -->
+<div>
+<div class="text-[10px] font-bold text-[#8A8A84] uppercase tracking-wider mb-1">Track 3 · Dynamic Captions</div>
+<div class="flex items-center gap-1.5 h-9 bg-[#F6F7F2] p-1 rounded-lg border border-[#E7E7E0] overflow-x-auto">
+<span class="px-2 py-0.5 rounded text-xs bg-white text-[#5C5C57]">Featherweight</span>
+<span class="px-2 py-0.5 rounded text-xs bg-[#C6F432] text-[#0F0F0F] font-bold shadow-xs">propulsion</span>
+<span class="px-2 py-0.5 rounded text-xs bg-white text-[#5C5C57]">under</span>
+<span class="px-2 py-0.5 rounded text-xs bg-white text-[#5C5C57]">your</span>
+<span class="px-2 py-0.5 rounded text-xs bg-white text-[#5C5C57]">feet</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Timeline Footer Info -->
+<div class="pt-4 flex items-center justify-between text-xs text-[#8A8A84] border-t border-[#E7E7E0]">
+<span>Layer lock enabled</span>
+<span>4 tracks synchronized</span>
+</div>
+</div>
+<!-- PANE 3: Inspector & Export Settings (22% - lg:col-span-3) -->
+<div class="lg:col-span-3 p-6 flex flex-col justify-between bg-[#FAFAF8]">
+<div>
+<div class="text-xs font-sora font-semibold text-[#0F0F0F] mb-4">Export Properties</div>
+<div class="flex flex-col gap-3.5">
+<!-- Setting 1 -->
+<div>
+<span class="text-[11px] text-[#8A8A84] block mb-1">Aspect Ratio</span>
+<div class="flex items-center justify-between p-2 bg-white border border-[#E7E7E0] rounded-lg text-xs font-semibold">
+<span class="flex items-center gap-1.5">
+<span class="w-2.5 h-4 border border-[#0F0F0F] rounded-[2px] inline-block"></span>
+                    9:16 Vertical
+                  </span>
+<span class="text-[#8A8A84]">Default</span>
+</div>
+</div>
+<!-- Setting 2 -->
+<div>
+<span class="text-[11px] text-[#8A8A84] block mb-1">Output Resolution</span>
+<div class="p-2 bg-white border border-[#E7E7E0] rounded-lg text-xs font-semibold text-[#0F0F0F]">
+                  1080 × 1920 (FHD 60fps)
+                </div>
+</div>
+<!-- Setting 3 -->
+<div>
+<span class="text-[11px] text-[#8A8A84] block mb-1">Inference Engine</span>
+<div class="p-2 bg-white border border-[#E7E7E0] rounded-lg text-xs font-semibold text-[#0F0F0F]">
+                  Clipwise Core v2.4 Multi-Model
+                </div>
+</div>
+<!-- Grounding Verified Pill -->
+<div class="mt-2 p-2.5 bg-[#CCFBF1]/70 border border-[#14B8A6]/30 rounded-lg flex items-center gap-2">
+<svg class="w-4 h-4 text-[#0F766E] shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+<path d="m9 12 2 2 4-4"></path>
+</svg>
+<div class="text-[11px] text-[#0F766E] font-medium leading-tight">
+                  Fact-check grounded via live web schema.
+                </div>
+</div>
+</div>
+</div>
+<!-- Export CTA -->
+<div class="pt-6">
+<button class="w-full h-10 bg-[#C6F432] hover:bg-[#B6E22A] text-[#0F0F0F] font-sora font-semibold text-xs rounded-lg transition-all lime-glow-subtle">
+              Render Master Reel
+            </button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- ================= 4. ANY IDEA, ANY STYLE (SPLIT TYPOGRAPHIC FORMAT SELECTOR) ================= -->
+<!-- STRICT CONSTRAINT: NO PHONE MOCKUPS HERE - ABSTRACT 16:10 / 4:3 HIGH-CRAFT CANVAS -->
+<section class="py-24 px-6 md:px-margin-lg max-w-7xl mx-auto border-t border-[#E7E7E0]/60" id="styles">
+<!-- Section Title -->
+<div class="max-w-2xl mb-14">
+<div class="text-label-sm font-semibold tracking-wider text-[#8A8A84] uppercase mb-2">Adaptive Aesthetics</div>
+<h2 class="font-sora text-headline-lg md:text-[40px] font-bold tracking-tight text-[#0F0F0F] mb-3">
+        Any idea, any style
+      </h2>
+<p class="text-body-lg text-[#5C5C57]">
+        Tailored motion and narrative pacing for every content type. The motion engine adapts cadence, transitions, and kinetic typography.
+      </p>
+</div>
+<!-- Split Layout -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+<!-- Left: Giant Typographic List -->
+<div class="lg:col-span-5 flex flex-col gap-5">
+<!-- Active Item: Product promos -->
+<div class="group cursor-pointer">
+<div class="flex items-center gap-3">
+<span class="text-2xl text-[#C6F432] font-bold">→</span>
+<span class="font-sora text-[38px] md:text-[44px] font-bold tracking-tight text-[#0F0F0F]">
+              Product promos
+            </span>
+</div>
+<p class="text-body-md text-[#5C5C57] mt-1.5 ml-8 max-w-sm">
+            High-energy cuts, dynamic price badges, spec overlays, and conversion-focused callouts.
+          </p>
+</div>
+<!-- Inactive Items -->
+<div class="flex items-center gap-3 cursor-pointer group">
+<span class="text-2xl text-transparent group-hover:text-[#A8A8A2] font-bold">→</span>
+<span class="font-sora text-[38px] md:text-[44px] font-bold tracking-tight text-[#A8A8A2] group-hover:text-[#5C5C57] transition-colors">
+            Explainers
+          </span>
+</div>
+<div class="flex items-center gap-3 cursor-pointer group">
+<span class="text-2xl text-transparent group-hover:text-[#A8A8A2] font-bold">→</span>
+<span class="font-sora text-[38px] md:text-[44px] font-bold tracking-tight text-[#A8A8A2] group-hover:text-[#5C5C57] transition-colors">
+            Stories
+          </span>
+</div>
+<div class="flex items-center gap-3 cursor-pointer group">
+<span class="text-2xl text-transparent group-hover:text-[#A8A8A2] font-bold">→</span>
+<span class="font-sora text-[38px] md:text-[44px] font-bold tracking-tight text-[#A8A8A2] group-hover:text-[#5C5C57] transition-colors">
+            Top tips
+          </span>
+</div>
+<div class="flex items-center gap-3 cursor-pointer group">
+<span class="text-2xl text-transparent group-hover:text-[#A8A8A2] font-bold">→</span>
+<span class="font-sora text-[38px] md:text-[44px] font-bold tracking-tight text-[#A8A8A2] group-hover:text-[#5C5C57] transition-colors">
+            News recaps
+          </span>
+</div>
+<div class="flex items-center gap-3 cursor-pointer group">
+<span class="text-2xl text-transparent group-hover:text-[#A8A8A2] font-bold">→</span>
+<span class="font-sora text-[38px] md:text-[44px] font-bold tracking-tight text-[#A8A8A2] group-hover:text-[#5C5C57] transition-colors">
+            Quotes
+          </span>
+</div>
+</div>
+<!-- Right: Pure 16:10 Architectural Canvas Card (NO PHONE MOCKUP) -->
+<div class="lg:col-span-7">
+<div class="bg-white border border-[#E7E7E0] rounded-2xl p-6 sm:p-8 aspect-[16/10] shadow-[0_4px_24px_rgba(0,0,0,0.03)] flex flex-col justify-between relative overflow-hidden group">
+<!-- Background Abstract Bauhaus Graphics (Non-phone) -->
+<div class="absolute -right-10 -bottom-10 w-80 h-80 rounded-full border-[32px] border-[#F6F7F2] -z-0"></div>
+<div class="absolute right-24 top-10 w-36 h-36 bg-[#C6F432]/25 rounded-2xl rotate-12 -z-0"></div>
+<!-- Canvas Top Row -->
+<div class="flex items-center justify-between z-10">
+<div class="flex items-center gap-2">
+<span class="px-2.5 py-1 rounded bg-[#0F0F0F] text-white text-[11px] font-mono uppercase tracking-wider font-semibold">STYLE · PRODUCT SPEED</span>
+<span class="text-xs text-[#8A8A84] font-medium">Auto-calibrated: 120BPM</span>
+</div>
+<div class="px-2.5 py-1 rounded-full bg-[#C6F432] text-[#0F0F0F] text-xs font-bold font-sora shadow-xs">
+              -30% EARLY BIRD
+            </div>
+</div>
+<!-- Canvas Middle Composition: Bold Geometric Display -->
+<div class="z-10 my-auto py-4">
+<div class="text-xs font-mono font-semibold text-[#14B8A6] uppercase tracking-widest mb-1">
+              ENGINEERING PREVIEW #084
+            </div>
+<h3 class="font-sora text-3xl sm:text-5xl font-bold tracking-tighter text-[#0F0F0F] leading-none mb-4">
+              Velocity Phantom X
+            </h3>
+<div class="flex items-baseline gap-3">
+<span class="text-2xl font-sora font-extrabold text-[#0F0F0F]">$189</span>
+<span class="text-sm line-through text-[#8A8A84]">$270</span>
+<span class="text-xs text-[#0F766E] font-semibold bg-[#CCFBF1] px-2 py-0.5 rounded">
+                Tier 1 Verified
+              </span>
+</div>
+</div>
+<!-- Canvas Bottom Metadata Strip -->
+<div class="z-10 pt-4 border-t border-[#E7E7E0] flex items-center justify-between text-xs text-[#5C5C57]">
+<div class="flex items-center gap-4">
+<span>Scene duration: 4.8s</span>
+<span>Transition: Hard Snap</span>
+<span>Audio: Sub-bass Kick</span>
+</div>
+<div class="flex items-center gap-1 font-mono text-[#0F0F0F] font-semibold">
+<span>CANVAS PREVIEW</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- ================= 5. FEATURES (ASYMMETRIC BENTO GRID) ================= -->
+<!-- STRICT CONSTRAINTS: NO EMOJIS, NO VIEW COUNTS, NO PHONE MOCKUPS -->
+<section class="py-24 px-6 md:px-margin-lg max-w-7xl mx-auto" id="features">
+<div class="max-w-xl mb-12">
+<div class="text-label-sm font-semibold tracking-wider text-[#8A8A84] uppercase mb-2">Core System Capabilities</div>
+<h2 class="font-sora text-headline-lg md:text-[40px] font-bold tracking-tight text-[#0F0F0F]">
+        Engineered for creative throughput
+      </h2>
+</div>
+<!-- Bento Grid Container -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<!-- BENTO 1: Large 2-column span -> Kinetic Motion -->
+<div class="lg:col-span-2 bg-white border border-[#E7E7E0] rounded-2xl p-8 flex flex-col justify-between shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
+<div>
+<div class="w-10 h-10 rounded-xl bg-[#F6F7F2] border border-[#E7E7E0] flex items-center justify-center text-[#0F0F0F] mb-5">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+<polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+<line x1="12" x2="12" y1="22.08" y2="12"></line>
+</svg>
+</div>
+<h3 class="font-sora text-xl font-bold text-[#0F0F0F] mb-2">Every scene animated at native 60fps</h3>
+<p class="text-body-md text-[#5C5C57] max-w-md">
+            No static slideshows. Every visual element follows programmatic spring curves, easing physics, and dynamic vector transformation.
+          </p>
+</div>
+<!-- 4-part vector graphic grid demo inside Bento 1 -->
+<div class="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-3">
+<div class="bg-[#F6F7F2] border border-[#E7E7E0] rounded-xl p-3 flex flex-col items-center justify-center text-center">
+<div class="w-8 h-8 rounded-full border border-dashed border-[#0F0F0F] flex items-center justify-center mb-2">
+<div class="w-2.5 h-2.5 rounded-full bg-[#C6F432]"></div>
+</div>
+<span class="text-xs font-semibold text-[#0F0F0F]">Orbital Node</span>
+</div>
+<div class="bg-[#F6F7F2] border border-[#E7E7E0] rounded-xl p-3 flex flex-col items-center justify-center text-center">
+<div class="flex items-end gap-1 h-8 mb-2">
+<div class="w-1.5 h-3 bg-[#0F0F0F] rounded-t"></div>
+<div class="w-1.5 h-6 bg-[#C6F432] rounded-t"></div>
+<div class="w-1.5 h-4 bg-[#0F0F0F] rounded-t"></div>
+</div>
+<span class="text-xs font-semibold text-[#0F0F0F]">Metric Ramp</span>
+</div>
+<div class="bg-[#F6F7F2] border border-[#E7E7E0] rounded-xl p-3 flex flex-col items-center justify-center text-center">
+<svg class="w-8 h-8 text-[#14B8A6] mb-2" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M2 12h20M12 2v20"></path>
+</svg>
+<span class="text-xs font-semibold text-[#0F0F0F]">Split Grid</span>
+</div>
+<div class="bg-[#F6F7F2] border border-[#E7E7E0] rounded-xl p-3 flex flex-col items-center justify-center text-center">
+<svg class="w-8 h-8 text-[#0F0F0F] mb-2" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M5 12h14M12 5l7 7-7 7"></path>
+</svg>
+<span class="text-xs font-semibold text-[#0F0F0F]">Flow Shift</span>
+</div>
+</div>
+</div>
+<!-- BENTO 2: Natural AI Voices -->
+<div class="bg-white border border-[#E7E7E0] rounded-2xl p-8 flex flex-col justify-between shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
+<div>
+<div class="w-10 h-10 rounded-xl bg-[#F6F7F2] border border-[#E7E7E0] flex items-center justify-center text-[#0F0F0F] mb-5">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+<path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+<line x1="12" x2="12" y1="19" y2="23"></line>
+<line x1="8" x2="16" y1="23" y2="23"></line>
+</svg>
+</div>
+<h3 class="font-sora text-xl font-bold text-[#0F0F0F] mb-2">Natural voice synthesis</h3>
+<p class="text-body-md text-[#5C5C57]">
+            Clean human timbre with adaptive cadence matching and automatic breath insertion.
+          </p>
+</div>
+<div class="mt-6 flex flex-col gap-2">
+<!-- Voice chip 1 (active) -->
+<div class="p-2.5 rounded-xl bg-[#0F0F0F] text-white flex items-center justify-between text-xs">
+<span class="font-medium">Liam · Confident British</span>
+<span class="px-1.5 py-0.5 rounded bg-[#C6F432] text-[#0F0F0F] font-bold text-[10px]">SELECTED</span>
+</div>
+<!-- Voice chip 2 -->
+<div class="p-2.5 rounded-xl bg-[#F6F7F2] border border-[#E7E7E0] text-[#0F0F0F] flex items-center justify-between text-xs">
+<span class="font-medium">Maya · Crisp North American</span>
+<span class="text-[#8A8A84] text-[10px]">48kHz</span>
+</div>
+<!-- Voice chip 3 -->
+<div class="p-2.5 rounded-xl bg-[#F6F7F2] border border-[#E7E7E0] text-[#0F0F0F] flex items-center justify-between text-xs">
+<span class="font-medium">Marcus · Narrative Deep</span>
+<span class="text-[#8A8A84] text-[10px]">48kHz</span>
+</div>
+</div>
+</div>
+<!-- BENTO 3: Captions that pop -->
+<div class="bg-white border border-[#E7E7E0] rounded-2xl p-8 flex flex-col justify-between shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
+<div>
+<div class="w-10 h-10 rounded-xl bg-[#F6F7F2] border border-[#E7E7E0] flex items-center justify-center text-[#0F0F0F] mb-5">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<polyline points="4 7 4 4 20 4 20 7"></polyline>
+<line x1="9" x2="15" y1="20" y2="20"></line>
+<line x1="12" x2="12" y1="4" y2="20"></line>
+</svg>
+</div>
+<h3 class="font-sora text-xl font-bold text-[#0F0F0F] mb-2">Captions that pop</h3>
+<p class="text-body-md text-[#5C5C57]">
+            Exact syllable timestamps for karaoke styling, bounce transitions, and custom brand colorways.
+          </p>
+</div>
+<div class="mt-6 p-4 rounded-xl bg-[#0F0F0F] text-white flex items-center justify-center text-center">
+<p class="font-sora text-sm font-semibold tracking-wide">
+            Stop wasting <span class="bg-[#C6F432] text-[#0F0F0F] px-2 py-0.5 rounded font-bold">hours</span> editing manually.
+          </p>
+</div>
+</div>
+<!-- BENTO 4: Your brand everywhere -->
+<div class="bg-white border border-[#E7E7E0] rounded-2xl p-8 flex flex-col justify-between shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
+<div>
+<div class="w-10 h-10 rounded-xl bg-[#F6F7F2] border border-[#E7E7E0] flex items-center justify-center text-[#0F0F0F] mb-5">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="10"></circle>
+<path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path>
+<path d="M2 12h20"></path>
+</svg>
+</div>
+<h3 class="font-sora text-xl font-bold text-[#0F0F0F] mb-2">Your brand everywhere</h3>
+<p class="text-body-md text-[#5C5C57]">
+            Lock font pairings, hex tokens, and vector watermarks once. Clipwise applies them to every reel automatically.
+          </p>
+</div>
+<div class="mt-6 bg-[#F6F7F2] border border-[#E7E7E0] rounded-xl p-3.5">
+<div class="flex items-center gap-2 mb-3">
+<div class="w-6 h-6 rounded-full bg-[#C6F432] border border-black/10"></div>
+<div class="w-6 h-6 rounded-full bg-[#14B8A6] border border-black/10"></div>
+<div class="w-6 h-6 rounded-full bg-[#0F0F0F]"></div>
+<div class="w-6 h-6 rounded-full bg-white border border-[#E7E7E0]"></div>
+<span class="text-[11px] font-mono text-[#8A8A84] ml-auto">Tokens locked</span>
+</div>
+<div class="flex justify-between items-center text-xs text-[#0F0F0F] border-t border-[#E7E7E0] pt-2">
+<span class="font-sora font-bold">Sora Bold</span>
+<span class="text-[#8A8A84]">+</span>
+<span class="font-sans font-medium">Inter Regular</span>
+</div>
+</div>
+</div>
+<!-- BENTO 5: Facts double-checked -->
+<div class="bg-white border border-[#E7E7E0] rounded-2xl p-8 flex flex-col justify-between shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
+<div>
+<div class="w-10 h-10 rounded-xl bg-[#CCFBF1] text-[#0F766E] flex items-center justify-center mb-5">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+</svg>
+</div>
+<h3 class="font-sora text-xl font-bold text-[#0F0F0F] mb-2">Facts double-checked</h3>
+<p class="text-body-md text-[#5C5C57]">
+            Automated factual verification layer parses scripts against search indices before video synthesis.
+          </p>
+</div>
+<div class="mt-6 flex flex-col gap-2 text-xs">
+<div class="flex items-center gap-2 text-[#0F766E] font-medium">
+<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+<span>Primary source verified</span>
+</div>
+<div class="flex items-center gap-2 text-[#0F766E] font-medium">
+<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+<span>Claim timestamped</span>
+</div>
+<div class="flex items-center gap-2 text-[#0F766E] font-medium">
+<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+<span>Hallucination check passed</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- ================= 6. FINAL CTA (DARK GLOWING BANNER) ================= -->
+<!-- STRICT CONSTRAINTS: NO PHONE MOCKUPS HERE - CLEAN DARK WORKSPACE PANEL -->
+<section class="py-20 px-6 md:px-margin-lg max-w-7xl mx-auto" id="early-access">
+<div class="relative bg-[#0F0F0F] rounded-[32px] p-10 md:p-16 overflow-hidden shadow-2xl">
+<!-- Top-right radiant lime blur orb -->
+<div class="absolute -top-24 -right-24 w-96 h-96 bg-[#C6F432]/20 rounded-full blur-3xl pointer-events-none"></div>
+<div class="relative z-10 max-w-2xl">
+<!-- Badge -->
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-[#C6F432] text-label-sm font-semibold mb-6 border border-white/10">
+<span class="w-2 h-2 rounded-full bg-[#C6F432]"></span>
+          Private Beta Cohort 04
+        </div>
+<h2 class="font-sora text-4xl sm:text-6xl font-bold tracking-tight text-white mb-4">
+          Ideas in. Videos out.
+        </h2>
+<p class="text-body-lg text-[#8A8A84] mb-8 max-w-lg leading-relaxed">
+          Turn thoughts, docs and notes into ready-to-post short video reels in minutes. Request an access key today.
+        </p>
+<!-- Clean Email Capture Form -->
+<form class="flex flex-col sm:flex-row items-stretch gap-3 max-w-md" onsubmit="event.preventDefault();">
+<input class="flex-1 h-12 px-4 rounded-xl bg-[#1C1B1B] border border-[#333333] text-white placeholder-[#5C5C57] focus:outline-none focus:ring-2 focus:ring-[#14B8A6] text-body-md" placeholder="name@company.com" required="" type="email"/>
+<button class="h-12 px-6 rounded-xl bg-[#C6F432] hover:bg-[#B6E22A] text-[#0F0F0F] font-sora font-semibold text-body-md inline-flex items-center justify-center transition-all duration-150 lime-glow shrink-0 active:scale-[0.98]" type="submit">
+            Get early access
+          </button>
+</form>
+<div class="mt-4 flex items-center gap-4 text-xs text-[#5C5C57]">
+<span>Single-seat beta keys issued daily</span>
+<span>·</span>
+<span>No credit card required</span>
+</div>
+</div>
+</div>
+</section>
+<!-- ================= 7. MINIMAL FOOTER ================= -->
+<footer class="max-w-7xl mx-auto px-6 md:px-margin-lg py-12 border-t border-[#E7E7E0] flex flex-col md:flex-row items-center justify-between gap-6">
+<!-- Left Logo & Tagline -->
+<div class="flex items-center gap-3">
+<div class="w-6 h-6 rounded bg-[#C6F432] flex items-center justify-center text-[#0F0F0F]">
+<svg class="w-3 h-3 fill-current ml-0.5" viewbox="0 0 24 24">
+<path d="M5 3l14 9-14 9V3z"></path>
+</svg>
+</div>
+<span class="font-sora font-bold text-sm text-[#0F0F0F]">Clipwise</span>
+<span class="text-xs text-[#8A8A84] border-l border-[#E7E7E0] pl-3">AI video synthesis platform</span>
+</div>
+<!-- Center Links -->
+<div class="flex items-center gap-6 text-xs font-medium text-[#5C5C57]">
+<a class="hover:text-[#0F0F0F] transition-colors" href="#features">Features</a>
+<a class="hover:text-[#0F0F0F] transition-colors" href="#how-it-works">How it works</a>
+<a class="hover:text-[#0F0F0F] transition-colors" href="#styles">Formats</a>
+<a class="hover:text-[#0F0F0F] transition-colors" href="#early-access">Pricing</a>
+<a class="hover:text-[#0F0F0F] transition-colors" href="#">API</a>
+</div>
+<!-- Right Copyright -->
+<div class="text-xs text-[#8A8A84]">
+      © 2026 Clipwise Inc. All rights reserved.
+    </div>
+</footer>
+</body></html>

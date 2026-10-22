@@ -1,0 +1,11 @@
+# Prototype evaluation topics (see the prototype plan). Format: topic | length
+How does Wi-Fi actually work? | 60
+What is a transistor? | 30
+How does GPS know where you are? | 60
+What happens when you type a URL? | 60
+Why do phone batteries wear out? | 30
+Why is the sky blue? | 30
+How do black holes form? | 60
+How do vaccines train your immune system? | 60
+Why do we have seasons? | 30
+What is DNA, really? | 60

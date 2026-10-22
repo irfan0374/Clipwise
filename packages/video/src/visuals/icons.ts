@@ -1,0 +1,30 @@
+import { icons, type LucideIcon } from "lucide-react";
+
+/** Icons offered to Gemini in the prompt (all exist in lucide). Any other lucide name also renders. */
+export const curatedIcons = [
+  "sun", "moon", "star", "cloud", "cloud-rain", "cloud-lightning", "snowflake", "thermometer", "wind", "droplet", "droplets", "flame",
+  "zap", "battery", "battery-charging", "battery-low", "plug", "lightbulb", "atom", "orbit", "dna", "microscope", "flask-conical",
+  "test-tube", "magnet", "radiation", "rocket", "satellite", "satellite-dish", "telescope", "globe", "earth", "map-pin", "navigation",
+  "compass", "radar", "radio", "wifi", "signal", "antenna", "smartphone", "laptop", "monitor", "cpu", "microchip", "circuit-board",
+  "memory-stick", "hard-drive", "server", "database", "router", "network", "cable", "binary", "code", "terminal", "bot",
+  "brain-circuit", "mouse-pointer-click", "lock", "key", "shield", "shield-check", "eye", "scan-eye", "ear", "brain", "heart",
+  "heart-pulse", "activity", "bone", "syringe", "pill", "bug", "biohazard", "stethoscope", "hand", "leaf", "sprout", "tree-pine",
+  "flower", "fish", "bird", "mountain", "sunrise", "sunset", "rainbow", "tornado", "clock", "timer", "hourglass", "calendar",
+  "ruler", "scale", "gauge", "trending-up", "trending-down", "chart-column", "chart-line", "audio-waveform", "volume-2", "mic",
+  "headphones", "camera", "image", "search", "mail", "message-circle", "user", "users", "car", "plane", "ship", "train-front",
+  "truck", "factory", "building", "house", "wrench", "settings", "recycle", "gem", "coins", "sparkles",
+] as const;
+
+const toPascal = (name: string) =>
+  name
+    .trim()
+    .toLowerCase()
+    .split(/[-_\s]+/)
+    .filter(Boolean)
+    .map((part) => part[0]!.toUpperCase() + part.slice(1))
+    .join("");
+
+export const isKnownIcon = (name: string) => toPascal(name) in icons;
+
+export const iconComponent = (name: string | undefined): LucideIcon =>
+  (name && icons[toPascal(name) as keyof typeof icons]) || icons.Sparkles;

@@ -1,0 +1,22 @@
+{
+  "name": "@clipwise/pipeline",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@clipwise/video": "workspace:*",
+    "@elevenlabs/elevenlabs-js": "^2.73.0",
+    "@google/genai": "^2.30.0",
+    "@remotion/bundler": "^4.0.536",
+    "@remotion/renderer": "^4.0.536",
+    "dotenv": "^18.0.8",
+    "lucide-react": "^1.59.0",
+    "remotion": "^4.0.536",
+    "zod": "^4.6.7"
+  }
+}
