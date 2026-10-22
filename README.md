@@ -24,6 +24,10 @@ Needs Node 22 (`nvm use` reads `.nvmrc`) and pnpm.
 | `pnpm dev` | Web app on http://localhost:3000 and the worker, together |
 | `pnpm check` | Lint + typecheck + tests. Run before every commit |
 | `pnpm format` | Auto-fix formatting and import order (Biome) |
+| `pnpm db:status` | Show the database name and how many records each collection has |
+| `pnpm db:seed` | Fill a dev database with a sample workspace and 3 videos (rendered, previewed, failed). Never runs on production |
+| `pnpm db:indexes` | Create or update all indexes (production builds no indexes on startup) |
+| `pnpm db:migrate` | Run pending scripts in `packages/db/migrations/` once each |
 | `pnpm make "topic" …` | Make a video with the prototype CLI (see below) |
 | `pnpm studio` | Tweak video templates live in Remotion Studio |
 
@@ -35,11 +39,12 @@ apps/worker         Node.js worker — runs AI, voice and render jobs from the q
 apps/cli            prototype `clipwise` command
 packages/pipeline   stage functions (script, fact-check, voice, align, render) + run orchestrator
 packages/video      Remotion project: compositions, templates, animated visuals, captions
-packages/shared     code used by web and worker: API result shape, error codes, input schemas
+packages/db         MongoDB (Mongoose) models, connection, db:* scripts, migrations, seed data
+packages/shared     code used by web, worker and db: enums, API result shape, error codes, input and job schemas
 design/             homepage prototype, Stitch prompts, API design
 ```
 
-Tooling: TypeScript 7, Biome (lint + format), Vitest, pnpm workspaces. Each package has its own `tsconfig.json` extending `tsconfig.base.json`.
+Tooling: TypeScript 7, Biome (lint + format), Vitest, pnpm workspaces. Database tests run on an in-memory MongoDB (downloaded once, ~100 MB), so `pnpm check` needs no Atlas connection. Each package has its own `tsconfig.json` extending `tsconfig.base.json`.
 
 ## Prototype CLI
 

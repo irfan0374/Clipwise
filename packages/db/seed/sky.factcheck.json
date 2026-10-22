@@ -1,0 +1,60 @@
+{
+  "claims": [
+    {
+      "scene": 1,
+      "text": "Sunlight looks white, but it contains all the colors of the rainbow combined.",
+      "verdict": "correct",
+      "fix": ""
+    },
+    {
+      "scene": 1,
+      "text": "Red value 10, Blue value 3",
+      "verdict": "wrong",
+      "fix": "Remove arbitrary chart values or use a spectrum representation, as sunlight contains a continuous spectrum where blue is actually more intense in photon number per wavelength than red."
+    },
+    {
+      "scene": 2,
+      "text": "Air molecules scatter short blue wavelengths much more than other colors.",
+      "verdict": "correct",
+      "fix": ""
+    },
+    {
+      "scene": 3,
+      "text": "Human cone cell sensitivity peaks in the green-blue region, and solar violet emission is lower, making violet less perceived.",
+      "verdict": "correct",
+      "fix": ""
+    },
+    {
+      "scene": 4,
+      "text": "10x more blue scattered",
+      "verdict": "imprecise",
+      "fix": "Rayleigh scattering intensity is inversely proportional to the fourth power of wavelength. Violet (approx 400 nm) is scattered roughly 5.5 to 6 times more than red (approx 700 nm), and about 9.5 times more than red if comparing extreme ends, but compared to green/yellow the factor is lower. Change to '5x' or remove exact multiplier."
+    }
+  ],
+  "model": "gemini-3.5-flash-lite",
+  "searched": false,
+  "tokens": 1094,
+  "rewrites": 1,
+  "fixedIssues": [
+    {
+      "scene": 3,
+      "text": "2x more blue sensitive",
+      "verdict": "imprecise",
+      "fix": "Human cone cell sensitivity peaks in the green-blue region, and solar violet emission is also lower, making violet less perceived, though not strictly a simple 2x multiplier."
+    }
+  ],
+  "remainingIssues": [
+    {
+      "scene": 1,
+      "text": "Red value 10, Blue value 3",
+      "verdict": "wrong",
+      "fix": "Remove arbitrary chart values or use a spectrum representation, as sunlight contains a continuous spectrum where blue is actually more intense in photon number per wavelength than red."
+    },
+    {
+      "scene": 4,
+      "text": "10x more blue scattered",
+      "verdict": "imprecise",
+      "fix": "Rayleigh scattering intensity is inversely proportional to the fourth power of wavelength. Violet (approx 400 nm) is scattered roughly 5.5 to 6 times more than red (approx 700 nm), and about 9.5 times more than red if comparing extreme ends, but compared to green/yellow the factor is lower. Change to '5x' or remove exact multiplier."
+    }
+  ]
+}

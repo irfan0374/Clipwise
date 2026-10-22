@@ -13,7 +13,11 @@
     "clipwise": "tsx apps/cli/src/index.ts",
     "make": "tsx apps/cli/src/index.ts make",
     "studio": "pnpm --filter @clipwise/video studio",
-    "sample": "tsx packages/pipeline/scripts/render-sample.ts"
+    "sample": "tsx packages/pipeline/scripts/render-sample.ts",
+    "db:indexes": "tsx packages/db/scripts/indexes.ts",
+    "db:migrate": "tsx packages/db/scripts/migrate.ts",
+    "db:seed": "tsx packages/db/scripts/seed.ts",
+    "db:status": "tsx packages/db/scripts/status.ts"
   },
   "engines": {
     "node": ">=22"

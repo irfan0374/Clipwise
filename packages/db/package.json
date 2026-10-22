@@ -1,0 +1,21 @@
+{
+  "name": "@clipwise/db",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@clipwise/shared": "workspace:*",
+    "@clipwise/video": "workspace:*",
+    "dotenv": "^18.0.8",
+    "mongoose": "^9.11.3"
+  },
+  "devDependencies": {
+    "mongodb-memory-server": "^11.3.0"
+  }
+}

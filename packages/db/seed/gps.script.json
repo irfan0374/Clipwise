@@ -1,0 +1,137 @@
+{
+  "title": "How does GPS know where you are?",
+  "lengthSeconds": 60,
+  "hook": "Ever wonder how Google Maps finds you instantly?",
+  "scenes": [
+    {
+      "index": 0,
+      "narration": "Ever wonder how Google Maps finds you instantly?",
+      "template": "title",
+      "onScreenText": ["How GPS Works", "Finding Your Location"],
+      "visual": {
+        "type": "icon",
+        "icon": "navigation"
+      }
+    },
+    {
+      "index": 1,
+      "narration": "Orbiting high above Earth, a massive network of satellites constantly beams invisible radio signals down to your phone.",
+      "template": "bullets",
+      "onScreenText": ["Satellites in space", "Beaming radio signals"],
+      "visual": {
+        "type": "orbit",
+        "icon": "globe",
+        "items": [
+          {
+            "icon": "satellite"
+          },
+          {
+            "icon": "satellite"
+          },
+          {
+            "icon": "satellite"
+          },
+          {
+            "icon": "satellite"
+          }
+        ]
+      }
+    },
+    {
+      "index": 2,
+      "narration": "These signals travel at the speed of light, carrying precise timestamps of the exact moment they were sent.",
+      "template": "bullets",
+      "onScreenText": ["Speed of light", "Precise timestamps"],
+      "visual": {
+        "type": "waves",
+        "items": [
+          {
+            "label": "Signal",
+            "value": 5,
+            "color": "cyan"
+          }
+        ]
+      }
+    },
+    {
+      "index": 3,
+      "narration": "Your phone measures the tiny delay it took for that message to arrive, calculating its distance from the satellite.",
+      "template": "bullets",
+      "onScreenText": ["Measuring tiny delays", "Calculating distance"],
+      "visual": {
+        "type": "flow",
+        "items": [
+          {
+            "icon": "radio",
+            "label": "Signal Sent"
+          },
+          {
+            "icon": "smartphone",
+            "label": "Phone Received"
+          }
+        ]
+      }
+    },
+    {
+      "index": 4,
+      "narration": "One satellite only tells you a radius. To pinpoint your exact spot, your device needs more data.",
+      "template": "bullets",
+      "onScreenText": ["One gives radius", "Need more data"],
+      "visual": {
+        "type": "network",
+        "icon": "map-pin",
+        "items": [
+          {
+            "icon": "satellite"
+          }
+        ]
+      }
+    },
+    {
+      "index": 5,
+      "narration": "By combining signals from four separate satellites, receivers use a clever math trick called trilateration.",
+      "template": "bullets",
+      "onScreenText": ["Four satellites total", "Trilateration math trick"],
+      "visual": {
+        "type": "orbit",
+        "icon": "smartphone",
+        "items": [
+          {
+            "icon": "satellite"
+          },
+          {
+            "icon": "satellite"
+          },
+          {
+            "icon": "satellite"
+          },
+          {
+            "icon": "satellite"
+          }
+        ]
+      }
+    },
+    {
+      "index": 6,
+      "narration": "Each sphere of distance intersects at a single common point, revealing your exact latitude and longitude on the globe.",
+      "template": "bullets",
+      "onScreenText": ["Spheres intersect", "Exact coordinates found"],
+      "visual": {
+        "type": "particles",
+        "icon": "globe",
+        "motion": "collapse"
+      }
+    },
+    {
+      "index": 7,
+      "narration": "Light travels so fast that tiny atomic clocks on board are needed to measure time accurately. Follow for more science in 60 seconds.",
+      "template": "stat",
+      "onScreenText": ["Atomic accuracy", "Nanosecond precision"],
+      "stat": {
+        "value": "1ns",
+        "label": "Time precision"
+      }
+    }
+  ],
+  "cta": "Follow for more science in 60 seconds."
+}

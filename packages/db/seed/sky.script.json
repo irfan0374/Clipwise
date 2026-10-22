@@ -1,0 +1,79 @@
+{
+  "title": "Why is the sky blue?",
+  "lengthSeconds": 30,
+  "hook": "Why is the sky blue and not violet?",
+  "scenes": [
+    {
+      "index": 0,
+      "narration": "Why is the sky blue and not violet?",
+      "template": "title",
+      "onScreenText": ["Why is the sky blue?"],
+      "visual": {
+        "type": "icon",
+        "icon": "sun"
+      }
+    },
+    {
+      "index": 1,
+      "narration": "Sunlight looks white, but it contains all the colors of the rainbow combined.",
+      "template": "bullets",
+      "onScreenText": ["White sunlight", "All colors mixed"],
+      "visual": {
+        "type": "waves",
+        "items": [
+          {
+            "label": "Red",
+            "value": 10,
+            "color": "red"
+          },
+          {
+            "label": "Blue",
+            "value": 3,
+            "color": "blue"
+          }
+        ]
+      }
+    },
+    {
+      "index": 2,
+      "narration": "Air molecules scatter short blue wavelengths much more than other colors.",
+      "template": "bullets",
+      "onScreenText": ["Air scatters light", "Blue spreads fast"],
+      "visual": {
+        "type": "particles",
+        "icon": "wind",
+        "motion": "scatter"
+      }
+    },
+    {
+      "index": 3,
+      "narration": "Human cone cell sensitivity peaks in the green-blue region, and solar violet emission is lower, making violet less perceived.",
+      "template": "bullets",
+      "onScreenText": ["Eye sensitivity peak", "Less violet from sun"],
+      "visual": {
+        "type": "flow",
+        "items": [
+          {
+            "icon": "eye",
+            "label": "Vision"
+          },
+          {
+            "icon": "sun",
+            "label": "Sunlight"
+          }
+        ]
+      }
+    },
+    {
+      "index": 4,
+      "narration": "That scattering fills the atmosphere with blue light. Follow for more science in 30 seconds.",
+      "template": "stat",
+      "onScreenText": ["Scattered light", "Fills our sky"],
+      "stat": {
+        "value": "10x",
+        "label": "more blue scattered"
+      }
+    }
+  ],
+  "cta": "Follow for more science in 30 seconds."
+}
