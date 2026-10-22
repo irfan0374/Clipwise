@@ -13,7 +13,7 @@ export const Stat = ({ value, label }: { value: string; label: string }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const parsed = parseStat(value);
-  const count = interpolate(frame, [0, 24], [0, 1], { extrapolateRight: "clamp", easing: (t) => 1 - Math.pow(1 - t, 3) });
+  const count = interpolate(frame, [0, 24], [0, 1], { extrapolateRight: "clamp", easing: (t) => 1 - (1 - t) ** 3 });
   const shown = parsed ? `${parsed.prefix}${(parsed.number * count).toFixed(parsed.decimals)}${parsed.suffix}` : value;
   const labelIn = spring({ frame: frame - 18, fps, config: { damping: 200 } });
 
@@ -27,7 +27,16 @@ export const Stat = ({ value, label }: { value: string; label: string }) => {
         height: theme.contentBottom,
       }}
     >
-      <div style={{ fontSize: Math.min(300, Math.round(1200 / Math.max(value.length, 1))), fontWeight: 800, lineHeight: 1, letterSpacing: -10, color: theme.accent, fontVariantNumeric: "tabular-nums" }}>
+      <div
+        style={{
+          fontSize: Math.min(300, Math.round(1200 / Math.max(value.length, 1))),
+          fontWeight: 800,
+          lineHeight: 1,
+          letterSpacing: -10,
+          color: theme.accent,
+          fontVariantNumeric: "tabular-nums",
+        }}
+      >
         {shown}
       </div>
       <div

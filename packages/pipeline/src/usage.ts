@@ -4,12 +4,18 @@ import { repoRoot } from "./env";
 
 const usageFile = path.join(repoRoot, "out/.usage.json");
 
-export type MonthUsage = { elevenLabsCredits: number; elevenLabsCharacters: number; geminiTokens: number; imageRequests: number };
+export type MonthUsage = {
+  elevenLabsCredits: number;
+  elevenLabsCharacters: number;
+  geminiTokens: number;
+  imageRequests: number;
+};
 
 const empty = (): MonthUsage => ({ elevenLabsCredits: 0, elevenLabsCharacters: 0, geminiTokens: 0, imageRequests: 0 });
 
 /** Flash/Turbo models cost about half a credit per character; other models about one. */
-export const creditsFor = (characters: number, model: string) => Math.ceil(characters * (/flash|turbo/i.test(model) ? 0.5 : 1));
+export const creditsFor = (characters: number, model: string) =>
+  Math.ceil(characters * (/flash|turbo/i.test(model) ? 0.5 : 1));
 
 export const monthUsage = async (): Promise<MonthUsage> => {
   try {

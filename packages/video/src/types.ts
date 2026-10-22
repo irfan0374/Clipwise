@@ -4,7 +4,17 @@ export type SceneTemplate = "title" | "bullets" | "imageFocus" | "stat";
 
 export type Stat = { value: string; label: string };
 
-export const VisualTypes = ["icon", "flow", "compare", "bars", "orbit", "waves", "particles", "network", "cycle"] as const;
+export const VisualTypes = [
+  "icon",
+  "flow",
+  "compare",
+  "bars",
+  "orbit",
+  "waves",
+  "particles",
+  "network",
+  "cycle",
+] as const;
 export type VisualType = (typeof VisualTypes)[number];
 
 export const VisualColors = ["blue", "red", "yellow", "green", "purple", "orange", "cyan", "white"] as const;

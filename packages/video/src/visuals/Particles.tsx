@@ -6,7 +6,15 @@ import { BOX } from "./palette";
 const COUNT = 110;
 
 // Deterministic particle field (same every render): scatter outward, flow across, rise, or collapse inward.
-export const Particles = ({ motion, icon, color }: { motion: ParticleMotion; icon: string | undefined; color: string }) => {
+export const Particles = ({
+  motion,
+  icon,
+  color,
+}: {
+  motion: ParticleMotion;
+  icon: string | undefined;
+  color: string;
+}) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const cx = BOX.width / 2;
@@ -46,7 +54,20 @@ export const Particles = ({ motion, icon, color }: { motion: ParticleMotion; ico
   return (
     <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
       {dots.map((d, i) => (
-        <div key={i} style={{ position: "absolute", left: d.x - d.size / 2, top: d.y - d.size / 2, width: d.size, height: d.size, borderRadius: d.size, backgroundColor: color, opacity: d.opacity, boxShadow: `0 0 ${d.size}px ${color}` }} />
+        <div
+          key={i}
+          style={{
+            position: "absolute",
+            left: d.x - d.size / 2,
+            top: d.y - d.size / 2,
+            width: d.size,
+            height: d.size,
+            borderRadius: d.size,
+            backgroundColor: color,
+            opacity: d.opacity,
+            boxShadow: `0 0 ${d.size}px ${color}`,
+          }}
+        />
       ))}
       {icon ? (
         <IconBadge
@@ -54,7 +75,12 @@ export const Particles = ({ motion, icon, color }: { motion: ParticleMotion; ico
           size={centred ? 200 : 170}
           color={color}
           filled={motion === "collapse"}
-          style={{ position: "absolute", left: cx - (centred ? 100 : 85), top: cy - (centred ? 100 : 85), transform: `scale(${pop})` }}
+          style={{
+            position: "absolute",
+            left: cx - (centred ? 100 : 85),
+            top: cy - (centred ? 100 : 85),
+            transform: `scale(${pop})`,
+          }}
         />
       ) : null}
     </div>

@@ -3,7 +3,7 @@ import path from "node:path";
 import { curatedIcons } from "@clipwise/video/icons";
 import { repoRoot } from "../env";
 import { askGemini, parseJsonReply } from "../gemini";
-import { lengthRules, type Length } from "../types";
+import { type Length, lengthRules } from "../types";
 
 const promptPath = path.join(repoRoot, "packages/pipeline/prompts/script.md");
 
@@ -17,7 +17,10 @@ export const buildPrompt = async (topic: string, length: Length, feedback: strin
     .replaceAll("{{minScenes}}", String(rules.minScenes))
     .replaceAll("{{maxScenes}}", String(rules.maxScenes))
     .replaceAll("{{icons}}", curatedIcons.join(", "))
-    .replaceAll("{{wordsPerScene}}", String(Math.round((rules.minWords + rules.maxWords) / 2 / ((rules.minScenes + rules.maxScenes) / 2))));
+    .replaceAll(
+      "{{wordsPerScene}}",
+      String(Math.round((rules.minWords + rules.maxWords) / 2 / ((rules.minScenes + rules.maxScenes) / 2))),
+    );
   if (!images) {
     prompt += `\n\nPhotos are not available for this video. Do not use the "imageFocus" template; use "title", "bullets" and "stat" only.`;
   }

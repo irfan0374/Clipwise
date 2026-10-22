@@ -63,7 +63,10 @@ export const estimateAlignment = (text: string, wordsPerSecond = 2.5): Alignment
 /** Audio length implied by the alignment (end of the last character). */
 export const spokenSeconds = (alignment: Alignment) => alignment.characterEndTimesSeconds.at(-1) ?? 0;
 
-export type LengthVerdict = { action: "accept" } | { action: "adjustSpeed"; speed: number } | { action: "rescript"; feedback: string };
+export type LengthVerdict =
+  | { action: "accept" }
+  | { action: "adjustSpeed"; speed: number }
+  | { action: "rescript"; feedback: string };
 
 /** Within ±10% accept; 10–20% off re-voice at a corrected speed; more than 20% off rewrite the script. */
 export const lengthVerdict = (seconds: number, target: Length): LengthVerdict => {
@@ -125,7 +128,11 @@ export const buildTimeline = ({
   }
 
   const durationInFrames = toFrame(spokenSeconds(alignment) + TAIL_SECONDS);
-  const words: TimelineWord[] = spoken.map((w) => ({ text: w.text, startFrame: toFrame(w.start), endFrame: Math.max(toFrame(w.end), toFrame(w.start) + 1) }));
+  const words: TimelineWord[] = spoken.map((w) => ({
+    text: w.text,
+    startFrame: toFrame(w.start),
+    endFrame: Math.max(toFrame(w.end), toFrame(w.start) + 1),
+  }));
 
   let cursor = 0;
   const sceneStarts = sceneWordCounts.map((count) => {
@@ -153,5 +160,14 @@ export const buildTimeline = ({
     };
   });
 
-  return { fps: FPS, width: 1080, height: 1920, durationInFrames, audioFile, scenes, words, captionPages: buildCaptionPages(words, durationInFrames) };
+  return {
+    fps: FPS,
+    width: 1080,
+    height: 1920,
+    durationInFrames,
+    audioFile,
+    scenes,
+    words,
+    captionPages: buildCaptionPages(words, durationInFrames),
+  };
 };

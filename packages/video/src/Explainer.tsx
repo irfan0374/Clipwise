@@ -1,4 +1,4 @@
-import { AbsoluteFill, Audio, Sequence, interpolate, staticFile, useCurrentFrame } from "remotion";
+import { AbsoluteFill, Audio, interpolate, Sequence, staticFile, useCurrentFrame } from "remotion";
 import { Background } from "./layers/Background";
 import { Captions } from "./layers/Captions";
 import { ProgressBar } from "./layers/ProgressBar";
@@ -33,11 +33,22 @@ const SceneBody = ({ scene }: { scene: TimelineScene }) => {
 };
 
 // Fades a scene in at its start and out over the extra frames it overlaps the next scene, giving a crossfade.
-const Fade = ({ children, fadeIn, fadeOutAt }: { children: React.ReactNode; fadeIn: boolean; fadeOutAt: number | null }) => {
+const Fade = ({
+  children,
+  fadeIn,
+  fadeOutAt,
+}: {
+  children: React.ReactNode;
+  fadeIn: boolean;
+  fadeOutAt: number | null;
+}) => {
   const frame = useCurrentFrame();
   const t = theme.transitionFrames;
   const opacityIn = fadeIn ? interpolate(frame, [0, t], [0, 1], { extrapolateRight: "clamp" }) : 1;
-  const opacityOut = fadeOutAt === null ? 1 : interpolate(frame, [fadeOutAt, fadeOutAt + t], [1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  const opacityOut =
+    fadeOutAt === null
+      ? 1
+      : interpolate(frame, [fadeOutAt, fadeOutAt + t], [1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
   return <AbsoluteFill style={{ opacity: Math.min(opacityIn, opacityOut) }}>{children}</AbsoluteFill>;
 };
 

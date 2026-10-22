@@ -1,6 +1,6 @@
-import { config } from "dotenv";
-import { fileURLToPath } from "node:url";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { config } from "dotenv";
 
 export const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 config({ path: path.join(repoRoot, ".env"), quiet: true });
@@ -15,7 +15,9 @@ export const env = {
   gemini: () => ({
     apiKey: required("GEMINI_API_KEY"),
     // Comma-separated, tried in order. Each model has its own free daily quota, so later ones take over when one runs out.
-    models: (process.env.GEMINI_MODEL || "gemini-3.5-flash-lite,gemini-3.1-flash-lite,gemini-2.5-flash-lite,gemini-2.5-flash")
+    models: (
+      process.env.GEMINI_MODEL || "gemini-3.5-flash-lite,gemini-3.1-flash-lite,gemini-2.5-flash-lite,gemini-2.5-flash"
+    )
       .split(",")
       .map((m) => m.trim())
       .filter(Boolean),
@@ -28,13 +30,14 @@ export const env = {
     // The pipeline refuses to start a voiceover that would go past this (free plan: 10,000 a month).
     monthlyCredits: Number(process.env.ELEVENLABS_MONTHLY_CREDITS || 10_000),
   }),
-  imageKeys: () => ({ pexels: process.env.PEXELS_API_KEY || undefined, pixabay: process.env.PIXABAY_API_KEY || undefined }),
+  imageKeys: () => ({
+    pexels: process.env.PEXELS_API_KEY || undefined,
+    pixabay: process.env.PIXABAY_API_KEY || undefined,
+  }),
 };
 
 /** Lists every missing key a run needs, so the CLI can stop before creating a run folder. */
 export const missingKeys = ({ dryRun = false } = {}) => {
-  const needed = dryRun
-    ? ["GEMINI_API_KEY"]
-    : ["GEMINI_API_KEY", "ELEVENLABS_API_KEY", "ELEVENLABS_VOICE_ID"];
+  const needed = dryRun ? ["GEMINI_API_KEY"] : ["GEMINI_API_KEY", "ELEVENLABS_API_KEY", "ELEVENLABS_VOICE_ID"];
   return needed.filter((name) => !process.env[name]);
 };

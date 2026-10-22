@@ -1,18 +1,24 @@
-import type { Timeline } from "@clipwise/video";
 import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { repoRoot } from "./env";
+import type { Timeline } from "@clipwise/video";
+import { env, repoRoot } from "./env";
+import { FatalError } from "./retry";
 import { buildTimeline, estimateAlignment, lengthVerdict, spokenSeconds } from "./stages/align";
-import { factCheck, factFeedback, issuesOf, removeDoubtfulNumbers, type Claim, type FactCheck } from "./stages/factcheck";
-import { fetchImages, imageProvider, type ImagesResult } from "./stages/images";
+import {
+  type Claim,
+  type FactCheck,
+  factCheck,
+  factFeedback,
+  issuesOf,
+  removeDoubtfulNumbers,
+} from "./stages/factcheck";
+import { fetchImages, type ImagesResult, imageProvider } from "./stages/images";
 import { renderVideo } from "./stages/render";
 import { generateScript } from "./stages/script";
 import { fixUnknownIcons, validateScript } from "./stages/validate";
 import { generateVoice, narrationText } from "./stages/voice";
-import { FatalError } from "./retry";
 import type { Alignment, Length, Script, StageName, StageReport } from "./types";
 import { creditsFor, monthUsage, recordUsage } from "./usage";
-import { env } from "./env";
 
 const MAX_SCRIPT_ATTEMPTS = 3;
 const MAX_RESCRIPTS = 1;
@@ -21,9 +27,19 @@ const MAX_FACT_REWRITES = 2;
 export type RunMeta = { topic: string; length: Length; final: boolean; createdAt: string };
 
 const slugify = (text: string) =>
-  text.toLowerCase().replace(/[^a-z0-9\s-]/g, "").trim().split(/\s+/).slice(0, 6).join("-");
+  text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .trim()
+    .split(/\s+/)
+    .slice(0, 6)
+    .join("-");
 
-const exists = (file: string) => stat(file).then(() => true, () => false);
+const exists = (file: string) =>
+  stat(file).then(
+    () => true,
+    () => false,
+  );
 const readJson = async <T>(file: string): Promise<T> => JSON.parse(await readFile(file, "utf8")) as T;
 const writeJson = (file: string, data: unknown) => writeFile(file, JSON.stringify(data, null, 2));
 
@@ -32,7 +48,12 @@ export const createRun = async (topic: string, length: Length, final = false) =>
   const stamp = new Date().toISOString().slice(0, 16).replace("T", "-").replace(":", "");
   const runDir = path.join(repoRoot, "out", `${stamp}-${slugify(topic)}`);
   await mkdir(path.join(runDir, "media"), { recursive: true });
-  await writeJson(path.join(runDir, "meta.json"), { topic, length, final, createdAt: new Date().toISOString() } satisfies RunMeta);
+  await writeJson(path.join(runDir, "meta.json"), {
+    topic,
+    length,
+    final,
+    createdAt: new Date().toISOString(),
+  } satisfies RunMeta);
   return runDir;
 };
 
@@ -62,18 +83,39 @@ export const runPipeline = async (
   const reports: StageReport[] = [];
   const startedAt = Date.now();
   const saveReport = (status: "ok" | "failed" | "dry-run") =>
-    writeJson(preview ? path.join(runDir, "run.preview.json") : files.report, { ...meta, runDir, status, totalMs: Date.now() - startedAt, stages: reports });
+    writeJson(preview ? path.join(runDir, "run.preview.json") : files.report, {
+      ...meta,
+      runDir,
+      status,
+      totalMs: Date.now() - startedAt,
+      stages: reports,
+    });
 
-  const stage = async <T>(name: StageName, fn: () => Promise<{ value: T; attempts?: number; units?: StageReport["units"]; skipped?: boolean }>) => {
+  const stage = async <T>(
+    name: StageName,
+    fn: () => Promise<{ value: T; attempts?: number; units?: StageReport["units"]; skipped?: boolean }>,
+  ) => {
     const t0 = Date.now();
     console.log(`→ ${name}`);
     try {
       const result = await fn();
-      reports.push({ stage: name, status: result.skipped ? "skipped" : "ok", durationMs: Date.now() - t0, attempts: result.attempts ?? (result.skipped ? 0 : 1), units: result.units });
+      reports.push({
+        stage: name,
+        status: result.skipped ? "skipped" : "ok",
+        durationMs: Date.now() - t0,
+        attempts: result.attempts ?? (result.skipped ? 0 : 1),
+        units: result.units,
+      });
       console.log(`  ${result.skipped ? "reused saved output" : "done"} in ${((Date.now() - t0) / 1000).toFixed(1)}s`);
       return result.value;
     } catch (error) {
-      reports.push({ stage: name, status: "failed", durationMs: Date.now() - t0, attempts: 0, error: (error as Error).message });
+      reports.push({
+        stage: name,
+        status: "failed",
+        durationMs: Date.now() - t0,
+        attempts: 0,
+        error: (error as Error).message,
+      });
       await saveReport("failed");
       throw error;
     }
@@ -100,7 +142,9 @@ export const runPipeline = async (
       feedback = [...extraFeedback, ...checked.errors];
     }
     await recordUsage({ geminiTokens: tokens });
-    throw new Error(`Gemini did not produce a valid script in ${MAX_SCRIPT_ATTEMPTS} attempts (see script.invalid-*.json)`);
+    throw new Error(
+      `Gemini did not produce a valid script in ${MAX_SCRIPT_ATTEMPTS} attempts (see script.invalid-*.json)`,
+    );
   };
 
   let script = await stage("script", async () =>
@@ -130,15 +174,29 @@ export const runPipeline = async (
       console.warn(`  removed doubtful numbers from scenes ${stripped.join(", ")}`);
     }
     const unsure = check.claims.filter((c) => c.verdict === "unsure");
-    for (const c of [...remaining, ...unsure]) console.warn(`  ⚠ check manually, scene ${c.scene}: "${c.text}" (${c.verdict})`);
-    await writeJson(files.factcheck, { ...check, rewrites, fixedIssues: fixed, remainingIssues: remaining, numbersRemovedFromScenes: stripped });
+    for (const c of [...remaining, ...unsure])
+      console.warn(`  ⚠ check manually, scene ${c.scene}: "${c.text}" (${c.verdict})`);
+    await writeJson(files.factcheck, {
+      ...check,
+      rewrites,
+      fixedIssues: fixed,
+      remainingIssues: remaining,
+      numbersRemovedFromScenes: stripped,
+    });
     await recordUsage({ geminiTokens: tokens });
     console.log(
       `  ${check.claims.length} claims checked${check.searched ? " with Google Search" : ""}; ${rewrites} rewrite(s), ${remaining.length + unsure.length} to check manually`,
     );
     return {
       value: null,
-      units: { claims: check.claims.length, rewrites, remaining: remaining.length, unsure: unsure.length, numbersRemoved: stripped.length, searched: String(check.searched) },
+      units: {
+        claims: check.claims.length,
+        rewrites,
+        remaining: remaining.length,
+        unsure: unsure.length,
+        numbersRemoved: stripped.length,
+        searched: String(check.searched),
+      },
     };
   });
 
@@ -188,7 +246,11 @@ export const runPipeline = async (
         await writeJson(files.alignment, voice.alignment);
         const month = await recordUsage({ elevenLabsCharacters: characters, elevenLabsCredits: credits });
         console.log(`  ElevenLabs: ${credits} credits this run, ${month.elevenLabsCredits} this month`);
-        return { value: voice.alignment, attempts, units: { characters, credits, model: voice.model, seconds: Number(seconds.toFixed(2)), speed } };
+        return {
+          value: voice.alignment,
+          attempts,
+          units: { characters, credits, model: voice.model, seconds: Number(seconds.toFixed(2)), speed },
+        };
       };
 
       if (verdict.action === "accept") return accept();
@@ -215,8 +277,17 @@ export const runPipeline = async (
     const result = await fetchImages(script, path.join(runDir, "media"));
     await writeJson(files.images, result);
     await recordUsage({ imageRequests: result.requests });
-    if (result.missing.length) console.warn(`  no photo for scenes ${result.missing.join(", ")}; they fall back to bullets`);
-    return { value: result, units: { provider: result.provider ?? "none", found: result.images.length, missing: result.missing.length, requests: result.requests } };
+    if (result.missing.length)
+      console.warn(`  no photo for scenes ${result.missing.join(", ")}; they fall back to bullets`);
+    return {
+      value: result,
+      units: {
+        provider: result.provider ?? "none",
+        found: result.images.length,
+        missing: result.missing.length,
+        requests: result.requests,
+      },
+    };
   });
 
   // Align: always recomputed; it's instant and picks up any script or image change.

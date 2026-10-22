@@ -9,7 +9,10 @@ const cacheDir = path.join(repoRoot, "out/.cache/images");
 
 type Photo = { id: string; downloadUrl: string; photographer: string; pageUrl: string };
 
-type ImageProvider = { name: "pexels" | "pixabay"; search: (query: string, portrait: boolean) => Promise<Photo | undefined> };
+type ImageProvider = {
+  name: "pexels" | "pixabay";
+  search: (query: string, portrait: boolean) => Promise<Photo | undefined>;
+};
 
 const getJson = async <T>(url: URL, headers: Record<string, string> = {}, label: string): Promise<T> => {
   const { value } = await withRetry(
@@ -30,10 +33,19 @@ const pexels = (apiKey: string): ImageProvider => ({
     url.searchParams.set("query", query);
     url.searchParams.set("per_page", "5");
     if (portrait) url.searchParams.set("orientation", "portrait");
-    const data = await getJson<{ photos: { id: number; photographer: string; url: string; src: { original: string } }[] }>(url, { Authorization: apiKey }, "Pexels");
+    const data = await getJson<{
+      photos: { id: number; photographer: string; url: string; src: { original: string } }[];
+    }>(url, { Authorization: apiKey }, "Pexels");
     const photo = data.photos[0];
     // Pexels crops server-side to the exact 9:16 frame.
-    return photo && { id: `pexels-${photo.id}`, downloadUrl: `${photo.src.original}?auto=compress&cs=tinysrgb&fit=crop&w=1080&h=1920`, photographer: photo.photographer, pageUrl: photo.url };
+    return (
+      photo && {
+        id: `pexels-${photo.id}`,
+        downloadUrl: `${photo.src.original}?auto=compress&cs=tinysrgb&fit=crop&w=1080&h=1920`,
+        photographer: photo.photographer,
+        pageUrl: photo.url,
+      }
+    );
   },
 });
 
@@ -47,10 +59,16 @@ const pixabay = (apiKey: string): ImageProvider => ({
     url.searchParams.set("safesearch", "true");
     url.searchParams.set("per_page", "5");
     if (portrait) url.searchParams.set("orientation", "vertical");
-    const data = await getJson<{ hits: { id: number; user: string; pageURL: string; largeImageURL: string }[] }>(url, {}, "Pixabay");
+    const data = await getJson<{ hits: { id: number; user: string; pageURL: string; largeImageURL: string }[] }>(
+      url,
+      {},
+      "Pixabay",
+    );
     const hit = data.hits[0];
     // Pixabay doesn't crop; the ImageFocus template covers the 9:16 frame with object-fit.
-    return hit && { id: `pixabay-${hit.id}`, downloadUrl: hit.largeImageURL, photographer: hit.user, pageUrl: hit.pageURL };
+    return (
+      hit && { id: `pixabay-${hit.id}`, downloadUrl: hit.largeImageURL, photographer: hit.user, pageUrl: hit.pageURL }
+    );
   },
 });
 
@@ -62,9 +80,20 @@ export const imageProvider = (): ImageProvider | null => {
   return null;
 };
 
-const exists = (file: string) => stat(file).then(() => true, () => false);
+const exists = (file: string) =>
+  stat(file).then(
+    () => true,
+    () => false,
+  );
 
-export type SceneImage = { sceneIndex: number; file: string; query: string; photographer: string; pageUrl: string; provider: string };
+export type SceneImage = {
+  sceneIndex: number;
+  file: string;
+  query: string;
+  photographer: string;
+  pageUrl: string;
+  provider: string;
+};
 export type ImagesResult = { images: SceneImage[]; missing: number[]; requests: number; provider: string | null };
 
 /**
@@ -83,7 +112,11 @@ export const fetchImages = async (script: Script, mediaDir: string): Promise<Ima
     scenes.map(async (scene): Promise<SceneImage | number> => {
       const query = scene.imageQuery!.trim();
       const short = query.split(/\s+/).slice(0, 2).join(" ");
-      const attempts: [string, boolean][] = [[query, true], [short, true], [query, false]];
+      const attempts: [string, boolean][] = [
+        [query, true],
+        [short, true],
+        [query, false],
+      ];
 
       for (const [q, portrait] of attempts) {
         requests++;
@@ -99,7 +132,14 @@ export const fetchImages = async (script: Script, mediaDir: string): Promise<Ima
         }
         const file = `scene-${scene.index}.jpg`;
         await copyFile(cached, path.join(mediaDir, file));
-        return { sceneIndex: scene.index, file, query: q, photographer: photo.photographer, pageUrl: photo.pageUrl, provider: provider.name } satisfies SceneImage;
+        return {
+          sceneIndex: scene.index,
+          file,
+          query: q,
+          photographer: photo.photographer,
+          pageUrl: photo.pageUrl,
+          provider: provider.name,
+        } satisfies SceneImage;
       }
       return scene.index;
     }),

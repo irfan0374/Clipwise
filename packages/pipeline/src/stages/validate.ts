@@ -1,10 +1,13 @@
 import { isKnownIcon } from "@clipwise/video/icons";
-import { ScriptSchema, lengthRules, type Length, type Script, type Visual } from "../types";
+import { type Length, lengthRules, type Script, ScriptSchema, type Visual } from "../types";
 
 const MAX_LABEL = 18;
 
 /** Item rules per visual type: how many items, and which fields each needs. */
-const visualRules: Record<Visual["type"], { min: number; max: number; needs: ("icon" | "label" | "value")[]; mainIcon?: boolean; motion?: boolean }> = {
+const visualRules: Record<
+  Visual["type"],
+  { min: number; max: number; needs: ("icon" | "label" | "value")[]; mainIcon?: boolean; motion?: boolean }
+> = {
   icon: { min: 0, max: 0, needs: [], mainIcon: true },
   flow: { min: 2, max: 4, needs: ["icon", "label"] },
   compare: { min: 2, max: 2, needs: ["icon", "label"] },
@@ -95,7 +98,9 @@ export const countWords = (text: string) => text.trim().split(/\s+/).filter(Bool
 
 export const narrationWords = (script: Script) => script.scenes.reduce((sum, s) => sum + countWords(s.narration), 0);
 
-export type ValidationResult = { ok: true; script: Script; repairs: string[] } | { ok: false; errors: string[]; wordCount?: number };
+export type ValidationResult =
+  | { ok: true; script: Script; repairs: string[] }
+  | { ok: false; errors: string[]; wordCount?: number };
 
 // Checks shape first, then the rules a schema can't express. Errors are written so they can be fed back to Gemini.
 export const validateScript = (raw: unknown, length: Length, { images = true } = {}): ValidationResult => {
@@ -123,8 +128,10 @@ export const validateScript = (raw: unknown, length: Length, { images = true } =
 
   script.scenes.forEach((scene, i) => {
     if (scene.index !== i) errors.push(`scenes[${i}].index must be ${i}.`);
-    if (scene.template === "imageFocus" && !images) errors.push(`scenes[${i}] uses imageFocus, which is not available; use another template.`);
-    if (scene.template === "imageFocus" && !scene.imageQuery?.trim()) errors.push(`scenes[${i}] is imageFocus but has no imageQuery.`);
+    if (scene.template === "imageFocus" && !images)
+      errors.push(`scenes[${i}] uses imageFocus, which is not available; use another template.`);
+    if (scene.template === "imageFocus" && !scene.imageQuery?.trim())
+      errors.push(`scenes[${i}] is imageFocus but has no imageQuery.`);
     if (scene.template === "stat" && !scene.stat) errors.push(`scenes[${i}] is stat but has no stat.`);
     if (scene.stat && (!/\d/.test(scene.stat.value) || scene.stat.value.length > 6)) {
       errors.push(`scenes[${i}].stat.value "${scene.stat.value}" must contain a digit and be at most 6 characters.`);

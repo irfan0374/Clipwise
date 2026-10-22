@@ -7,8 +7,8 @@ import { Flow } from "./Flow";
 import { IconHero } from "./IconHero";
 import { Network } from "./Network";
 import { Orbit } from "./Orbit";
-import { BOX, colorOf } from "./palette";
 import { Particles } from "./Particles";
+import { BOX, colorOf } from "./palette";
 import { Waves } from "./Waves";
 
 const Body = ({ visual, duration }: { visual: Visual; duration: number }) => {

@@ -1,21 +1,50 @@
-# Clipwise — pipeline prototype
+# Clipwise
 
-Turns a tech or science topic into a 30s or 60s vertical (1080×1920) explainer video:
-Gemini script → ElevenLabs voice + timestamps → Remotion motion graphics and word-synced captions.
+AI short videos for creators, brands and educators: any idea becomes a Reel, Short or TikTok (promos, explainers, stories, tips and more).
+Pipeline: script → fact-check → voiceover → animated visuals → captions → render → schedule and publish.
 
-All visuals are drawn by Remotion (title, bullets, stat). Stock photos are an optional extra that stays off unless `PIXABAY_API_KEY` or `PEXELS_API_KEY` is set.
+**Progress:** see [STATUS.md](STATUS.md) for what's built, what's in progress and what's next.
 
-Design: [Pipeline Technical Design and Prototype Plan](https://claude.ai/code/artifact/ae0b3815-1950-4e48-9cbc-ace979104af7) · [PRD](https://claude.ai/code/artifact/f8f8abca-e939-4ba5-bc6a-b7eac21a3d68)
+Docs: [PRD](https://claude.ai/code/artifact/f8f8abca-e939-4ba5-bc6a-b7eac21a3d68) · [Pipeline design](https://claude.ai/code/artifact/ae0b3815-1950-4e48-9cbc-ace979104af7) · [System design](https://claude.ai/artifact/J2oWzhzu7bKSQA7LenYHww) · [Database design](https://claude.ai/artifact/FP5BPiXzyp9cUYTLNtUGpQ) · [API design](design/api-design.md) · [Stitch prompts](design/stitch-prompts.md)
 
 ## Setup
 
+Needs Node 22 (`nvm use` reads `.nvmrc`) and pnpm.
+
 1. `pnpm install`
-2. Fill in `.env` (copied from `.env.example`). Both have free tiers:
-   - `GEMINI_API_KEY` — https://aistudio.google.com/apikey
-   - `ELEVENLABS_API_KEY` and `ELEVENLABS_VOICE_ID` — https://elevenlabs.io (pick a voice in the Voice Library, copy its ID)
+2. `cp .env.example .env` and fill in only the groups the current feature needs (each group names its feature). For the prototype pipeline that's:
+   - `GEMINI_API_KEY` — https://aistudio.google.com/apikey (free tier)
+   - `ELEVENLABS_API_KEY` — https://elevenlabs.io (free plan, default voices only)
 3. Check rendering works without any keys: `pnpm sample` → `out/sample/sample.mp4`
 
-## Usage
+## Commands
+
+| Command | What it does |
+| --- | --- |
+| `pnpm dev` | Web app on http://localhost:3000 and the worker, together |
+| `pnpm check` | Lint + typecheck + tests. Run before every commit |
+| `pnpm format` | Auto-fix formatting and import order (Biome) |
+| `pnpm make "topic" …` | Make a video with the prototype CLI (see below) |
+| `pnpm studio` | Tweak video templates live in Remotion Studio |
+
+## Layout
+
+```
+apps/web            Next.js app (App Router) — homepage, dashboard, editor, server actions
+apps/worker         Node.js worker — runs AI, voice and render jobs from the queue
+apps/cli            prototype `clipwise` command
+packages/pipeline   stage functions (script, fact-check, voice, align, render) + run orchestrator
+packages/video      Remotion project: compositions, templates, animated visuals, captions
+packages/shared     code used by web and worker: API result shape, error codes, input schemas
+design/             homepage prototype, Stitch prompts, API design
+```
+
+Tooling: TypeScript 7, Biome (lint + format), Vitest, pnpm workspaces. Each package has its own `tsconfig.json` extending `tsconfig.base.json`.
+
+## Prototype CLI
+
+Turns a topic into a 30s or 60s vertical (1080×1920) video: Gemini script → fact-check → ElevenLabs voice + timestamps → Remotion animated visuals and word-synced captions.
+
 
 ```bash
 pnpm make "How do black holes form?" --length 60 --preview  # silent preview, 0 voice credits
@@ -41,14 +70,6 @@ Each run writes to `out/<date>-<topic>/`:
 | `run.json` | Per-stage timings, attempts, credits used, errors |
 
 To redo one stage, delete its output and run `resume`. Monthly provider usage is tracked in `out/.usage.json`.
-
-## Layout
-
-```
-packages/pipeline   stage functions (script, validate, voice, images, align, render) + run orchestrator
-packages/video      Remotion project: Explainer composition, 4 templates, captions, theme
-apps/cli            `clipwise` command
-```
 
 ## Credits and limits
 

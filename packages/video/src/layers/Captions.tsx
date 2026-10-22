@@ -11,7 +11,12 @@ export const Captions = ({ words, pages }: { words: TimelineWord[]; pages: Capti
   const page = pages.find((p) => frame >= p.startFrame && frame < p.endFrame);
   if (!page) return null;
 
-  const pop = spring({ frame: frame - page.startFrame, fps, config: { damping: 14, stiffness: 220 }, durationInFrames: 8 });
+  const pop = spring({
+    frame: frame - page.startFrame,
+    fps,
+    config: { damping: 14, stiffness: 220 },
+    durationInFrames: 8,
+  });
 
   return (
     <div

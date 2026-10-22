@@ -34,7 +34,15 @@ describe("buildCaptionPages", () => {
   const w = (text: string, start: number) => ({ text, startFrame: start, endFrame: start + 5 });
 
   it("caps pages at four words and breaks after punctuation", () => {
-    const words = [w("one", 0), w("two", 6), w("three", 12), w("four", 18), w("five", 24), w("end.", 30), w("next", 36)];
+    const words = [
+      w("one", 0),
+      w("two", 6),
+      w("three", 12),
+      w("four", 18),
+      w("five", 24),
+      w("end.", 30),
+      w("next", 36),
+    ];
     const pages = buildCaptionPages(words, 60);
     expect(pages.map((p) => p.wordIndexes)).toEqual([[0, 1, 2, 3], [4, 5], [6]]);
   });
@@ -76,21 +84,33 @@ describe("buildTimeline", () => {
 
   it("passes each scene's visual to the timeline", () => {
     const script = validScript();
-    const timeline = buildTimeline({ script, alignment: fakeAlignment(narrationText(script)), audioFile: null, imageFiles: {} });
+    const timeline = buildTimeline({
+      script,
+      alignment: fakeAlignment(narrationText(script)),
+      audioFile: null,
+      imageFiles: {},
+    });
     expect(timeline.scenes[0]!.visual).toEqual({ type: "icon", icon: "sun" });
     expect(timeline.scenes[2]!.visual).toBeUndefined();
   });
 
   it("falls back to bullets when an imageFocus scene has no image", () => {
     const script = validScript();
-    const timeline = buildTimeline({ script, alignment: fakeAlignment(narrationText(script)), audioFile: null, imageFiles: {} });
+    const timeline = buildTimeline({
+      script,
+      alignment: fakeAlignment(narrationText(script)),
+      audioFile: null,
+      imageFiles: {},
+    });
     expect(timeline.scenes[1]!.template).toBe("bullets");
     expect(timeline.scenes[1]!.imageFile).toBeUndefined();
   });
 
   it("refuses an alignment that doesn't match the script", () => {
     const script = validScript();
-    expect(() => buildTimeline({ script, alignment: fakeAlignment("too few words"), audioFile: null, imageFiles: {} })).toThrow(/Alignment has 3 words/);
+    expect(() =>
+      buildTimeline({ script, alignment: fakeAlignment("too few words"), audioFile: null, imageFiles: {} }),
+    ).toThrow(/Alignment has 3 words/);
   });
 });
 

@@ -30,7 +30,8 @@ export const generateVoice = async (text: string, { final = false, speed = 1 } =
             "This ElevenLabs voice needs a paid plan. On the free plan use a default voice, e.g. George JBFqnCBsd6RMkjVDRZzb, Brian nPczCjzI2devNBz1zQrb, Liam TX3LPaxmHKxFdv7VOQHJ or Jessica cgSgspJ2msm6clMCkdW9, as ELEVENLABS_VOICE_ID in .env.",
           );
         }
-        if (/voice_not_found/.test(body)) throw new FatalError(`ELEVENLABS_VOICE_ID "${voiceId}" was not found on this account.`);
+        if (/voice_not_found/.test(body))
+          throw new FatalError(`ELEVENLABS_VOICE_ID "${voiceId}" was not found on this account.`);
         if (status === 401 || /quota|credits/i.test(body)) {
           throw new FatalError(`ElevenLabs refused the request (${status}): out of credits or invalid key. ${body}`);
         }
@@ -41,5 +42,11 @@ export const generateVoice = async (text: string, { final = false, speed = 1 } =
   );
 
   if (!response.alignment) throw new Error("ElevenLabs returned no alignment");
-  return { audio: Buffer.from(response.audioBase64, "base64"), alignment: response.alignment, characters: text.length, model, attempts };
+  return {
+    audio: Buffer.from(response.audioBase64, "base64"),
+    alignment: response.alignment,
+    characters: text.length,
+    model,
+    attempts,
+  };
 };

@@ -1,8 +1,8 @@
 import { interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
 import type { VisualItem } from "../types";
 import { IconBadge } from "./IconBadge";
-import { BOX, colorOf } from "./palette";
 import { Label } from "./Label";
+import { BOX, colorOf } from "./palette";
 
 // 2–4 steps left to right; each appears in turn, arrows draw between them, then a pulse travels the chain.
 export const Flow = ({ items, color, duration }: { items: VisualItem[]; color: string; duration: number }) => {
@@ -26,21 +26,63 @@ export const Flow = ({ items, color, duration }: { items: VisualItem[]; color: s
         {steps.slice(1).map((_, k) => {
           const x1 = xs[k]! + badge / 2 + 10;
           const x2 = xs[k + 1]! - badge / 2 - 10;
-          const grow = interpolate(frame, [(k + 1) * stagger - 6, (k + 1) * stagger + 6], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+          const grow = interpolate(frame, [(k + 1) * stagger - 6, (k + 1) * stagger + 6], [0, 1], {
+            extrapolateLeft: "clamp",
+            extrapolateRight: "clamp",
+          });
           const end = x1 + (x2 - x1) * grow;
           return (
             <g key={k} opacity={grow}>
-              <line x1={x1} y1={cy} x2={end} y2={cy} stroke={color} strokeWidth={6} strokeDasharray="14 12" strokeDashoffset={-frame * 2} strokeLinecap="round" />
-              <path d={`M${end - 18} ${cy - 16} L${end} ${cy} L${end - 18} ${cy + 16}`} fill="none" stroke={color} strokeWidth={6} strokeLinecap="round" strokeLinejoin="round" />
+              <line
+                x1={x1}
+                y1={cy}
+                x2={end}
+                y2={cy}
+                stroke={color}
+                strokeWidth={6}
+                strokeDasharray="14 12"
+                strokeDashoffset={-frame * 2}
+                strokeLinecap="round"
+              />
+              <path
+                d={`M${end - 18} ${cy - 16} L${end} ${cy} L${end - 18} ${cy + 16}`}
+                fill="none"
+                stroke={color}
+                strokeWidth={6}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </g>
           );
         })}
-        {pulseT >= 0 ? <circle cx={pulseX} cy={cy} r={14} fill="#FFFFFF" opacity={0.9} style={{ filter: `drop-shadow(0 0 12px ${color})` }} /> : null}
+        {pulseT >= 0 ? (
+          <circle
+            cx={pulseX}
+            cy={cy}
+            r={14}
+            fill="#FFFFFF"
+            opacity={0.9}
+            style={{ filter: `drop-shadow(0 0 12px ${color})` }}
+          />
+        ) : null}
       </svg>
       {steps.map((item, i) => {
         const a = appear(i);
         return (
-          <div key={i} style={{ position: "absolute", left: xs[i]! - 120, top: cy - badge / 2, width: 240, display: "flex", flexDirection: "column", alignItems: "center", opacity: a, transform: `scale(${0.6 + a * 0.4})` }}>
+          <div
+            key={i}
+            style={{
+              position: "absolute",
+              left: xs[i]! - 120,
+              top: cy - badge / 2,
+              width: 240,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              opacity: a,
+              transform: `scale(${0.6 + a * 0.4})`,
+            }}
+          >
             <IconBadge icon={item.icon} size={badge} color={colorOf(item.color, color)} />
             <Label text={item.label} width={240} style={{ marginTop: 26 }} />
           </div>

@@ -11,11 +11,47 @@ export const validScript = (): Script => {
     lengthSeconds: 30,
     hook,
     scenes: [
-      { index: 0, template: "title", narration: hook, onScreenText: ["Why is the sky blue?"], visual: { type: "icon", icon: "sun" } },
-      { index: 1, template: "imageFocus", imageQuery: "sunlight through clouds", narration: words(15, "a"), onScreenText: ["Light hits air"] },
-      { index: 2, template: "stat", stat: { value: "~5x", label: "more blue scattered" }, narration: words(15, "b"), onScreenText: ["Blue scatters most"] },
-      { index: 3, template: "bullets", narration: words(15, "c"), onScreenText: ["Blue comes from everywhere"], visual: { type: "particles", motion: "scatter" } },
-      { index: 4, template: "bullets", narration: `${words(9, "d")} ${cta}`, onScreenText: ["Sky looks blue"], visual: { type: "flow", items: [{ icon: "sun", label: "Sunlight" }, { icon: "eye", label: "Your eyes" }] } },
+      {
+        index: 0,
+        template: "title",
+        narration: hook,
+        onScreenText: ["Why is the sky blue?"],
+        visual: { type: "icon", icon: "sun" },
+      },
+      {
+        index: 1,
+        template: "imageFocus",
+        imageQuery: "sunlight through clouds",
+        narration: words(15, "a"),
+        onScreenText: ["Light hits air"],
+      },
+      {
+        index: 2,
+        template: "stat",
+        stat: { value: "~5x", label: "more blue scattered" },
+        narration: words(15, "b"),
+        onScreenText: ["Blue scatters most"],
+      },
+      {
+        index: 3,
+        template: "bullets",
+        narration: words(15, "c"),
+        onScreenText: ["Blue comes from everywhere"],
+        visual: { type: "particles", motion: "scatter" },
+      },
+      {
+        index: 4,
+        template: "bullets",
+        narration: `${words(9, "d")} ${cta}`,
+        onScreenText: ["Sky looks blue"],
+        visual: {
+          type: "flow",
+          items: [
+            { icon: "sun", label: "Sunlight" },
+            { icon: "eye", label: "Your eyes" },
+          ],
+        },
+      },
     ],
     cta,
   };

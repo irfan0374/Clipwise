@@ -66,7 +66,10 @@ describe("validateScript", () => {
     script.scenes[2]!.stat = { value: "Billions", label: "switches" };
     const result = validateScript(script, 30);
     expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.errors).toContain('scenes[2].stat.value "Billions" must contain a digit and be at most 6 characters.');
+    if (!result.ok)
+      expect(result.errors).toContain(
+        'scenes[2].stat.value "Billions" must contain a digit and be at most 6 characters.',
+      );
   });
 
   it("counts words on any whitespace", () => {
@@ -78,7 +81,8 @@ describe("validateScript without images", () => {
   it("rejects imageFocus scenes when no photo provider is set", () => {
     const result = validateScript(validScript(), 30, { images: false });
     expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.errors).toContain("scenes[1] uses imageFocus, which is not available; use another template.");
+    if (!result.ok)
+      expect(result.errors).toContain("scenes[1] uses imageFocus, which is not available; use another template.");
   });
 });
 
@@ -99,7 +103,11 @@ describe("visuals", () => {
 
   it("falls back to a single icon when a visual is incomplete", () => {
     const script = validScript();
-    script.scenes[4]!.visual = { type: "cycle", color: "green", items: [{ icon: "sun" }, { icon: "leaf", label: "Autumn" }] };
+    script.scenes[4]!.visual = {
+      type: "cycle",
+      color: "green",
+      items: [{ icon: "sun" }, { icon: "leaf", label: "Autumn" }],
+    };
     const result = ok(script);
     expect(result.script.scenes[4]!.visual).toEqual({ type: "icon", icon: "sun", color: "green" });
   });
@@ -107,7 +115,16 @@ describe("visuals", () => {
   it("fixes small problems in place", () => {
     const script = validScript();
     script.scenes[3]!.visual = { type: "particles" };
-    script.scenes[4]!.visual = { type: "flow", items: [{ icon: "sun", label: "A very long label indeed" }, { icon: "eye", label: "Eye" }, { icon: "a", label: "b" }, { icon: "c", label: "d" }, { icon: "e", label: "f" }] };
+    script.scenes[4]!.visual = {
+      type: "flow",
+      items: [
+        { icon: "sun", label: "A very long label indeed" },
+        { icon: "eye", label: "Eye" },
+        { icon: "a", label: "b" },
+        { icon: "c", label: "d" },
+        { icon: "e", label: "f" },
+      ],
+    };
     const result = ok(script);
     expect(result.script.scenes[3]!.visual!.motion).toBe("scatter");
     expect(result.script.scenes[4]!.visual!.items).toHaveLength(4);

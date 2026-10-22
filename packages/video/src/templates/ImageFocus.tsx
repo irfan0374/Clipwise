@@ -11,10 +11,19 @@ export const ImageFocus = ({ src, label, duration }: { src: string; label: strin
 
   return (
     <AbsoluteFill>
-      <Img src={src} style={{ width: "100%", height: "100%", objectFit: "cover", transform: `scale(${scale}) translateX(${panX}px)` }} />
+      <Img
+        src={src}
+        style={{
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          transform: `scale(${scale}) translateX(${panX}px)`,
+        }}
+      />
       <AbsoluteFill
         style={{
-          background: "linear-gradient(180deg, rgba(11,11,15,0.85) 0%, rgba(11,11,15,0) 30%, rgba(11,11,15,0) 55%, rgba(11,11,15,0.9) 100%)",
+          background:
+            "linear-gradient(180deg, rgba(11,11,15,0.85) 0%, rgba(11,11,15,0) 30%, rgba(11,11,15,0) 55%, rgba(11,11,15,0.9) 100%)",
         }}
       />
       {label ? (

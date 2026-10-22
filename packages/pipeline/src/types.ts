@@ -26,7 +26,9 @@ export const SceneSchema = z.object({
   onScreenText: z.array(z.string().min(1)).min(1).max(3).describe("1-3 short lines, max 6 words each"),
   imageQuery: z.string().optional().describe("Concrete stock-photo search query; required for imageFocus"),
   stat: z.object({ value: z.string(), label: z.string() }).optional().describe("Required for stat scenes"),
-  visual: VisualSchema.optional().describe("Animated illustration; required for every scene except stat and imageFocus"),
+  visual: VisualSchema.optional().describe(
+    "Animated illustration; required for every scene except stat and imageFocus",
+  ),
 });
 
 export const ScriptSchema = z.object({
@@ -44,10 +46,11 @@ export type Script = z.infer<typeof ScriptSchema>;
 /** Speech rate the word budget is based on (words per second). */
 export const WORDS_PER_SECOND = 2.5;
 
-export const lengthRules: Record<Length, { minWords: number; maxWords: number; minScenes: number; maxScenes: number }> = {
-  30: { minWords: 65, maxWords: 80, minScenes: 4, maxScenes: 5 },
-  60: { minWords: 130, maxWords: 155, minScenes: 7, maxScenes: 9 },
-};
+export const lengthRules: Record<Length, { minWords: number; maxWords: number; minScenes: number; maxScenes: number }> =
+  {
+    30: { minWords: 65, maxWords: 80, minScenes: 4, maxScenes: 5 },
+    60: { minWords: 130, maxWords: 155, minScenes: 7, maxScenes: 9 },
+  };
 
 /** Character-level timestamps as returned by ElevenLabs (`alignment`). */
 export type Alignment = {

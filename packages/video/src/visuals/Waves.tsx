@@ -34,14 +34,31 @@ export const Waves = ({ items, color }: { items: VisualItem[]; color: string }) 
           }
           return (
             <g key={i} clipPath="url(#wave-reveal)">
-              <path d={d} fill="none" stroke={c} strokeWidth={9} strokeLinecap="round" style={{ filter: `drop-shadow(0 0 10px ${c})` }} />
+              <path
+                d={d}
+                fill="none"
+                stroke={c}
+                strokeWidth={9}
+                strokeLinecap="round"
+                style={{ filter: `drop-shadow(0 0 10px ${c})` }}
+              />
             </g>
           );
         })}
       </svg>
       {rows.map((item, i) =>
         item.label ? (
-          <div key={i} style={{ position: "absolute", left: 0, top: rowH * i + 4, fontSize: 36, fontWeight: 700, color: theme.text }}>
+          <div
+            key={i}
+            style={{
+              position: "absolute",
+              left: 0,
+              top: rowH * i + 4,
+              fontSize: 36,
+              fontWeight: 700,
+              color: theme.text,
+            }}
+          >
             {item.label}
           </div>
         ) : null,

@@ -18,11 +18,15 @@ export type Claim = z.infer<typeof ClaimSchema>;
 export type FactCheck = z.infer<typeof FactCheckSchema> & { model: string; searched: boolean; tokens: number };
 
 /** Claims that must be fixed before the voice is recorded. */
-export const issuesOf = (check: Pick<FactCheck, "claims">) => check.claims.filter((c) => c.verdict === "wrong" || c.verdict === "imprecise");
+export const issuesOf = (check: Pick<FactCheck, "claims">) =>
+  check.claims.filter((c) => c.verdict === "wrong" || c.verdict === "imprecise");
 
 /** Turns issues into feedback the script writer can act on. */
 export const factFeedback = (issues: Claim[]) => [
-  ...issues.map((c) => `Fact error in scene ${c.scene}: "${c.text}" is ${c.verdict}.${c.fix ? ` Replace it with: "${c.fix}".` : " Remove it."}`),
+  ...issues.map(
+    (c) =>
+      `Fact error in scene ${c.scene}: "${c.text}" is ${c.verdict}.${c.fix ? ` Replace it with: "${c.fix}".` : " Remove it."}`,
+  ),
   "Keep everything else the same. Keep the language simple. If you are not certain of a number, use a well-known qualitative statement instead.",
 ];
 
@@ -56,7 +60,9 @@ const checkable = (script: Script) =>
     onScreenText: s.onScreenText,
     ...(s.stat ? { stat: s.stat } : {}),
     // Only bar values are data; wave values just set the drawn wavelength.
-    ...(s.visual?.type === "bars" ? { barChart: s.visual.items?.map((i) => ({ label: i.label, value: i.value })) } : {}),
+    ...(s.visual?.type === "bars"
+      ? { barChart: s.visual.items?.map((i) => ({ label: i.label, value: i.value })) }
+      : {}),
   }));
 
 /** Asks Gemini (with Google Search when the free tier allows it) to verify every claim in the script. */
@@ -64,6 +70,7 @@ export const factCheck = async (script: Script): Promise<FactCheck> => {
   const prompt = (await readFile(promptPath, "utf8")).replace("{{script}}", JSON.stringify(checkable(script), null, 2));
   const answer = await askGemini({ prompt, json: true, search: true, temperature: 0.2 });
   const parsed = FactCheckSchema.safeParse(parseJsonReply(answer.text));
-  if (!parsed.success) throw new Error(`Fact-check reply was not valid JSON: ${parsed.error.issues[0]?.message ?? "unknown"}`);
+  if (!parsed.success)
+    throw new Error(`Fact-check reply was not valid JSON: ${parsed.error.issues[0]?.message ?? "unknown"}`);
   return { ...parsed.data, model: answer.model, searched: answer.searched, tokens: answer.tokens };
 };

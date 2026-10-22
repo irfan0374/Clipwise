@@ -1,7 +1,7 @@
-import { Command, InvalidArgumentError } from "commander";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { Lengths, createRun, missingKeys, repoRoot, runPipeline, type Length } from "@clipwise/pipeline";
+import { createRun, type Length, Lengths, missingKeys, repoRoot, runPipeline } from "@clipwise/pipeline";
+import { Command, InvalidArgumentError } from "commander";
 
 /** Script-only and preview runs need just Gemini; full runs also need ElevenLabs. */
 const requireKeys = (geminiOnly = false) => {
@@ -13,7 +13,8 @@ const requireKeys = (geminiOnly = false) => {
 
 const parseLength = (value: string): Length => {
   const n = Number(value);
-  if (!(Lengths as readonly number[]).includes(n)) throw new InvalidArgumentError(`length must be one of ${Lengths.join(", ")}`);
+  if (!(Lengths as readonly number[]).includes(n))
+    throw new InvalidArgumentError(`length must be one of ${Lengths.join(", ")}`);
   return n as Length;
 };
 
@@ -57,7 +58,10 @@ program
   .option("--final", "use the best ElevenLabs model")
   .action(async (file: string, opts: { length: Length; preview?: boolean; final?: boolean }) => {
     requireKeys(opts.preview);
-    const lines = (await readFile(file, "utf8")).split("\n").map((l) => l.trim()).filter((l) => l && !l.startsWith("#"));
+    const lines = (await readFile(file, "utf8"))
+      .split("\n")
+      .map((l) => l.trim())
+      .filter((l) => l && !l.startsWith("#"));
     const failures: string[] = [];
     for (const [i, line] of lines.entries()) {
       const [topic, len] = line.split("|").map((s) => s.trim());
@@ -70,7 +74,9 @@ program
         failures.push(topic!);
       }
     }
-    console.log(`\n${lines.length - failures.length}/${lines.length} succeeded${failures.length ? `; failed: ${failures.join(", ")}` : ""}`);
+    console.log(
+      `\n${lines.length - failures.length}/${lines.length} succeeded${failures.length ? `; failed: ${failures.join(", ")}` : ""}`,
+    );
   });
 
 program.parseAsync().catch((error: Error) => {

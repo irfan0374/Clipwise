@@ -1,7 +1,7 @@
-import { bundle } from "@remotion/bundler";
-import { renderMedia, selectComposition } from "@remotion/renderer";
 import path from "node:path";
 import type { Timeline } from "@clipwise/video";
+import { bundle } from "@remotion/bundler";
+import { renderMedia, selectComposition } from "@remotion/renderer";
 import { repoRoot } from "../env";
 
 const entryPoint = path.join(repoRoot, "packages/video/src/index.ts");

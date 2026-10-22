@@ -42,13 +42,26 @@ export const Cycle = ({ items, color, duration }: { items: VisualItem[]; color: 
         // Labels sit outside the ring: above for the top step, below for the rest.
         const labelAbove = Math.sin(angle) < -0.5;
         return (
-          <div key={i} style={{ position: "absolute", left: x - badge / 2, top: y - badge / 2, transform: `scale(${p * (isActive ? 1.15 : 1)})` }}>
+          <div
+            key={i}
+            style={{
+              position: "absolute",
+              left: x - badge / 2,
+              top: y - badge / 2,
+              transform: `scale(${p * (isActive ? 1.15 : 1)})`,
+            }}
+          >
             <IconBadge icon={item.icon} size={badge} color={colorOf(item.color, color)} filled={isActive} />
             <Label
               text={item.label}
               width={230}
               size={34}
-              style={{ position: "absolute", left: badge / 2 - 115, top: labelAbove ? -58 : badge + 10, opacity: isActive ? 1 : 0.7 }}
+              style={{
+                position: "absolute",
+                left: badge / 2 - 115,
+                top: labelAbove ? -58 : badge + 10,
+                opacity: isActive ? 1 : 0.7,
+              }}
             />
           </div>
         );
