@@ -101,3 +101,19 @@ export const retryVideo = action(z.object({ videoId: Id }), async ({ videoId }, 
   if (!locked.value) throw new ActionError("CONFLICT", "This video isn't waiting for a retry.");
   return { stage: locked.value };
 });
+
+/** "Mark as OK" on a fact-check note: the user checked it. Notes are warnings; they never block rendering. */
+export const acceptClaim = action(
+  z.object({ videoId: Id, claimIndex: z.number().int().min(0).max(100) }),
+  async ({ videoId, claimIndex }, { workspace }) => {
+    await ownVideo(videoId, workspace._id);
+    const res = await Video.updateOne(
+      { _id: videoId, workspaceId: workspace._id, [`factcheck.claims.${claimIndex}`]: { $exists: true } },
+      { $set: { [`factcheck.claims.${claimIndex}.acceptedAt`]: new Date() } },
+    );
+    if (!res.matchedCount) throw new ActionError("NOT_FOUND", "This note doesn't exist anymore.");
+    const video = await Video.findById(videoId, { "factcheck.claims": 1 }).lean();
+    const remaining = (video?.factcheck?.claims ?? []).filter((c) => c.verdict !== "correct" && !c.acceptedAt).length;
+    return { remaining };
+  },
+);

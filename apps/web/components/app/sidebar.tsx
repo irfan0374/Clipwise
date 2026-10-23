@@ -142,3 +142,103 @@ export function Sidebar({ user, usage }: { user: SidebarUser; usage: Usage }) {
     </>
   );
 }
+
+/** Stitch's collapsed 64px icon rail (Storyboard): logo, nav icons, today's usage ring and the account menu. */
+export function IconRail({ user, usage }: { user: SidebarUser; usage: Usage }) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const signOut = async () => {
+    await authClient.signOut();
+    router.push("/sign-in");
+    router.refresh();
+  };
+  const used = Math.min(usage.used, usage.limit);
+  const pct = usage.limit ? Math.round((used / usage.limit) * 100) : 0;
+  const icon = "grid size-10 place-items-center rounded-lg transition-all duration-150";
+  return (
+    <aside className="fixed inset-y-0 left-0 z-50 hidden w-16 flex-col items-center justify-between border-r border-line bg-paper py-4 select-none lg:flex">
+      <div className="flex w-full flex-col items-center gap-6">
+        <Link
+          href="/create"
+          aria-label="Clipwise"
+          className="grid size-9 place-items-center rounded-lg bg-lime shadow-[0_2px_8px_rgba(198,244,50,0.3)] transition-transform hover:scale-105 active:scale-95"
+        >
+          <svg viewBox="0 0 16 16" className="size-4 fill-ink" aria-hidden="true">
+            <path d="M5 3.5v9l7-4.5z" />
+          </svg>
+        </Link>
+        <nav aria-label="Main" className="flex w-full flex-col items-center gap-2 px-2">
+          {navItems.map(({ label, href, icon: Icon, soon }) => {
+            if (soon) {
+              return (
+                <span
+                  key={href}
+                  aria-disabled="true"
+                  title={`${label} · Coming soon`}
+                  className={cn(icon, "cursor-default text-ink-3/60")}
+                >
+                  <Icon className="size-[18px]" strokeWidth={1.75} />
+                </span>
+              );
+            }
+            const active = isActive(pathname, href);
+            return (
+              <Link
+                key={href}
+                href={href}
+                title={label}
+                aria-current={active ? "page" : undefined}
+                className={cn(
+                  icon,
+                  "relative",
+                  active
+                    ? "border border-line bg-panel text-ink shadow-xs"
+                    : "text-ink-2 hover:bg-panel hover:text-ink",
+                )}
+              >
+                <Icon className="size-[18px]" strokeWidth={active ? 2 : 1.75} />
+                {active && <span className="absolute top-2 right-2 size-1.5 rounded-full bg-teal" />}
+                <span className="sr-only">{label}</span>
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
+      <div className="flex w-full flex-col items-center gap-3 px-2">
+        <div className="relative grid size-8 place-items-center" title={`${used} of ${usage.limit} videos today`}>
+          <svg className="size-8 -rotate-90" viewBox="0 0 36 36" aria-hidden="true">
+            <circle cx="18" cy="18" r="15.9155" fill="none" stroke="var(--line)" strokeWidth="3" />
+            <circle
+              cx="18"
+              cy="18"
+              r="15.9155"
+              fill="none"
+              stroke="var(--teal)"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeDasharray={`${pct}, 100`}
+            />
+          </svg>
+          <span className="absolute text-[10px] font-semibold text-ink tabular-nums">
+            {used}/{usage.limit}
+          </span>
+        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            aria-label="Account"
+            className="grid size-8 place-items-center rounded-full bg-ink text-[11px] font-medium text-white shadow-xs ring-2 ring-white outline-none transition-opacity hover:opacity-90 focus-visible:ring-ring/40"
+          >
+            {initials(user.name)}
+          </DropdownMenuTrigger>
+          <DropdownMenuContent side="right" align="end" className="w-56">
+            <DropdownMenuLabel className="truncate font-normal text-ink-2">{user.email}</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={signOut}>
+              <LogOut /> Sign out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </aside>
+  );
+}

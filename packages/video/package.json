@@ -4,7 +4,8 @@
   "type": "module",
   "exports": {
     ".": "./src/types.ts",
-    "./icons": "./src/visuals/icons.ts"
+    "./icons": "./src/visuals/icons.ts",
+    "./explainer": "./src/Explainer.tsx"
   },
   "scripts": {
     "studio": "remotion studio src/index.ts",

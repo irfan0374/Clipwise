@@ -1,9 +1,10 @@
 import { dailyUsage } from "@clipwise/queue";
 import type { ReactNode } from "react";
+import { PageFrame } from "@/components/app/page-frame";
 import { Sidebar } from "@/components/app/sidebar";
 import { requireUser } from "@/lib/session";
 
-/** Shell for signed-in pages: sidebar on the left, content up to 1120px wide. */
+/** Shell for signed-in pages: sidebar on the left, content in a PageFrame. */
 export default async function AppLayout({ children }: { children: ReactNode }) {
   const { user } = await requireUser();
   const usage = await dailyUsage(user.id);
@@ -14,7 +15,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         usage={usage.videos}
       />
       <main className="lg:pl-60">
-        <div className="mx-auto w-full max-w-[1120px] px-4 py-8 sm:px-8 lg:py-12">{children}</div>
+        <PageFrame>{children}</PageFrame>
       </main>
     </div>
   );

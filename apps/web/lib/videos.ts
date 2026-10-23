@@ -1,7 +1,9 @@
 import "server-only";
 import { connectDb, PipelineRun, Video } from "@clipwise/db";
-import type { ClaimVerdict, Format, Stage, VideoStatus } from "@clipwise/shared";
+import { previewTimeline } from "@clipwise/pipeline/web";
+import { type ClaimVerdict, type Format, type Stage, type VideoStatus, Voices } from "@clipwise/shared";
 import { storage } from "@clipwise/storage";
+import type { Timeline } from "@clipwise/video";
 import type { Types } from "mongoose";
 
 const isId = (id: string) => /^[a-f0-9]{24}$/.test(id);
@@ -58,8 +60,14 @@ export type VideoView = {
     onScreenText: string[];
     visual: string | null;
     stat: { value: string; label: string } | null;
-    claims: { text: string; verdict: ClaimVerdict; fix: string }[];
+    /** Claims still to review in this scene (accepted ones are hidden). */
+    claims: { index: number; text: string; verdict: ClaimVerdict; fix: string }[];
+    startFrame: number;
+    endFrame: number;
   }[];
+  voiceName: string;
+  /** Silent preview timeline (estimated timing), once the script exists. */
+  timeline: Timeline | null;
   canCancel: boolean;
   canRetry: boolean;
   /** The latest run was cancelled by the user. */
@@ -77,6 +85,14 @@ export async function videoForOwner(id: string, workspaceId: Types.ObjectId): Pr
     [...(run?.stages ?? [])].reverse().find((s) => s.stage === stage && s.status === "ok")?.durationMs ?? null;
 
   const script = v.script;
+  let timeline: Timeline | null = null;
+  if (script && v.scriptVersion > 0) {
+    try {
+      timeline = previewTimeline(JSON.parse(JSON.stringify(script)));
+    } catch (error) {
+      console.error("[preview] timeline failed", error);
+    }
+  }
   const checked = v.factcheck != null && v.factcheck.checkedVersion === v.scriptVersion && v.scriptVersion > 0;
   const claims = v.factcheck?.claims ?? [];
   const failedAt = v.status === "failed" ? v.stage : null;
@@ -110,7 +126,11 @@ export async function videoForOwner(id: string, workspaceId: Types.ObjectId): Pr
         ms: stageMs("factcheck"),
       },
     },
+    voiceName: Voices.find((x) => x.id === v.voiceId)?.name ?? "Custom voice",
+    timeline,
     scenes: (script?.scenes ?? []).map((s) => ({
+      startFrame: timeline?.scenes.find((t) => t.index === s.index)?.startFrame ?? 0,
+      endFrame: timeline?.scenes.find((t) => t.index === s.index)?.endFrame ?? 0,
       index: s.index,
       template: s.template,
       narration: s.narration,
@@ -118,8 +138,14 @@ export async function videoForOwner(id: string, workspaceId: Types.ObjectId): Pr
       visual: s.visual?.type ?? null,
       stat: s.stat?.value ? { value: s.stat.value, label: s.stat.label ?? "" } : null,
       claims: claims
-        .filter((c) => c.scene === s.index && c.verdict !== "correct")
-        .map((c) => ({ text: c.text ?? "", verdict: (c.verdict ?? "unsure") as ClaimVerdict, fix: c.fix ?? "" })),
+        .map((c, index) => ({ c, index }))
+        .filter(({ c }) => c.scene === s.index && c.verdict !== "correct" && !c.acceptedAt)
+        .map(({ c, index }) => ({
+          index,
+          text: c.text ?? "",
+          verdict: (c.verdict ?? "unsure") as ClaimVerdict,
+          fix: c.fix ?? "",
+        })),
     })),
     canCancel: ["draft", "scripting", "checking"].includes(v.status) && run?.status === "running",
     canRetry: v.status === "failed",

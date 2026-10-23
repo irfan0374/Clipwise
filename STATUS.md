@@ -6,11 +6,11 @@ Repo: https://github.com/irfan0374/Clipwise (public). Updated before every commi
 
 ## Now
 
-**Step D — Storyboard with silent preview (Feature 9)** · Planning
+**Step E — Editing (Feature 10)** · Planning
 
 ## Next up
 
-**Step E — Editing** (Feature 10).
+**Step F — Render and download · Library** (Features 11, 12).
 
 ## Build plan
 
@@ -31,9 +31,9 @@ Legend: ✅ done · 🔍 in review · 🛠 building · ⏳ not started. Small fe
 | --- | --- | --- | --- | --- |
 | A | 4 Homepage · 5 Sign-in (email + password) | ✅ | `d4bca16` | Front door: GSAP/Lenis homepage, Better Auth email + password, open sign-up, workspace on first sign-up |
 | B | 6 Worker, queue and storage | ✅ | `62021df` | BullMQ + local Redis, storage interface (local folder now), jobs script→factcheck→voice→render, budgets, crash recovery |
-| C | 7 Create screen · 8 Live progress and fact-check job | ✅ | (this commit) | Create + Generating screens, live updates (SSE), formats, ideas, cancel/retry, per-user limits |
-| D | 9 Storyboard with silent preview | 🛠 | | |
-| E | 10 Editing | ⏳ | | Optimistic locking with `expectedVersion` |
+| C | 7 Create screen · 8 Live progress and fact-check job | ✅ | `9b2f2ca` | Create + Generating screens, live updates (SSE), formats, ideas, cancel/retry, per-user limits |
+| D | 9 Storyboard with silent preview | ✅ | (this commit) | Storyboard + Generating rebuilt to match Stitch exactly: icon rail, scene frame grid from real animation stills, timing bar, Mark as OK, click a frame for the in-browser player |
+| E | 10 Editing | 🛠 | | Optimistic locking with `expectedVersion` |
 | F | 11 Render and download · 12 Library | ⏳ | | |
 | G | 13 Limits and settings · 14 Admin | ⏳ | | |
 | H | 15 Polish and Sentry · 16 Deploy and private beta | ⏳ | | GitHub repo ready |
@@ -61,6 +61,8 @@ Legend: ✅ done · 🔍 in review · 🛠 building · ⏳ not started. Small fe
 | 2026-10-23 | Beta limits per user: 10 new videos/day, 2 in progress, 30 idea suggestions/day (env LIMIT_*) |
 | 2026-10-23 | Script rules relaxed: scene range 3–6 (30s) / 5–9 (60s), word floor 80%, 4 attempts, hook/cta/length fields repaired instead of rejected; if only the length is off, the closest attempt is kept |
 | 2026-10-23 | QA/review fixes: promo product claims are checked only against the creator's brief (no web search) and promos are never labelled "Fact-checked" ("Check product details"); quote videos must say the saying word for word; unreadable fact-check claims show as "to review"; job IDs include the run (retries really run); budget rebuild never overwrites live counters; per-workspace lock for the running-videos limit; CLI uses the shared budgets |
+| 2026-10-23 | App screens copy the Stitch designs exactly. Controls for features not built yet are shown disabled with a "Coming soon" tooltip; the Storyboard uses Stitch's 64px icon rail and opens the player in a popup when a frame is clicked; Lucide icons stand in for Material Symbols |
+| 2026-10-23 | Storyboard preview plays in the browser (Remotion Player + Thumbnail) from the same composition the renderer uses; no preview MP4 is rendered |
 | 2026-10-23 | Small features may be merged with neighbours into one build step (user preference) |
 | 2026-10-23 | Build feature by feature; one commit per approved feature; STATUS.md updated before each commit and push |
 | 2026-10-23 | Biome for lint + format (not ESLint + Prettier). `noNonNullAssertion` off (works with strict index typing); array-index keys and SVG titles allowed in video frames |

@@ -162,6 +162,43 @@
   }
 }
 
+/* Motion from the Stitch Generating screen: status dots, the active step and the preview skeleton. */
+@keyframes subtle-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(0.96);
+  }
+}
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+@utility pulse-soft {
+  animation: subtle-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+@utility spin-slow {
+  animation: spin 2.4s linear infinite;
+}
+@utility shimmer {
+  background: linear-gradient(
+    90deg,
+    rgb(255 255 255 / 0.03) 0%,
+    rgb(255 255 255 / 0.12) 50%,
+    rgb(255 255 255 / 0.03) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2.5s infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
