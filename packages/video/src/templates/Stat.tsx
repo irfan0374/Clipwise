@@ -1,20 +1,13 @@
 import { AbsoluteFill, interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
 import { theme } from "../theme";
-
-// Splits "~5x" into prefix "~", number 5, suffix "x" so the number can count up.
-export const parseStat = (value: string) => {
-  const match = value.match(/^(\D*?)(\d+(?:[.,]\d+)?)(.*)$/);
-  if (!match) return null;
-  const raw = match[2]!.replace(",", ".");
-  return { prefix: match[1]!, number: Number(raw), decimals: raw.split(".")[1]?.length ?? 0, suffix: match[3]! };
-};
+import { formatStat, parseStat } from "./stat-number";
 
 export const Stat = ({ value, label }: { value: string; label: string }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const parsed = parseStat(value);
   const count = interpolate(frame, [0, 24], [0, 1], { extrapolateRight: "clamp", easing: (t) => 1 - (1 - t) ** 3 });
-  const shown = parsed ? `${parsed.prefix}${(parsed.number * count).toFixed(parsed.decimals)}${parsed.suffix}` : value;
+  const shown = parsed ? formatStat(parsed, count) : value;
   const labelIn = spring({ frame: frame - 18, fps, config: { damping: 200 } });
 
   return (

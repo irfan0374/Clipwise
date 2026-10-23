@@ -1,5 +1,5 @@
 import { isKnownIcon } from "@clipwise/video/icons";
-import { type Length, lengthRules, type Script, ScriptSchema, type Visual } from "../types";
+import { type Length, lengthRules, type Script, ScriptSchema, type Visual, WORD_FLOOR } from "../types";
 
 const MAX_LABEL = 18;
 
@@ -105,7 +105,7 @@ export type ValidationResult =
       errors: string[];
       wordCount?: number;
       /** Set when the shape was valid and the word count is the only problem, so the script can be fixed up. */
-      lengthOnly?: { script: Script; minWords: number; maxWords: number };
+      lengthOnly?: { script: Script; minWords: number; maxWords: number; repairs: string[] };
     };
 
 // Checks shape first, then the rules a schema can't express. Errors are written so they can be fed back to Gemini.
@@ -119,12 +119,28 @@ export const validateScript = (raw: unknown, length: Length, { images = true } =
   const rules = lengthRules[length];
   const errors: string[] = [];
 
-  if (script.lengthSeconds !== length) errors.push(`lengthSeconds must be ${length}.`);
+  // Bookkeeping fields are repaired, not rejected: they are copies of what the scenes already say.
+  const fixes: string[] = [];
+  if (script.lengthSeconds !== length) {
+    script.lengthSeconds = length;
+    fixes.push(`lengthSeconds set to ${length}`);
+  }
+  const first = script.scenes[0];
+  if (first && first.narration.trim() !== script.hook.trim()) {
+    script.hook = first.narration.trim();
+    fixes.push("hook synced to scene 1");
+  }
+  const last = script.scenes.at(-1);
+  if (last && !last.narration.trim().endsWith(script.cta.trim())) {
+    const sentences = last.narration.trim().split(/(?<=[.!?])\s+/);
+    script.cta = sentences.at(-1) ?? last.narration.trim();
+    fixes.push("cta taken from the last scene");
+  }
 
   // Accept ~10% either side of the asked-for budget; voice speed correction handles the rest.
   const words = narrationWords(script);
-  const tooShort = words < Math.round(rules.minWords * 0.9);
-  const tooLong = words > Math.round(rules.maxWords * 1.1);
+  const tooShort = words < Math.round(rules.minWords * WORD_FLOOR);
+  const tooLong = words > Math.round(rules.maxWords * 1.2);
   if (tooShort) {
     errors.push(
       `You wrote ${words} words of narration; you need at least ${rules.minWords} (aim for ${rules.maxWords}). Add about ${rules.maxWords - words} words: make every scene's narration one sentence longer.`,
@@ -137,8 +153,12 @@ export const validateScript = (raw: unknown, length: Length, { images = true } =
   }
 
   const sceneCount = script.scenes.length;
-  if (sceneCount < rules.minScenes || sceneCount > rules.maxScenes) {
-    errors.push(`You wrote ${sceneCount} scenes; write between ${rules.minScenes} and ${rules.maxScenes}.`);
+  const [fewest, most] = rules.allowedScenes;
+  const badSceneCount = sceneCount < fewest || sceneCount > most;
+  if (badSceneCount) {
+    errors.push(
+      `You wrote ${sceneCount} scenes; write between ${rules.minScenes} and ${rules.maxScenes} (${fewest}–${most} at most).`,
+    );
   }
 
   script.scenes.forEach((scene, i) => {
@@ -156,23 +176,26 @@ export const validateScript = (raw: unknown, length: Length, { images = true } =
     });
   });
 
-  if (script.scenes[0]?.narration.trim() !== script.hook.trim()) {
-    errors.push("scenes[0].narration must be exactly the hook.");
-  }
-  const last = script.scenes.at(-1);
-  if (last && !last.narration.trim().endsWith(script.cta.trim())) {
-    errors.push("The last scene's narration must end with the cta.");
-  }
-
   if (errors.length) {
-    const lengthOnly = (tooShort || tooLong) && errors.length === 1;
+    // Only the size is off (words and/or scene count): the script can be handed back to be resized.
+    const sizeErrors = Number(tooShort || tooLong) + Number(badSceneCount);
+    const lengthOnly = sizeErrors > 0 && errors.length === sizeErrors;
     return {
       ok: false,
       errors,
       wordCount: words,
-      ...(lengthOnly ? { lengthOnly: { script, minWords: rules.minWords, maxWords: rules.maxWords } } : {}),
+      ...(lengthOnly
+        ? {
+            lengthOnly: {
+              script,
+              minWords: rules.minWords,
+              maxWords: rules.maxWords,
+              repairs: [...fixes, ...script.scenes.map(repairVisual).filter((r): r is string => r !== null)],
+            },
+          }
+        : {}),
     };
   }
-  const repairs = script.scenes.map(repairVisual).filter((r): r is string => r !== null);
+  const repairs = [...fixes, ...script.scenes.map(repairVisual).filter((r): r is string => r !== null)];
   return { ok: true, script, repairs };
 };

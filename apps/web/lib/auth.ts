@@ -1,6 +1,6 @@
 import "server-only";
 import { mongodbAdapter } from "@better-auth/mongo-adapter";
-import { connectDb, roleForEmail, setUpNewUser } from "@clipwise/db";
+import { connectDb, setUpNewUser } from "@clipwise/db";
 import { betterAuth } from "better-auth";
 import { nextCookies } from "better-auth/next-js";
 import { MongoClient } from "mongodb";
@@ -54,7 +54,9 @@ export const auth = betterAuth({
   databaseHooks: {
     user: {
       create: {
-        before: async (user) => ({ data: { ...user, role: roleForEmail(user.email) } }),
+        // Everyone signs up as a normal user (emails aren't verified, so an email can't prove admin).
+        // Admins are made with `pnpm user:admin you@example.com` on a machine with database access.
+        before: async (user) => ({ data: { ...user, role: "user" } }),
         after: async (user) => {
           await connectDb();
           await setUpNewUser(user);

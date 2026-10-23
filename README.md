@@ -22,15 +22,16 @@ Needs Node 22 (`nvm use` reads `.nvmrc`) and pnpm.
 
 | Command | What it does |
 | --- | --- |
-| `pnpm dev` | Web app on http://localhost:3000 and the worker, together. Design system at http://localhost:3000/design (dev only) |
+| `pnpm dev` | Web app on http://localhost:3000 and the worker, together (sign up, then Create → Write my video). Design system at http://localhost:3000/design (dev only) |
 | `pnpm check` | Lint + typecheck + tests. Run before every commit |
 | `pnpm format` | Auto-fix formatting and import order (Biome) |
 | `pnpm job:make "topic" [--preview \| --final]` | Queue a video for the sample workspace through the real worker and follow its progress. Default stops after script + fact-check; `--preview` adds a silent MP4 (0 voice credits); `--final` records the voice (uses ElevenLabs credits). Needs the worker running (`pnpm dev`) |
+| `pnpm user:admin you@example.com [--remove]` | Make an existing account admin (or a normal user again). The only way to become admin |
 | `pnpm db:status` | Show the database name and how many records each collection has |
 | `pnpm db:seed` | Fill a dev database with a sample workspace and 3 videos (rendered, previewed, failed). Never runs on production |
 | `pnpm db:indexes` | Create or update all indexes (production builds no indexes on startup) |
 | `pnpm db:migrate` | Run pending scripts in `packages/db/migrations/` once each |
-| `pnpm make "topic" …` | Make a video with the prototype CLI (see below) |
+| `pnpm make "topic" …` | Make a video with the prototype CLI (see below). Needs MongoDB + Redis: it spends against the same budgets as the worker |
 | `pnpm studio` | Tweak video templates live in Remotion Studio |
 
 ## Layout

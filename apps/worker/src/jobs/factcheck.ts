@@ -1,8 +1,17 @@
 import { PipelineRun, Render, ScriptVersion, Video } from "@clipwise/db";
-import { checkFacts, type Providers } from "@clipwise/pipeline";
+import { checkFacts, type Providers, type VideoFormat } from "@clipwise/pipeline";
 import type { JobData } from "@clipwise/queue";
 import { enqueue } from "@clipwise/queue";
-import { emit, type Loaded, plainScript, recordUsage, resolveLength, runStage, setStatus } from "../context";
+import {
+  emit,
+  type Loaded,
+  plainScript,
+  recordUsage,
+  resolveLength,
+  runStage,
+  setStatus,
+  stillRunning,
+} from "../context";
 
 /** Checks every claim (rewriting the script if needed), then stops or continues to preview / voice. */
 export async function factcheckJob(ctx: Loaded, data: JobData<"factcheck">, attempt: number, providers?: Providers) {
@@ -17,12 +26,18 @@ export async function factcheckJob(ctx: Loaded, data: JobData<"factcheck">, atte
   if (video.scriptVersion !== data.scriptVersion) return; // stale: the script changed since this job was queued
 
   await setStatus(videoId, "checking", "factcheck", 35);
-  const length = resolveLength(video.lengthMode);
+  const length = resolveLength(video);
   const script = plainScript(video);
 
   const r = await runStage(ctx, "factcheck", attempt, async () => {
     const result = await checkFacts(
-      { script, topic: video.topic, length, log: (m) => console.log(`  [factcheck] ${m}`) },
+      {
+        script,
+        topic: video.topic,
+        length,
+        format: video.format as VideoFormat,
+        log: (m) => console.log(`  [factcheck] ${m}`),
+      },
       providers,
     );
     await recordUsage(ctx, [
@@ -48,6 +63,8 @@ export async function factcheckJob(ctx: Loaded, data: JobData<"factcheck">, atte
       detail: `${result.check.claims.length} claims · ${result.rewrites} rewrite(s) · ${toReview} to review`,
     };
   });
+
+  if (!(await stillRunning(ctx))) return; // cancelled while the fact-check ran: discard
 
   let version = data.scriptVersion;
   if (r.scriptChanged) {

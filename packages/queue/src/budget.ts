@@ -27,7 +27,7 @@ local total = redis.call('INCRBY', KEYS[1], n)
 redis.call('EXPIRE', KEYS[1], ARGV[3])
 return total`;
 
-const reserve = async (key: string, n: number, limit: number, ttlSeconds: number) =>
+export const reserve = async (key: string, n: number, limit: number, ttlSeconds: number) =>
   ((await redis().eval(RESERVE, 1, key, n, limit, ttlSeconds)) as number) >= 0;
 
 /** Reserves one Gemini request against today's budget. False = budget used up (nothing reserved). */
@@ -52,7 +52,11 @@ export async function budgetStatus() {
   };
 }
 
-/** Rebuilds today's and this month's counters from usageEvents (call on worker start). */
+/**
+ * Restores today's and this month's counters from usageEvents if they are missing (e.g. after a Redis restart).
+ * Existing counters are never overwritten (SET NX): they include reservations for requests still in flight,
+ * which MongoDB doesn't know about yet, and several workers may start at once.
+ */
 export async function rebuildBudgetCounters(now = new Date()) {
   const dayStart = new Date(`${day(now)}T00:00:00.000Z`);
   const monthStart = new Date(`${month(now)}-01T00:00:00.000Z`);
@@ -64,10 +68,15 @@ export async function rebuildBudgetCounters(now = new Date()) {
     { $match: { provider: "elevenlabs", unit: "credits", createdAt: { $gte: monthStart } } },
     { $group: { _id: null, n: { $sum: "$quantity" } } },
   ]);
-  await redis()
+  const [g, e] = await redis()
     .multi()
-    .set(budgetKeys.geminiRequests(now), gemini?.n ?? 0, "EX", 2 * 24 * 3600)
-    .set(budgetKeys.elevenLabsCredits(now), eleven?.n ?? 0, "EX", 40 * 24 * 3600)
-    .exec();
-  return { geminiRequests: gemini?.n ?? 0, elevenLabsCredits: eleven?.n ?? 0 };
+    .set(budgetKeys.geminiRequests(now), gemini?.n ?? 0, "EX", 2 * 24 * 3600, "NX")
+    .set(budgetKeys.elevenLabsCredits(now), eleven?.n ?? 0, "EX", 40 * 24 * 3600, "NX")
+    .exec()
+    .then((r) => (r ?? []).map(([, v]) => v === "OK"));
+  return {
+    geminiRequests: gemini?.n ?? 0,
+    elevenLabsCredits: eleven?.n ?? 0,
+    restored: { gemini: !!g, elevenlabs: !!e },
+  };
 }

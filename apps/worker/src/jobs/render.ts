@@ -55,10 +55,10 @@ export async function renderJob(ctx: Loaded, data: JobData<"render">, attempt: n
         thumbnailFile: thumb,
         onProgress: (pct) => {
           void emit(videoId, { type: "render", renderId: data.renderId, progress: pct });
-          void Video.updateOne(
-            { _id: video._id },
-            { $set: { progress: Math.round(base + (pct / 100) * (99 - base)) } },
-          );
+          // .exec(): a Mongoose query only runs when executed or awaited
+          Video.updateOne({ _id: video._id }, { $set: { progress: Math.round(base + (pct / 100) * (99 - base)) } })
+            .exec()
+            .catch((err: unknown) => console.warn(`  [render] progress not saved: ${(err as Error).message}`));
         },
       });
       const sizeBytes = (await stat(out)).size;

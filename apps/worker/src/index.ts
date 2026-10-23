@@ -18,7 +18,7 @@ installBudgetGuards(); // atomic budget reservation before every Gemini / Eleven
 const rebuilt = await rebuildBudgetCounters();
 const budget = await budgetStatus();
 console.log(
-  `[worker] budgets: Gemini ${budget.gemini.used}/${budget.gemini.limit} requests today · ElevenLabs ${budget.elevenlabs.used}/${budget.elevenlabs.limit} credits this month (rebuilt from ${rebuilt.geminiRequests + rebuilt.elevenLabsCredits > 0 ? "usage" : "empty usage"})`,
+  `[worker] budgets: Gemini ${budget.gemini.used}/${budget.gemini.limit} requests today · ElevenLabs ${budget.elevenlabs.used}/${budget.elevenlabs.limit} credits this month${rebuilt.restored.gemini || rebuilt.restored.elevenlabs ? " (restored from usage records)" : ""}`,
 );
 
 const processor = makeProcessor();

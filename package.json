@@ -18,6 +18,7 @@
     "db:migrate": "tsx packages/db/scripts/migrate.ts",
     "db:seed": "tsx packages/db/scripts/seed.ts",
     "db:status": "tsx packages/db/scripts/status.ts",
+    "user:admin": "tsx packages/db/scripts/user-admin.ts",
     "job:make": "tsx apps/worker/scripts/make.ts"
   },
   "engines": {

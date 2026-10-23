@@ -49,20 +49,26 @@ describe("removeDoubtfulNumbers", () => {
 });
 
 describe("readClaims", () => {
-  it("accepts renamed fields, string scenes and capitalised verdicts, and skips unusable claims", () => {
+  it("accepts renamed fields, string scenes and capitalised verdicts; unreadable claims become 'to review'", () => {
     const claims = readClaims({
       claims: [
         { scene: 1, text: "Cats purr at 25 Hz", verdict: "correct", fix: "" },
         { scene: "2", claim: "Purring heals bones", verdict: "Unsure" },
-        { scene: 3, verdict: "correct" }, // no text: skipped
-        { scene: 4, text: "x", verdict: "maybe" }, // unknown verdict: skipped
+        { scene: 3, verdict: "correct" }, // no text
+        { scene: 3, text: "x", verdict: "maybe" }, // unknown verdict, same scene
         "noise",
       ],
     });
     expect(claims).toEqual([
       { scene: 1, text: "Cats purr at 25 Hz", verdict: "correct", fix: "" },
       { scene: 2, text: "Purring heals bones", verdict: "unsure", fix: "" },
+      { scene: 3, text: "One claim in this scene couldn't be checked automatically", verdict: "unsure", fix: "" },
+      { scene: 0, text: "One claim couldn't be checked automatically", verdict: "unsure", fix: "" },
     ]);
+  });
+
+  it("rejects a reply whose claims are all unreadable (retried, never shown as verified)", () => {
+    expect(() => readClaims({ claims: [{ scene: 1 }, "noise"] })).toThrow(/no readable claims/);
   });
 
   it("accepts a bare array, and rejects a reply without any claims list", () => {

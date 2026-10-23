@@ -112,7 +112,7 @@ Not server actions: the browser calls Better Auth's own endpoints through its cl
 // POST /api/auth/sign-out                                   -> clears the cookie
 ```
 - Sign-up is open to anyone (decided 2026-10-23). Passwords: 8–128 characters, hashed by Better Auth and stored in its `account` collection (`providerId: "credential"`).
-- On sign-up a hook gives the `admin` role to emails in `ADMIN_EMAILS` and creates the user's workspace.
+- On sign-up a hook creates the user's workspace. Everyone signs up as `user`; admins are made with `pnpm user:admin you@example.com` (database access required), never by email.
 - No emails are sent in the beta: no verification and no self-service reset. A forgotten password is reset by an admin (`resetUserPassword`). Add an email provider before the public launch.
 - Errors shown to people: wrong email or password (401), email already has an account (422), too many attempts (429).
 

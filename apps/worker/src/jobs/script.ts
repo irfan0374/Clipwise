@@ -1,8 +1,8 @@
 import { ScriptVersion, Video } from "@clipwise/db";
-import { type Providers, ScriptFailedError, writeScript } from "@clipwise/pipeline";
+import { type Providers, ScriptFailedError, type VideoFormat, writeScript } from "@clipwise/pipeline";
 import type { JobData } from "@clipwise/queue";
 import { enqueue } from "@clipwise/queue";
-import { emit, type Loaded, recordUsage, resolveLength, runStage, setStatus } from "../context";
+import { emit, type Loaded, recordUsage, resolveLength, runStage, setStatus, stillRunning } from "../context";
 
 /** Writes the first script (version 1), then queues the fact-check. */
 export async function scriptJob(ctx: Loaded, data: JobData<"script">, attempt: number, providers?: Providers) {
@@ -17,12 +17,12 @@ export async function scriptJob(ctx: Loaded, data: JobData<"script">, attempt: n
   }
 
   await setStatus(videoId, "scripting", "script", 5);
-  const length = resolveLength(video.lengthMode);
+  const length = resolveLength(video);
 
   const result = await runStage(ctx, "script", attempt, async () => {
     try {
       const r = await writeScript(
-        { topic: video.topic, length, log: (m) => console.log(`  [script] ${m}`) },
+        { topic: video.topic, length, format: video.format as VideoFormat, log: (m) => console.log(`  [script] ${m}`) },
         providers,
       );
       await recordUsage(ctx, [
@@ -41,6 +41,8 @@ export async function scriptJob(ctx: Loaded, data: JobData<"script">, attempt: n
       throw error;
     }
   });
+
+  if (!(await stillRunning(ctx))) return; // cancelled while Gemini was writing: discard
 
   await ScriptVersion.updateOne(
     { videoId: video._id, version: 1 },

@@ -29,9 +29,15 @@ importers:
 
   apps/cli:
     dependencies:
+      '@clipwise/db':
+        specifier: workspace:*
+        version: link:../../packages/db
       '@clipwise/pipeline':
         specifier: workspace:*
         version: link:../../packages/pipeline
+      '@clipwise/queue':
+        specifier: workspace:*
+        version: link:../../packages/queue
       commander:
         specifier: ^15.0.0
         version: 15.0.0
@@ -47,9 +53,18 @@ importers:
       '@clipwise/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@clipwise/pipeline':
+        specifier: workspace:*
+        version: link:../../packages/pipeline
+      '@clipwise/queue':
+        specifier: workspace:*
+        version: link:../../packages/queue
       '@clipwise/shared':
         specifier: workspace:*
         version: link:../../packages/shared
+      '@clipwise/storage':
+        specifier: workspace:*
+        version: link:../../packages/storage
       better-auth:
         specifier: 1.7.12
         version: 1.7.12(mongodb@7.7.0(socks@2.8.10))(next@16.4.2(@babel/core@7.29.7(supports-color@8.1.1))(@types/node@26.6.5)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(vitest@5.0.5(@types/node@26.6.5)(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)))
@@ -74,6 +89,9 @@ importers:
       mongodb:
         specifier: ~7.7.0
         version: 7.7.0(socks@2.8.10)
+      mongoose:
+        specifier: ^9.11.3
+        version: 9.11.3(socks@2.8.10)
       next:
         specifier: ^16.4.2
         version: 16.4.2(@babel/core@7.29.7(supports-color@8.1.1))(@types/node@26.6.5)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -200,6 +218,9 @@ importers:
       '@clipwise/db':
         specifier: workspace:*
         version: link:../db
+      '@clipwise/pipeline':
+        specifier: workspace:*
+        version: link:../pipeline
       '@clipwise/shared':
         specifier: workspace:*
         version: link:../shared

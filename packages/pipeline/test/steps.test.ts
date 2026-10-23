@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { FactCheck } from "../src/stages/factcheck";
 import { narrationText } from "../src/stages/voice";
 import { checkFacts, type Providers, recordVoice, ScriptFailedError, writeScript } from "../src/steps";
-import { fakeAlignment, validScript } from "./fixtures";
+import { fakeAlignment, validScript, words } from "./fixtures";
 
 const scriptReply = (raw: unknown) => ({ raw, tokens: 100, attempts: 1, model: "fake-gemini" });
 const check = (claims: FactCheck["claims"]): FactCheck => ({ claims, model: "fake", searched: false, tokens: 50 });
@@ -54,6 +54,7 @@ describe("writeScript", () => {
   it("hands back a too-short script to be lengthened instead of starting over", async () => {
     const short = validScript();
     short.scenes[1]!.narration = "Too short.";
+    short.scenes[3]!.narration = "Also short.";
     const feedback: string[][] = [];
     const p = fakes({ scripts: [short, validScript()] });
     const spy: Providers = {
@@ -72,11 +73,26 @@ describe("writeScript", () => {
     expect(second).toContain('"narration":"Too short."');
   });
 
-  it("gives up after three invalid replies and reports what was spent", async () => {
-    const p = fakes({ scripts: [{}, {}, {}] });
+  it("keeps the closest attempt when every attempt is good except its length", async () => {
+    const short = (n: number) => {
+      const s = validScript();
+      s.scenes[1]!.narration = words(n);
+      s.scenes[3]!.narration = words(2);
+      return s;
+    };
+    // narration totals: 42, 46, 40, 44 words (all under the 52-word floor for 30s); 46 is closest to the target
+    const p = fakes({ scripts: [short(5), short(9), short(3), short(7)] });
+    const r = await writeScript({ topic: "sky", length: 30, images: true }, p);
+    expect(r.attempts).toBe(4);
+    expect(r.invalid).toHaveLength(4);
+    expect(r.script.scenes[1]!.narration.split(" ")).toHaveLength(9);
+  });
+
+  it("gives up after four invalid replies and reports what was spent", async () => {
+    const p = fakes({ scripts: [{}, {}, {}, {}] });
     const err = await writeScript({ topic: "sky", length: 30 }, p).catch((e) => e);
     expect(err).toBeInstanceOf(ScriptFailedError);
-    expect(err.tokens).toBe(300);
+    expect(err.tokens).toBe(400);
   });
 });
 

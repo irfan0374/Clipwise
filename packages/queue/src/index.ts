@@ -8,6 +8,16 @@ export {
   reserveGeminiRequest,
 } from "./budget";
 export { publishVideoEvent, subscribeAllVideoEvents, subscribeVideoEvents } from "./events";
+export { budgetGuards, type UsageRow } from "./guards";
+export {
+  activeRunCount,
+  dailyUsage,
+  refundDaily,
+  secondsUntilReset,
+  takeDaily,
+  userLimits,
+  withWorkspaceLock,
+} from "./limits";
 export { isGenerationPaused, setGenerationPaused } from "./pause";
 export {
   allQueues,
@@ -21,4 +31,4 @@ export {
   queue,
 } from "./queues";
 export { closeRedis, newRedis, redis, redisUrl } from "./redis";
-export { type StartVideoInput, startVideo } from "./videos";
+export { cancelVideo, retryVideo, type StartVideoInput, startVideo } from "./videos";

@@ -35,7 +35,7 @@ export const queue = (name: QueueName): Queue => {
 export const allQueues = () => (Object.keys(Queues) as QueueName[]).filter((n) => n !== "publish").map(queue);
 
 /**
- * Deterministic IDs (vid_{id}_{stage}_v{scriptVersion}_{run or render}): adding the same job twice, from a
+ * Deterministic IDs (vid_{id}_{stage}_v{scriptVersion}[_{render}]_{run}): adding the same job twice, from a
  * double click or a retried parent job, is a no-op. BullMQ custom ids may not contain ":".
  */
 export const jobIdFor = <N extends JobName>(name: N, data: JobData<N>): string => {
@@ -47,7 +47,9 @@ export const jobIdFor = <N extends JobName>(name: N, data: JobData<N>): string =
     case "factcheck":
       return `${base}_v${d.scriptVersion}_${d.runId}`;
     default:
-      return `${base}_v${d.scriptVersion}_${d.renderId}`;
+      // The run is part of the ID: a retry is a new run, so its jobs never collide with the failed ones
+      // BullMQ keeps (adding an existing ID is silently ignored).
+      return `${base}_v${d.scriptVersion}_${d.renderId}_${d.runId}`;
   }
 };
 

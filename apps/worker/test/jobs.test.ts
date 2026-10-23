@@ -1,13 +1,19 @@
 import { PipelineRun, Render, ScriptVersion, UsageEvent, Video, Workspace } from "@clipwise/db";
 import { type FactCheck, type Providers, providerGuards } from "@clipwise/pipeline";
 import {
+  activeRunCount,
   budgetKeys,
+  cancelVideo,
   enqueue,
   queue,
+  rebuildBudgetCounters,
   redis,
   reserveGeminiRequest,
+  retryVideo,
   startVideo,
   subscribeVideoEvents,
+  takeDaily,
+  withWorkspaceLock,
 } from "@clipwise/queue";
 import type { RunTarget, VideoEvent } from "@clipwise/shared";
 import type { Job } from "bullmq";
@@ -281,5 +287,115 @@ describe("safety", () => {
     await Video.updateOne({ _id: videoId }, { $set: { deletedAt: new Date() } });
     await drain("ai", fakes());
     expect((await Video.findById(videoId).lean())?.status).toBe("draft");
+  });
+});
+
+describe("cancel and retry", () => {
+  it("cancels a video that is still being written: waiting jobs are dropped and nothing is saved", async () => {
+    const { videoId, runId } = await newVideo();
+    expect(await activeRunCount((await Video.findById(videoId))!.workspaceId)).toBe(1);
+    expect(await cancelVideo(videoId)).toBe(true);
+    expect(await queue("ai").count()).toBe(0);
+    expect((await PipelineRun.findById(runId).lean())?.status).toBe("cancelled");
+    // A job that was already running when Cancel was clicked: its result is discarded.
+    await enqueue("script", { videoId, runId });
+    await drain("ai", fakes());
+    const video = await Video.findById(videoId).lean();
+    expect(video).toMatchObject({ status: "draft", scriptVersion: 0 });
+    expect(await activeRunCount(video!.workspaceId)).toBe(0);
+  });
+
+  it("can't cancel once the script is checked", async () => {
+    const { videoId } = await newVideo();
+    await drain("ai", fakes());
+    expect(await cancelVideo(videoId)).toBe(false);
+  });
+
+  it("retries from the failed step and reuses what was done", async () => {
+    await redis().set(budgetKeys.geminiRequests(), 79); // script fits, fact-check doesn't
+    const { videoId } = await newVideo();
+    await drain("ai", fakes());
+    expect((await Video.findById(videoId).lean())?.status).toBe("failed");
+
+    await redis().set(budgetKeys.geminiRequests(), 0); // budget back (next day)
+    expect(await retryVideo(videoId)).toBe("factcheck");
+    const scriptCalls: string[] = [];
+    const p = fakes();
+    await drain("ai", {
+      ...p,
+      generateScript: async (...args) => {
+        scriptCalls.push("script");
+        return p.generateScript(...args);
+      },
+    });
+    const video = await Video.findById(videoId).lean();
+    expect(video).toMatchObject({ status: "previewed", scriptVersion: 1, error: null });
+    expect(scriptCalls).toEqual([]); // the script was reused, not rewritten
+    expect(await PipelineRun.countDocuments({ videoId })).toBe(2);
+  });
+
+  it("does nothing for a video that hasn't failed", async () => {
+    const { videoId } = await newVideo();
+    expect(await retryVideo(videoId)).toBeNull();
+  });
+});
+
+describe("per-user limits", () => {
+  it("allows 10 new videos a day, then refuses without counting further", async () => {
+    const results = [];
+    for (let i = 0; i < 12; i++) results.push(await takeDaily("u1", "videos"));
+    expect(results.filter(Boolean)).toHaveLength(10);
+    expect(await takeDaily("u2", "videos")).toBe(true); // per user
+  });
+});
+
+describe("review fixes", () => {
+  it("a provider error that arrives after Cancel doesn't overwrite the cancellation", async () => {
+    const { videoId, runId } = await newVideo();
+    const p = fakes();
+    await drain("ai", {
+      ...p,
+      generateScript: async () => {
+        await cancelVideo(videoId); // user cancels while Gemini is still answering…
+        throw new Error("boom"); // …and the call then fails for good
+      },
+    });
+    for (let i = 0; i < 3; i++) await drain("ai", p); // retries are skipped: the run is cancelled
+    expect((await PipelineRun.findById(runId).lean())?.status).toBe("cancelled");
+    expect((await Video.findById(videoId).lean())?.status).toBe("draft");
+  });
+
+  it("retrying a failed voice step really runs again (new job id, not the retained failed one)", async () => {
+    const { videoId } = await newVideo("final");
+    await drain("ai", fakes());
+    await redis().set(budgetKeys.elevenLabsCredits(), 10_000); // no credits left → voice fails
+    await drain("voice", fakes());
+    expect((await Video.findById(videoId).lean())?.status).toBe("failed");
+    await redis().set(budgetKeys.elevenLabsCredits(), 0);
+    expect(await retryVideo(videoId)).toBe("voice");
+    expect(await drain("voice", fakes())).toEqual(["voice"]);
+    expect((await Video.findById(videoId).lean())?.voice?.scriptVersion).toBe(1);
+  });
+
+  it("worker startup never overwrites live budget counters (only restores missing ones)", async () => {
+    await newVideo();
+    await drain("ai", fakes()); // 2 Gemini requests recorded in MongoDB
+    await redis().set(budgetKeys.geminiRequests(), 50); // includes reservations still in flight
+    await rebuildBudgetCounters();
+    expect(Number(await redis().get(budgetKeys.geminiRequests()))).toBe(50);
+    await redis().del(budgetKeys.geminiRequests()); // Redis lost its data
+    const r = await rebuildBudgetCounters();
+    expect(r.restored.gemini).toBe(true);
+    expect(Number(await redis().get(budgetKeys.geminiRequests()))).toBe(2);
+  });
+
+  it("only one of several simultaneous starts holds the workspace lock", async () => {
+    const results = await Promise.all(
+      Array.from({ length: 4 }, () =>
+        withWorkspaceLock("ws1", () => new Promise((r) => setTimeout(() => r("ok"), 50))),
+      ),
+    );
+    expect(results.filter(Boolean)).toHaveLength(1);
+    expect(await withWorkspaceLock("ws1", async () => "again")).toEqual({ value: "again" }); // released after
   });
 });

@@ -1,6 +1,8 @@
 // The pipeline's decision logic, free of storage: each step takes data, calls the providers and returns data.
 // The CLI (run.ts) saves results to out/; the worker saves them to MongoDB and object storage.
 // Provider calls are injectable so tests never spend credits.
+
+import type { VideoFormat } from "./formats";
 import { estimateAlignment, lengthVerdict, spokenSeconds } from "./stages/align";
 import {
   type Claim,
@@ -11,12 +13,12 @@ import {
   removeDoubtfulNumbers,
 } from "./stages/factcheck";
 import { generateScript, type ScriptAttempt } from "./stages/script";
-import { fixUnknownIcons, validateScript } from "./stages/validate";
+import { fixUnknownIcons, narrationWords, type ValidationResult, validateScript } from "./stages/validate";
 import { generateVoice, narrationText, type VoiceResult } from "./stages/voice";
-import type { Alignment, Length, Script } from "./types";
+import { type Alignment, type Length, lengthRules, type Script } from "./types";
 import { creditsFor } from "./usage";
 
-export const MAX_SCRIPT_ATTEMPTS = 3;
+export const MAX_SCRIPT_ATTEMPTS = 4;
 export const MAX_FACT_REWRITES = 2;
 
 export type Log = (message: string) => void;
@@ -45,12 +47,36 @@ export class ScriptFailedError extends Error {
   }
 }
 
+const letters = (text: string) =>
+  text
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+
+/** A quote-format topic that is a saying itself (not a theme like "quotes about patience"). */
+export const quoteFromTopic = (topic: string, format: VideoFormat) =>
+  format === "quote" && !/^\s*(quotes?|sayings?|proverbs?)\b/i.test(topic) && letters(topic).split(" ").length >= 3
+    ? topic.trim().replace(/^["“'‘]+|["”'’]+$/g, "")
+    : null;
+
+/** For a quote video whose topic is the saying, the hook must say it word for word. */
+const withQuoteRule = (checked: ValidationResult, topic: string, format: VideoFormat): ValidationResult => {
+  const quote = quoteFromTopic(topic, format);
+  if (!quote) return checked;
+  const script = checked.ok ? checked.script : checked.lengthOnly?.script;
+  if (!script || letters(script.scenes[0]?.narration ?? "").includes(letters(quote))) return checked;
+  const error = `Use the quote "${quote}" word for word as scene 0's narration and as the title scene's on-screen text.`;
+  return checked.ok
+    ? { ok: false, errors: [error] }
+    : { ...checked, errors: [...checked.errors, error], lengthOnly: undefined };
+};
+
 const countWords = (text: string) => text.trim().split(/\s+/).filter(Boolean).length;
 
 /** Feedback that returns the previous script with per-scene word counts, to be edited rather than redone. */
 export const lengthFixup = (script: Script) =>
   [
-    "Edit your previous script below instead of starting over. Keep the title, hook, cta, scene order, templates, visuals and on-screen text; change only the narration so the total word count is right (the hook stays the first scene's narration and the cta stays at the end of the last one).",
+    "Edit your previous script below instead of starting over. Keep the title, hook, cta, templates, visuals and on-screen text of the scenes you keep; lengthen or shorten the narration and, only if asked above, add or remove scenes so the size is right (the hook stays the first scene's narration and the cta stays at the end of the last one; renumber scene indexes from 0).",
     `Current words per scene: ${script.scenes.map((s) => `scene ${s.index}: ${countWords(s.narration)}`).join(", ")}.`,
     `Previous script: ${JSON.stringify(script)}`,
   ].join("\n");
@@ -68,20 +94,24 @@ export type ScriptResult = {
 
 /** Gemini script, validated with Zod; invalid replies are retried with the errors as feedback. */
 export async function writeScript(
-  opts: { topic: string; length: Length; feedback?: string[]; images?: boolean; log?: Log },
+  opts: { topic: string; length: Length; format?: VideoFormat; feedback?: string[]; images?: boolean; log?: Log },
   providers: Providers = real,
 ): Promise<ScriptResult> {
-  const { topic, length, images = false, log = quiet } = opts;
+  const { topic, length, format = "explainer", images = false, log = quiet } = opts;
   const extra = opts.feedback ?? [];
   let feedback = extra;
   let tokens = 0;
   let requests = 0;
   const invalid: ScriptResult["invalid"] = [];
+  // The attempt closest to the word budget among those where only the size was off: used as a fallback,
+  // so a good script never fails only because of its length (the video runs a little shorter or longer).
+  let best: { script: Script; off: number; model: string; attempt: number } | null = null;
+  const target = (lengthRules[length].minWords + lengthRules[length].maxWords) / 2;
   for (let attempt = 1; attempt <= MAX_SCRIPT_ATTEMPTS; attempt++) {
-    const result: ScriptAttempt = await providers.generateScript(topic, length, feedback, { images });
+    const result: ScriptAttempt = await providers.generateScript(topic, length, feedback, { images, format });
     tokens += result.tokens;
     requests += result.attempts;
-    const checked = validateScript(result.raw, length, { images });
+    const checked = withQuoteRule(validateScript(result.raw, length, { images }), topic, format);
     if (checked.ok) {
       for (const repair of checked.repairs) log(`repaired ${repair}`);
       const replaced = fixUnknownIcons(checked.script);
@@ -90,11 +120,20 @@ export async function writeScript(
     }
     log(`attempt ${attempt} invalid: ${checked.errors.join(" | ")}`);
     invalid.push({ raw: result.raw, errors: checked.errors });
+    if (checked.lengthOnly) {
+      const off = Math.abs(narrationWords(checked.lengthOnly.script) - target) / target;
+      if (!best || off < best.off) best = { script: checked.lengthOnly.script, off, model: result.model, attempt };
+    }
     // Only the length is off: hand the script back to be lengthened/shortened instead of rewritten from scratch
     // (a fresh attempt tends to repeat the same word count).
     feedback = checked.lengthOnly
       ? [...extra, ...checked.errors, lengthFixup(checked.lengthOnly.script)]
       : [...extra, ...checked.errors];
+  }
+  if (best) {
+    log(`no attempt hit the word budget; keeping attempt ${best.attempt} (${narrationWords(best.script)} words)`);
+    fixUnknownIcons(best.script);
+    return { script: best.script, attempts: MAX_SCRIPT_ATTEMPTS, requests, tokens, model: best.model, invalid };
   }
   throw new ScriptFailedError(invalid, tokens, requests);
 }
@@ -131,13 +170,13 @@ const sceneDiff = (a: Script, b: Script) =>
 
 /** Checks every claim; wrong or imprecise ones trigger up to two rewrites, then doubtful numbers are removed. */
 export async function checkFacts(
-  opts: { script: Script; topic: string; length: Length; images?: boolean; log?: Log },
+  opts: { script: Script; topic: string; length: Length; format?: VideoFormat; images?: boolean; log?: Log },
   providers: Providers = real,
 ): Promise<FactCheckResult> {
-  const { topic, length, images = false, log = quiet } = opts;
+  const { topic, length, format = "explainer", images = false, log = quiet } = opts;
   const original = opts.script;
   let script = structuredClone(original);
-  let check = await providers.factCheck(script);
+  let check = await providers.factCheck(script, { brief: topic, format });
   let factcheckTokens = check.tokens;
   let scriptTokens = 0;
   let requests = 1;
@@ -148,13 +187,16 @@ export async function checkFacts(
     const issues = issuesOf(check);
     for (const c of issues) log(`✗ scene ${c.scene}: "${c.text}" (${c.verdict}) → ${c.fix || "remove"}`);
     fixed.push(...issues);
-    const rewritten = await writeScript({ topic, length, feedback: factFeedback(issues), images, log }, providers);
+    const rewritten = await writeScript(
+      { topic, length, format, feedback: factFeedback(issues), images, log },
+      providers,
+    );
     script = rewritten.script;
     scriptTokens += rewritten.tokens;
     requests += rewritten.requests;
     rewriteModel = rewritten.model;
     rewrites++;
-    check = await providers.factCheck(script);
+    check = await providers.factCheck(script, { brief: topic, format });
     factcheckTokens += check.tokens;
     requests++;
   }

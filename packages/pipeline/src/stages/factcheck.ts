@@ -66,9 +66,16 @@ const checkable = (script: Script) =>
   }));
 
 /** Asks Gemini (with Google Search when the free tier allows it) to verify every claim in the script. */
-export const factCheck = async (script: Script): Promise<FactCheck> => {
-  const prompt = (await readFile(promptPath, "utf8")).replace("{{script}}", JSON.stringify(checkable(script), null, 2));
-  const answer = await askGemini({ prompt, json: true, search: true, temperature: 0.2 });
+export const factCheck = async (
+  script: Script,
+  { brief = "", format = "explainer" }: { brief?: string; format?: string } = {},
+): Promise<FactCheck> => {
+  const prompt = (await readFile(promptPath, "utf8"))
+    .replace("{{script}}", JSON.stringify(checkable(script), null, 2))
+    .replace("{{brief}}", brief.replace(/"/g, "'"))
+    .replace("{{format}}", format);
+  // A promo is checked against the creator's brief only: web search would "confirm" features of other products.
+  const answer = await askGemini({ prompt, json: true, search: format !== "promo", temperature: 0.2 });
   const claims = readClaims(parseJsonReply(answer.text));
   return { claims, model: answer.model, searched: answer.searched, tokens: answer.tokens };
 };
@@ -86,16 +93,31 @@ export const readClaims = (reply: unknown): Claim[] => {
       : null;
   if (!list) throw new Error("Fact-check reply has no claims list");
   const claims: Claim[] = [];
+  const unreadable = new Set<number>();
   for (const item of list) {
-    if (!item || typeof item !== "object") continue;
-    const c = item as Record<string, unknown>;
+    const c = (item && typeof item === "object" ? item : {}) as Record<string, unknown>;
+    const scene = typeof c.scene === "string" ? Number.parseInt(c.scene, 10) : c.scene;
     const parsed = ClaimSchema.safeParse({
-      scene: typeof c.scene === "string" ? Number.parseInt(c.scene, 10) : c.scene,
+      scene,
       text: c.text ?? c.claim ?? c.statement,
       verdict: typeof c.verdict === "string" ? c.verdict.trim().toLowerCase() : c.verdict,
       fix: typeof c.fix === "string" ? c.fix : "",
     });
     if (parsed.success && parsed.data.text.trim()) claims.push(parsed.data);
+    else unreadable.add(typeof scene === "number" && Number.isInteger(scene) ? scene : -1);
+  }
+  if (list.length && !claims.length) throw new Error("Fact-check reply had no readable claims");
+  // A claim the checker returned but we couldn't read is NOT verified: show it for review, never as checked.
+  for (const scene of unreadable) {
+    claims.push({
+      scene: Math.max(0, scene),
+      text:
+        scene >= 0
+          ? "One claim in this scene couldn't be checked automatically"
+          : "One claim couldn't be checked automatically",
+      verdict: "unsure",
+      fix: "",
+    });
   }
   return claims;
 };

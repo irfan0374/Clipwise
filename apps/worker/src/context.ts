@@ -1,6 +1,6 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import { PipelineRun, UsageEvent, Video } from "@clipwise/db";
-import type { Script } from "@clipwise/pipeline";
+import { autoLength, type Script, type VideoFormat } from "@clipwise/pipeline";
 import { publishVideoEvent } from "@clipwise/queue";
 import type { Provider, Stage, VideoEvent, VideoStatus } from "@clipwise/shared";
 
@@ -78,8 +78,21 @@ export async function recordUsage(ctx: Loaded, rows: Usage[]) {
   if (kept.length) await UsageEvent.insertMany(kept.map((r) => ({ ...base, ...r })));
 }
 
-/** "auto" length becomes 60s until the script writer can choose (Step C). */
-export const resolveLength = (mode: string): 30 | 60 => (mode === "30" ? 30 : 60);
+/** The video's length: 30/60 as chosen, or for "auto" the format's natural length (promo/tips/quote 30s, others 60s). */
+export const resolveLength = (video: {
+  lengthMode: string;
+  format?: string | null;
+  lengthSeconds?: number | null;
+}): 30 | 60 => {
+  if (video.lengthSeconds === 30 || video.lengthSeconds === 60) return video.lengthSeconds;
+  if (video.lengthMode === "30") return 30;
+  if (video.lengthMode === "60") return 60;
+  return autoLength((video.format ?? "explainer") as VideoFormat);
+};
 
 /** The video's current script as a plain object (what the pipeline expects), without Mongoose wrappers. */
 export const plainScript = (video: Loaded["video"]): Script => video.toObject().script as unknown as Script;
+
+/** False once the run was cancelled (or ended) while an AI call was in flight: its result is discarded. */
+export const stillRunning = async (ctx: Loaded) =>
+  (await PipelineRun.exists({ _id: ctx.run._id, status: "running" })) !== null;

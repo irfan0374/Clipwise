@@ -1,13 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { roleForEmail, setUpNewUser, Workspace } from "../src/index";
-
-describe("roles", () => {
-  it("makes ADMIN_EMAILS admins, case-insensitive, and everyone else a user", () => {
-    const admins = new Set(["boss@example.com"]);
-    expect(roleForEmail(" Boss@Example.com", admins)).toBe("admin");
-    expect(roleForEmail("sam@example.com", admins)).toBe("user");
-  });
-});
+import { setUpNewUser, Workspace } from "../src/index";
 
 describe("new user setup", () => {
   it("creates one workspace even if called twice", async () => {

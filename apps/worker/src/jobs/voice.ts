@@ -29,7 +29,7 @@ export async function voiceJob(ctx: Loaded, data: JobData<"voice">, attempt: num
     const r = await recordVoice(
       {
         script,
-        length: resolveLength(video.lengthMode),
+        length: resolveLength(video),
         voiceId: video.voiceId,
         log: (m) => console.log(`  [voice] ${m}`),
       },

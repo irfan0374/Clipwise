@@ -1,7 +1,35 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { createRun, type Length, Lengths, missingKeys, repoRoot, runPipeline } from "@clipwise/pipeline";
+import { connectDb, disconnectDb, UsageEvent, Workspace } from "@clipwise/db";
+import {
+  createRun,
+  type Length,
+  Lengths,
+  missingKeys,
+  repoRoot,
+  runPipeline,
+  setProviderGuards,
+} from "@clipwise/pipeline";
+import { budgetGuards, closeRedis } from "@clipwise/queue";
 import { Command, InvalidArgumentError } from "commander";
+
+/**
+ * The CLI spends against the same global budgets as the worker (Redis reservations + MongoDB usage rows),
+ * recorded under a "CLI" workspace. Needs MongoDB and Redis, like the app.
+ */
+async function useSharedBudgets() {
+  await connectDb();
+  const ws = await Workspace.findOneAndUpdate(
+    { ownerUserId: "cli" },
+    { $setOnInsert: { ownerUserId: "cli", name: "CLI" } },
+    { upsert: true, returnDocument: "after" },
+  );
+  setProviderGuards(
+    budgetGuards(async (rows) => {
+      await UsageEvent.insertMany(rows.map((r) => ({ ...r, workspaceId: ws._id, userId: "cli" })));
+    }),
+  );
+}
 
 /** Script-only and preview runs need just Gemini; full runs also need ElevenLabs. */
 const requireKeys = (geminiOnly = false) => {
@@ -78,6 +106,12 @@ program
       `\n${lines.length - failures.length}/${lines.length} succeeded${failures.length ? `; failed: ${failures.join(", ")}` : ""}`,
     );
   });
+
+program.hook("preAction", useSharedBudgets);
+program.hook("postAction", async () => {
+  await closeRedis();
+  await disconnectDb();
+});
 
 program.parseAsync().catch((error: Error) => {
   console.error(`\n✗ ${error.message}`);

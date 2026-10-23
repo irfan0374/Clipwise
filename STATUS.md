@@ -6,11 +6,11 @@ Repo: https://github.com/irfan0374/Clipwise (public). Updated before every commi
 
 ## Now
 
-**Step C — Make a video (Features 7 + 8)** · Planning
+**Step D — Storyboard with silent preview (Feature 9)** · Planning
 
 ## Next up
 
-**Step D — Storyboard with silent preview** (Feature 9).
+**Step E — Editing** (Feature 10).
 
 ## Build plan
 
@@ -31,8 +31,8 @@ Legend: ✅ done · 🔍 in review · 🛠 building · ⏳ not started. Small fe
 | --- | --- | --- | --- | --- |
 | A | 4 Homepage · 5 Sign-in (email + password) | ✅ | `d4bca16` | Front door: GSAP/Lenis homepage, Better Auth email + password, open sign-up, workspace on first sign-up |
 | B | 6 Worker, queue and storage | ✅ | `62021df` | BullMQ + local Redis, storage interface (local folder now), jobs script→factcheck→voice→render, budgets, crash recovery |
-| C | 7 Create screen · 8 Live progress and fact-check job | 🛠 | | SSE |
-| D | 9 Storyboard with silent preview | ⏳ | | |
+| C | 7 Create screen · 8 Live progress and fact-check job | ✅ | (this commit) | Create + Generating screens, live updates (SSE), formats, ideas, cancel/retry, per-user limits |
+| D | 9 Storyboard with silent preview | 🛠 | | |
 | E | 10 Editing | ⏳ | | Optimistic locking with `expectedVersion` |
 | F | 11 Render and download · 12 Library | ⏳ | | |
 | G | 13 Limits and settings · 14 Admin | ⏳ | | |
@@ -56,7 +56,11 @@ Legend: ✅ done · 🔍 in review · 🛠 building · ⏳ not started. Small fe
 | 2026-10-23 | Pipeline logic split into storage-free steps (packages/pipeline/src/steps.ts) shared by CLI and worker |
 | 2026-10-23 | Script writer aims for the top of the word budget; a too-short/long script is handed back with per-scene counts to edit (not redone). Fact-check replies are read leniently (renamed fields, partial claims) |
 | 2026-10-23 | Review fixes: budgets are reserved atomically before every Gemini request and every ElevenLabs take (worker guards), each paid take is recorded at once; render retries finish a saved render; the voice step never rewrites the script (one speed correction 0.8–1.2x only) |
-| 2026-10-23 | ADMIN_EMAILS kept as-is (user's choice): the admin role goes to whoever first signs up with that email. Accepted risk while local-only; closed once the admin account exists |
+| 2026-10-23 | Admins are made only with `pnpm user:admin you@example.com` (needs database access); sign-up never grants admin. ADMIN_EMAILS removed |
+| 2026-10-23 | Formats change the script (structure, tone, call to action); Auto length = 30s for promo/tips/quote, 60s for explainer/story/recap |
+| 2026-10-23 | Beta limits per user: 10 new videos/day, 2 in progress, 30 idea suggestions/day (env LIMIT_*) |
+| 2026-10-23 | Script rules relaxed: scene range 3–6 (30s) / 5–9 (60s), word floor 80%, 4 attempts, hook/cta/length fields repaired instead of rejected; if only the length is off, the closest attempt is kept |
+| 2026-10-23 | QA/review fixes: promo product claims are checked only against the creator's brief (no web search) and promos are never labelled "Fact-checked" ("Check product details"); quote videos must say the saying word for word; unreadable fact-check claims show as "to review"; job IDs include the run (retries really run); budget rebuild never overwrites live counters; per-workspace lock for the running-videos limit; CLI uses the shared budgets |
 | 2026-10-23 | Small features may be merged with neighbours into one build step (user preference) |
 | 2026-10-23 | Build feature by feature; one commit per approved feature; STATUS.md updated before each commit and push |
 | 2026-10-23 | Biome for lint + format (not ESLint + Prettier). `noNonNullAssertion` off (works with strict index typing); array-index keys and SVG titles allowed in video frames |
@@ -74,6 +78,5 @@ Legend: ✅ done · 🔍 in review · 🛠 building · ⏳ not started. Small fe
 
 - ElevenLabs free plan is non-commercial — upgrade before real users (Feature 16).
 - Sidebar user and usage meter show placeholder values until sign-in (Feature 5) and limits (Feature 13).
-- **Before deploy (step H): create your admin account** with your ADMIN_EMAILS address, so nobody else can register it first (no email verification yet).
+- Make yourself admin: create your account in the app, then run `pnpm user:admin you@example.com`.
 - Hosting at launch (step H): Railway needs a card after its trial; pick a worker host and storage that fit the no-card preference.
-- Length "Auto" currently means 60s; let the script writer choose in Step C.

@@ -6,4 +6,4 @@ export { UsageEvent } from "./models/usageEvent";
 export { Video } from "./models/video";
 export { Workspace } from "./models/workspace";
 export { allModels } from "./registry";
-export { adminEmails, normalizeEmail, roleForEmail, setUpNewUser } from "./services/access";
+export { normalizeEmail, setUpNewUser } from "./services/access";

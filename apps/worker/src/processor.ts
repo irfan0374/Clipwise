@@ -18,18 +18,10 @@ export async function markFailed(job: Job, error: unknown) {
   const data = job.data as { videoId: string; runId: string; renderId?: string };
   const stage = stageOf[name];
   const failure = classify(error);
-  await Video.updateOne(
-    { _id: data.videoId },
-    {
-      $set: {
-        status: "failed",
-        stage,
-        error: { stage, code: failure.code, message: failure.userMessage, at: new Date() },
-      },
-    },
-  );
-  await PipelineRun.updateOne(
-    { _id: data.runId },
+  // Only a run that is still running can fail: if the user cancelled while this provider call was in flight,
+  // the late error must not overwrite the cancellation.
+  const run = await PipelineRun.findOneAndUpdate(
+    { _id: data.runId, status: "running" },
     {
       $set: { status: "failed", finishedAt: new Date() },
       $push: {
@@ -40,6 +32,17 @@ export async function markFailed(job: Job, error: unknown) {
           attempts: job.attemptsMade + 1,
           error: failure.message,
         },
+      },
+    },
+  );
+  if (!run) return;
+  await Video.updateOne(
+    { _id: data.videoId },
+    {
+      $set: {
+        status: "failed",
+        stage,
+        error: { stage, code: failure.code, message: failure.userMessage, at: new Date() },
       },
     },
   );
@@ -56,6 +59,7 @@ export const makeProcessor = (providers?: Providers) => async (job: Job) => {
   const data = def.schema.parse(job.data);
   const ctx = await load(data);
   if (!ctx) return; // video deleted or run missing: nothing to do
+  if (ctx.run.status === "cancelled") return; // the user cancelled this run
   const attempt = job.attemptsMade + 1;
   try {
     return await jobContext.run(ctx, () => runJob(name, ctx, data, attempt, providers));

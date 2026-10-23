@@ -10,7 +10,7 @@ describe("job ids", () => {
     expect(jobIdFor("script", { videoId: id, runId: run })).toBe(`vid_${id}_script_${run}`);
     expect(jobIdFor("factcheck", { videoId: id, runId: run, scriptVersion: 2 })).toBe(`vid_${id}_factcheck_v2_${run}`);
     expect(jobIdFor("render", { videoId: id, runId: run, renderId: render, scriptVersion: 3, kind: "final" })).toBe(
-      `vid_${id}_render_v3_${render}`,
+      `vid_${id}_render_v3_${render}_${run}`,
     );
     for (const name of ["script", "factcheck"] as const) {
       expect(jobIdFor(name, { videoId: id, runId: run, scriptVersion: 1 })).not.toContain(":");

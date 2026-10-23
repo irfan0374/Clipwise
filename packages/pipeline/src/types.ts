@@ -46,11 +46,20 @@ export type Script = z.infer<typeof ScriptSchema>;
 /** Speech rate the word budget is based on (words per second). */
 export const WORDS_PER_SECOND = 2.5;
 
-export const lengthRules: Record<Length, { minWords: number; maxWords: number; minScenes: number; maxScenes: number }> =
-  {
-    30: { minWords: 65, maxWords: 80, minScenes: 4, maxScenes: 5 },
-    60: { minWords: 130, maxWords: 155, minScenes: 7, maxScenes: 9 },
-  };
+/**
+ * Word budget and scene counts per length. The prompt asks for the ideal scene count (minScenes–maxScenes);
+ * validation also accepts the wider allowed range, so a list topic ("4 exercises" = hook + 4 + ending) fits.
+ */
+export const lengthRules: Record<
+  Length,
+  { minWords: number; maxWords: number; minScenes: number; maxScenes: number; allowedScenes: [number, number] }
+> = {
+  30: { minWords: 65, maxWords: 80, minScenes: 4, maxScenes: 5, allowedScenes: [3, 6] },
+  60: { minWords: 130, maxWords: 155, minScenes: 7, maxScenes: 9, allowedScenes: [5, 9] },
+};
+
+/** Narration below this share of minWords is rejected; voice speed correction (0.8–1.2x) covers the rest. */
+export const WORD_FLOOR = 0.8;
 
 /** Character-level timestamps as returned by ElevenLabs (`alignment`). */
 export type Alignment = {

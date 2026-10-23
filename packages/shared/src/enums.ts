@@ -35,7 +35,7 @@ export const RenderKinds = ["final", "preview"] as const;
 export const RenderStatuses = ["queued", "rendering", "done", "failed"] as const;
 
 export const RunTriggers = ["create", "regenerate-scene", "render", "retry"] as const;
-export const RunStatuses = ["running", "ok", "failed"] as const;
+export const RunStatuses = ["running", "ok", "failed", "cancelled"] as const;
 /** How far a run goes: script + fact-check only, a silent preview MP4, or voice + final MP4. */
 export const RunTargets = ["script", "preview", "final"] as const;
 export const StageReportStatuses = ["ok", "skipped", "failed"] as const;

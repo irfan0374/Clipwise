@@ -2,15 +2,25 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { curatedIcons } from "@clipwise/video/icons";
 import { repoRoot } from "../env";
+import { formatGuides, type VideoFormat } from "../formats";
 import { askGemini, parseJsonReply } from "../gemini";
 import { type Length, lengthRules } from "../types";
 
 const promptPath = path.join(repoRoot, "packages/pipeline/prompts/script.md");
 
-export const buildPrompt = async (topic: string, length: Length, feedback: string[] = [], { images = true } = {}) => {
+export const buildPrompt = async (
+  topic: string,
+  length: Length,
+  feedback: string[] = [],
+  { images = true, format = "explainer" as VideoFormat } = {},
+) => {
+  const guide = formatGuides[format];
   const rules = lengthRules[length];
   let prompt = (await readFile(promptPath, "utf8"))
     .replaceAll("{{topic}}", topic)
+    .replaceAll("{{format}}", format)
+    .replaceAll("{{formatGuide}}", guide.guide)
+    .replaceAll("{{ctaHint}}", guide.cta)
     .replaceAll("{{length}}", String(length))
     .replaceAll("{{minWords}}", String(rules.minWords))
     .replaceAll("{{maxWords}}", String(rules.maxWords))
@@ -38,9 +48,9 @@ export const generateScript = async (
   topic: string,
   length: Length,
   feedback: string[] = [],
-  { images = true } = {},
+  { images = true, format = "explainer" as VideoFormat } = {},
 ): Promise<ScriptAttempt> => {
-  const prompt = await buildPrompt(topic, length, feedback, { images });
+  const prompt = await buildPrompt(topic, length, feedback, { images, format });
   // JSON mode without a response schema: Gemini rejects schemas this nested ("invalid argument").
   // The shape is spelled out in the prompt and every reply is checked with Zod in validate.ts.
   const answer = await askGemini({ prompt, json: true });

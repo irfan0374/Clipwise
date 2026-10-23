@@ -1,22 +1,29 @@
-import { Sparkles } from "lucide-react";
+import { type Format, Formats, type LengthMode, LengthModes, type VoiceId, Voices } from "@clipwise/shared";
 import type { Metadata } from "next";
-import { EmptyState } from "@/components/app/empty-state";
-import { PageHeader } from "@/components/app/page-header";
+import { CreateStudio } from "@/components/video/create-studio";
+import { RecentStrip } from "@/components/video/recent-strip";
+import { requireUser } from "@/lib/session";
+import { recentVideos } from "@/lib/videos";
 
 export const metadata: Metadata = { title: "Create" };
 
-export default function CreatePage() {
+export default async function CreatePage() {
+  const { workspace } = await requireUser();
+  const recent = await recentVideos(workspace._id, 3);
+  const s = workspace.settings;
+  const defaults = {
+    format: (Formats.includes(s?.defaultFormat as Format) ? s?.defaultFormat : "explainer") as Format,
+    lengthMode: (LengthModes.includes(s?.defaultLength as LengthMode) ? s?.defaultLength : "auto") as LengthMode,
+    voiceId: (Voices.some((v) => v.id === s?.defaultVoiceId) ? s?.defaultVoiceId : Voices[0].id) as VoiceId,
+  };
   return (
-    <>
-      <PageHeader
-        title="Create a video"
-        description="Describe your idea, pick a format and length, and Clipwise writes, voices and animates it."
-      />
-      <EmptyState
-        icon={Sparkles}
-        title="The Create screen arrives in Feature 7"
-        description="This page shows the app shell: sidebar, page header and content width."
-      />
-    </>
+    <div className="mx-auto max-w-[760px] space-y-10">
+      <header className="space-y-2">
+        <h1 className="text-h1 sm:text-[36px]">What do you want to make?</h1>
+        <p className="text-ink-2">Describe an idea. Clipwise writes, checks, voices and animates it.</p>
+      </header>
+      <CreateStudio defaults={defaults} />
+      <RecentStrip videos={recent} />
+    </div>
   );
 }
