@@ -1,5 +1,6 @@
 import { type GenerateContentConfig, type GenerateContentResponse, GoogleGenAI, ThinkingLevel } from "@google/genai";
 import { env } from "./env";
+import { providerGuards } from "./guards";
 import { FatalError, withRetry } from "./retry";
 
 const errorText = (error: unknown) => `${(error as Error)?.message ?? ""}`;
@@ -42,7 +43,10 @@ export const askGemini = async ({
     for (const withSearch of search ? [true, false] : [false]) {
       try {
         const { value: response, attempts } = await withRetry(
-          () => ai.models.generateContent({ model, contents: prompt, config: configFor(model, withSearch) }),
+          async () => {
+            await providerGuards().beforeGeminiRequest?.(); // budget reservation, per request
+            return ai.models.generateContent({ model, contents: prompt, config: configFor(model, withSearch) });
+          },
           { label: `Gemini ${model}`, tries: withSearch ? 1 : 3 },
         );
         return {

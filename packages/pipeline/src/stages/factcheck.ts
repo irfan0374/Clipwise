@@ -69,8 +69,33 @@ const checkable = (script: Script) =>
 export const factCheck = async (script: Script): Promise<FactCheck> => {
   const prompt = (await readFile(promptPath, "utf8")).replace("{{script}}", JSON.stringify(checkable(script), null, 2));
   const answer = await askGemini({ prompt, json: true, search: true, temperature: 0.2 });
-  const parsed = FactCheckSchema.safeParse(parseJsonReply(answer.text));
-  if (!parsed.success)
-    throw new Error(`Fact-check reply was not valid JSON: ${parsed.error.issues[0]?.message ?? "unknown"}`);
-  return { ...parsed.data, model: answer.model, searched: answer.searched, tokens: answer.tokens };
+  const claims = readClaims(parseJsonReply(answer.text));
+  return { claims, model: answer.model, searched: answer.searched, tokens: answer.tokens };
+};
+
+/**
+ * Reads the claims list leniently: Gemini sometimes renames a field ("claim" for "text"), sends the scene as a
+ * string or a verdict in capitals, or leaves a claim incomplete. Usable claims are kept and unusable ones skipped;
+ * only a reply with no claims list at all is an error (it is retried).
+ */
+export const readClaims = (reply: unknown): Claim[] => {
+  const list = Array.isArray(reply)
+    ? reply
+    : reply && typeof reply === "object" && Array.isArray((reply as { claims?: unknown }).claims)
+      ? (reply as { claims: unknown[] }).claims
+      : null;
+  if (!list) throw new Error("Fact-check reply has no claims list");
+  const claims: Claim[] = [];
+  for (const item of list) {
+    if (!item || typeof item !== "object") continue;
+    const c = item as Record<string, unknown>;
+    const parsed = ClaimSchema.safeParse({
+      scene: typeof c.scene === "string" ? Number.parseInt(c.scene, 10) : c.scene,
+      text: c.text ?? c.claim ?? c.statement,
+      verdict: typeof c.verdict === "string" ? c.verdict.trim().toLowerCase() : c.verdict,
+      fix: typeof c.fix === "string" ? c.fix : "",
+    });
+    if (parsed.success && parsed.data.text.trim()) claims.push(parsed.data);
+  }
+  return claims;
 };

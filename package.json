@@ -17,7 +17,8 @@
     "db:indexes": "tsx packages/db/scripts/indexes.ts",
     "db:migrate": "tsx packages/db/scripts/migrate.ts",
     "db:seed": "tsx packages/db/scripts/seed.ts",
-    "db:status": "tsx packages/db/scripts/status.ts"
+    "db:status": "tsx packages/db/scripts/status.ts",
+    "job:make": "tsx apps/worker/scripts/make.ts"
   },
   "engines": {
     "node": ">=22"

@@ -22,7 +22,7 @@ export async function setUpNewUser(user: { id: string; email: string; name?: str
         name: (user.name || user.email.split("@")[0] || "My workspace").slice(0, 80),
       },
     },
-    { upsert: true, new: true },
+    { upsert: true, returnDocument: "after" },
   );
   return ws._id.toString();
 }

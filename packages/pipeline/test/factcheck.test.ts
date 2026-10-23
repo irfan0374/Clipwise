@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { type Claim, factFeedback, issuesOf, removeDoubtfulNumbers } from "../src/stages/factcheck";
+import { type Claim, factFeedback, issuesOf, readClaims, removeDoubtfulNumbers } from "../src/stages/factcheck";
 import { validScript } from "./fixtures";
 
 const claim = (verdict: Claim["verdict"], fix = ""): Claim => ({
@@ -45,5 +45,28 @@ describe("removeDoubtfulNumbers", () => {
     expect(script.scenes[2]!.stat).toBeUndefined();
     expect(script.scenes[3]!.visual).toEqual({ type: "icon", icon: "sun" });
     expect(script.scenes[1]!.template).toBe("imageFocus");
+  });
+});
+
+describe("readClaims", () => {
+  it("accepts renamed fields, string scenes and capitalised verdicts, and skips unusable claims", () => {
+    const claims = readClaims({
+      claims: [
+        { scene: 1, text: "Cats purr at 25 Hz", verdict: "correct", fix: "" },
+        { scene: "2", claim: "Purring heals bones", verdict: "Unsure" },
+        { scene: 3, verdict: "correct" }, // no text: skipped
+        { scene: 4, text: "x", verdict: "maybe" }, // unknown verdict: skipped
+        "noise",
+      ],
+    });
+    expect(claims).toEqual([
+      { scene: 1, text: "Cats purr at 25 Hz", verdict: "correct", fix: "" },
+      { scene: 2, text: "Purring heals bones", verdict: "unsure", fix: "" },
+    ]);
+  });
+
+  it("accepts a bare array, and rejects a reply without any claims list", () => {
+    expect(readClaims([{ scene: 0, text: "a", verdict: "wrong", fix: "b" }])).toHaveLength(1);
+    expect(() => readClaims({ result: "ok" })).toThrow(/no claims list/);
   });
 });

@@ -3,26 +3,15 @@ import path from "node:path";
 import type { Timeline } from "@clipwise/video";
 import { env, repoRoot } from "./env";
 import { FatalError } from "./retry";
-import { buildTimeline, estimateAlignment, lengthVerdict, spokenSeconds } from "./stages/align";
-import {
-  type Claim,
-  type FactCheck,
-  factCheck,
-  factFeedback,
-  issuesOf,
-  removeDoubtfulNumbers,
-} from "./stages/factcheck";
+import { buildTimeline, estimateAlignment, spokenSeconds } from "./stages/align";
 import { fetchImages, type ImagesResult, imageProvider } from "./stages/images";
 import { renderVideo } from "./stages/render";
-import { generateScript } from "./stages/script";
-import { fixUnknownIcons, validateScript } from "./stages/validate";
-import { generateVoice, narrationText } from "./stages/voice";
+import { narrationText } from "./stages/voice";
+import { checkFacts, recordVoice, ScriptFailedError, writeScript as writeScriptStep } from "./steps";
 import type { Alignment, Length, Script, StageName, StageReport } from "./types";
 import { creditsFor, monthUsage, recordUsage } from "./usage";
 
-const MAX_SCRIPT_ATTEMPTS = 3;
-const MAX_RESCRIPTS = 1;
-const MAX_FACT_REWRITES = 2;
+const warn = (message: string) => console.warn(`  ${message}`);
 
 export type RunMeta = { topic: string; length: Length; final: boolean; createdAt: string };
 
@@ -121,81 +110,65 @@ export const runPipeline = async (
     }
   };
 
-  // Script: Gemini, validated, retried with the validation errors as feedback.
+  // Script: Gemini, validated, retried with the validation errors as feedback (steps.ts).
   const writeScript = async (extraFeedback: string[] = []) => {
-    let feedback = extraFeedback;
-    let tokens = 0;
-    for (let attempt = 1; attempt <= MAX_SCRIPT_ATTEMPTS; attempt++) {
-      const result = await generateScript(meta.topic, meta.length, feedback, { images });
-      tokens += result.tokens;
-      const checked = validateScript(result.raw, meta.length, { images });
-      if (checked.ok) {
-        for (const repair of checked.repairs) console.warn(`  repaired ${repair}`);
-        const replaced = fixUnknownIcons(checked.script);
-        if (replaced.length) console.warn(`  unknown icons replaced with "sparkles": ${replaced.join(", ")}`);
-        await writeJson(files.script, checked.script);
-        await recordUsage({ geminiTokens: tokens });
-        return { value: checked.script, attempts: attempt, units: { geminiTokens: tokens, model: result.model } };
+    try {
+      const result = await writeScriptStep(
+        { topic: meta.topic, length: meta.length, feedback: extraFeedback, images, log: warn },
+        undefined,
+      );
+      for (const [i, bad] of result.invalid.entries()) {
+        await writeJson(path.join(runDir, `script.invalid-${i + 1}.json`), bad);
       }
-      console.warn(`  attempt ${attempt} invalid: ${checked.errors.join(" | ")}`);
-      await writeJson(path.join(runDir, `script.invalid-${attempt}.json`), { raw: result.raw, errors: checked.errors });
-      feedback = [...extraFeedback, ...checked.errors];
+      await writeJson(files.script, result.script);
+      await recordUsage({ geminiTokens: result.tokens });
+      return {
+        value: result.script,
+        attempts: result.attempts,
+        units: { geminiTokens: result.tokens, model: result.model },
+      };
+    } catch (error) {
+      if (!(error instanceof ScriptFailedError)) throw error;
+      for (const [i, bad] of error.invalid.entries()) {
+        await writeJson(path.join(runDir, `script.invalid-${i + 1}.json`), bad);
+      }
+      await recordUsage({ geminiTokens: error.tokens });
+      throw new Error(`${error.message} (see script.invalid-*.json)`);
     }
-    await recordUsage({ geminiTokens: tokens });
-    throw new Error(
-      `Gemini did not produce a valid script in ${MAX_SCRIPT_ATTEMPTS} attempts (see script.invalid-*.json)`,
-    );
   };
 
   let script = await stage("script", async () =>
     (await exists(files.script)) ? { value: await readJson<Script>(files.script), skipped: true } : writeScript(),
   );
 
-  // Fact-check: verify every claim; if any are wrong, rewrite the script once with the corrections and check again.
+  // Fact-check: verify every claim; rewrite up to twice with the corrections, then strip doubtful numbers (steps.ts).
   await stage("factcheck", async () => {
     if (await exists(files.factcheck)) return { value: null, skipped: true };
-    let check: FactCheck = await factCheck(script);
-    let tokens = check.tokens;
-    let rewrites = 0;
-    const fixed: Claim[] = [];
-    while (issuesOf(check).length && rewrites < MAX_FACT_REWRITES) {
-      const issues = issuesOf(check);
-      for (const c of issues) console.warn(`  ✗ scene ${c.scene}: "${c.text}" (${c.verdict}) → ${c.fix || "remove"}`);
-      fixed.push(...issues);
-      script = (await writeScript(factFeedback(issues))).value;
-      rewrites++;
-      check = await factCheck(script);
-      tokens += check.tokens;
-    }
-    const remaining = issuesOf(check);
-    const stripped = removeDoubtfulNumbers(script, remaining);
-    if (stripped.length) {
-      await writeJson(files.script, script);
-      console.warn(`  removed doubtful numbers from scenes ${stripped.join(", ")}`);
-    }
-    const unsure = check.claims.filter((c) => c.verdict === "unsure");
-    for (const c of [...remaining, ...unsure])
+    const result = await checkFacts({ script, topic: meta.topic, length: meta.length, images, log: warn });
+    script = result.script;
+    if (result.scriptChanged) await writeJson(files.script, script);
+    for (const c of [...result.remaining, ...result.unsure])
       console.warn(`  ⚠ check manually, scene ${c.scene}: "${c.text}" (${c.verdict})`);
     await writeJson(files.factcheck, {
-      ...check,
-      rewrites,
-      fixedIssues: fixed,
-      remainingIssues: remaining,
-      numbersRemovedFromScenes: stripped,
+      ...result.check,
+      rewrites: result.rewrites,
+      fixedIssues: result.fixed,
+      remainingIssues: result.remaining,
+      numbersRemovedFromScenes: result.numbersRemovedFromScenes,
     });
-    await recordUsage({ geminiTokens: tokens });
+    await recordUsage({ geminiTokens: result.factcheckTokens + result.scriptTokens });
     console.log(
-      `  ${check.claims.length} claims checked${check.searched ? " with Google Search" : ""}; ${rewrites} rewrite(s), ${remaining.length + unsure.length} to check manually`,
+      `  ${result.check.claims.length} claims checked${result.check.searched ? " with Google Search" : ""}; ${result.rewrites} rewrite(s), ${result.remaining.length + result.unsure.length} to check manually`,
     );
     return {
       value: null,
       units: {
-        claims: check.claims.length,
-        rewrites,
-        remaining: remaining.length,
-        unsure: unsure.length,
-        numbersRemoved: stripped.length,
-        searched: String(check.searched),
+        claims: result.check.claims.length,
+        rewrites: result.rewrites,
+        remaining: result.remaining.length,
+        unsure: result.unsure.length,
+        numbersRemoved: result.numbersRemovedFromScenes.length,
+        searched: String(result.check.searched),
       },
     };
   });
@@ -225,50 +198,27 @@ export const runPipeline = async (
         `This voiceover needs about ${estimate} ElevenLabs credits but only ${monthlyCredits - used} of ${monthlyCredits} are left this month. Use --preview for a free silent version.`,
       );
     }
-    let characters = 0;
-    let credits = 0;
-    let attempts = 0;
-    let speed = 1;
-    let rescripts = 0;
-    let speedAdjusted = false;
-
-    for (;;) {
-      const voice = await generateVoice(narrationText(script), { final: useFinalVoice, speed });
-      attempts += voice.attempts;
-      characters += voice.characters;
-      credits += creditsFor(voice.characters, voice.model);
-      const seconds = spokenSeconds(voice.alignment);
-      const verdict = lengthVerdict(seconds, meta.length);
-      console.log(`  ${seconds.toFixed(1)}s spoken (target ${meta.length}s) → ${verdict.action}`);
-
-      const accept = async () => {
-        await writeFile(files.voice, voice.audio);
-        await writeJson(files.alignment, voice.alignment);
-        const month = await recordUsage({ elevenLabsCharacters: characters, elevenLabsCredits: credits });
-        console.log(`  ElevenLabs: ${credits} credits this run, ${month.elevenLabsCredits} this month`);
-        return {
-          value: voice.alignment,
-          attempts,
-          units: { characters, credits, model: voice.model, seconds: Number(seconds.toFixed(2)), speed },
-        };
-      };
-
-      if (verdict.action === "accept") return accept();
-      if (verdict.action === "adjustSpeed" && !speedAdjusted) {
-        speed = verdict.speed;
-        speedAdjusted = true;
-        continue;
-      }
-      if (verdict.action === "rescript" && rescripts < MAX_RESCRIPTS) {
-        rescripts++;
-        script = (await writeScript([verdict.feedback])).value;
-        speed = 1;
-        speedAdjusted = false;
-        continue;
-      }
-      console.warn("  length still off target after corrections; keeping this take");
-      return accept();
-    }
+    const voice = await recordVoice({
+      script,
+      length: meta.length,
+      final: useFinalVoice,
+      log: (m) => console.log(`  ${m}`),
+    });
+    await writeFile(files.voice, voice.audio);
+    await writeJson(files.alignment, voice.alignment);
+    const month = await recordUsage({ elevenLabsCharacters: voice.characters, elevenLabsCredits: voice.credits });
+    console.log(`  ElevenLabs: ${voice.credits} credits this run, ${month.elevenLabsCredits} this month`);
+    return {
+      value: voice.alignment,
+      attempts: voice.attempts,
+      units: {
+        characters: voice.characters,
+        credits: voice.credits,
+        model: voice.model,
+        seconds: voice.seconds,
+        speed: voice.speed,
+      } as StageReport["units"],
+    };
   });
 
   // Images: Pexels photos for imageFocus scenes.

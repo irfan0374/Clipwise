@@ -1,4 +1,4 @@
-import { RunStatuses, RunTriggers, StageReportStatuses, Stages } from "@clipwise/shared";
+import { RunStatuses, RunTargets, RunTriggers, StageReportStatuses, Stages } from "@clipwise/shared";
 import { type InferSchemaType, Schema } from "mongoose";
 import { baseOptions, defineModel, ownerFields } from "../base";
 
@@ -21,6 +21,7 @@ const PipelineRunSchema = new Schema(
     ...ownerFields,
     videoId: { type: Schema.Types.ObjectId, ref: "Video", required: true },
     trigger: { type: String, enum: RunTriggers, required: true },
+    target: { type: String, enum: RunTargets, default: "script" }, // how far this run goes
     scriptVersion: Number,
     status: { type: String, enum: RunStatuses, default: "running" },
     stages: { type: [StageReportSchema], default: [] },

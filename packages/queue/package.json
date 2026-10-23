@@ -1,0 +1,23 @@
+{
+  "name": "@clipwise/queue",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@clipwise/db": "workspace:*",
+    "@clipwise/shared": "workspace:*",
+    "bullmq": "^6.4.0",
+    "ioredis": "^6.0.0",
+    "mongoose": "^9.11.3",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "mongodb-memory-server": "^11.3.0"
+  }
+}

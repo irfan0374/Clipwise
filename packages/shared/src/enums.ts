@@ -36,6 +36,8 @@ export const RenderStatuses = ["queued", "rendering", "done", "failed"] as const
 
 export const RunTriggers = ["create", "regenerate-scene", "render", "retry"] as const;
 export const RunStatuses = ["running", "ok", "failed"] as const;
+/** How far a run goes: script + fact-check only, a silent preview MP4, or voice + final MP4. */
+export const RunTargets = ["script", "preview", "final"] as const;
 export const StageReportStatuses = ["ok", "skipped", "failed"] as const;
 
 export const Providers = ["gemini", "elevenlabs", "r2", "instagram"] as const;
@@ -48,3 +50,4 @@ export type ClaimVerdict = (typeof ClaimVerdicts)[number];
 export type ScriptSource = (typeof ScriptSources)[number];
 export type RenderKind = (typeof RenderKinds)[number];
 export type Provider = (typeof Providers)[number];
+export type RunTarget = (typeof RunTargets)[number];

@@ -12,10 +12,11 @@ Docs: [PRD](https://claude.ai/code/artifact/f8f8abca-e939-4ba5-bc6a-b7eac21a3d68
 Needs Node 22 (`nvm use` reads `.nvmrc`) and pnpm.
 
 1. `pnpm install`
-2. `cp .env.example .env` and fill in only the groups the current feature needs (each group names its feature). For the prototype pipeline that's:
+2. Redis for the job queue: `brew install redis && brew services start redis` (starts with your Mac)
+3. `cp .env.example .env` and fill in only the groups the current feature needs (each group names its feature). For the prototype pipeline that's:
    - `GEMINI_API_KEY` — https://aistudio.google.com/apikey (free tier)
    - `ELEVENLABS_API_KEY` — https://elevenlabs.io (free plan, default voices only)
-3. Check rendering works without any keys: `pnpm sample` → `out/sample/sample.mp4`
+4. Check rendering works without any keys: `pnpm sample` → `out/sample/sample.mp4`
 
 ## Commands
 
@@ -24,6 +25,7 @@ Needs Node 22 (`nvm use` reads `.nvmrc`) and pnpm.
 | `pnpm dev` | Web app on http://localhost:3000 and the worker, together. Design system at http://localhost:3000/design (dev only) |
 | `pnpm check` | Lint + typecheck + tests. Run before every commit |
 | `pnpm format` | Auto-fix formatting and import order (Biome) |
+| `pnpm job:make "topic" [--preview \| --final]` | Queue a video for the sample workspace through the real worker and follow its progress. Default stops after script + fact-check; `--preview` adds a silent MP4 (0 voice credits); `--final` records the voice (uses ElevenLabs credits). Needs the worker running (`pnpm dev`) |
 | `pnpm db:status` | Show the database name and how many records each collection has |
 | `pnpm db:seed` | Fill a dev database with a sample workspace and 3 videos (rendered, previewed, failed). Never runs on production |
 | `pnpm db:indexes` | Create or update all indexes (production builds no indexes on startup) |
@@ -39,10 +41,12 @@ apps/web            Next.js app (App Router) — homepage, dashboard, editor, se
                       components/ui/    shadcn/ui primitives restyled to the Clipwise theme (Radix)
                       components/app/   Clipwise components: sidebar, logo, status badge, segmented, chips…
                       app/globals.css   design tokens (Paper, ink, lime, teal; Sora + Inter)
-apps/worker         Node.js worker — runs AI, voice and render jobs from the queue
+apps/worker         Node.js worker — BullMQ jobs: script → fact-check → voice → render, saved to MongoDB + storage
 apps/cli            prototype `clipwise` command
 packages/pipeline   stage functions (script, fact-check, voice, align, render) + run orchestrator
 packages/video      Remotion project: compositions, templates, animated visuals, captions
+packages/queue      BullMQ queues, adding jobs, live progress events (Redis pub/sub), budgets, pause switch
+packages/storage    files: local folder in dev (.storage/), any S3-compatible bucket in production; signed URLs
 packages/db         MongoDB (Mongoose) models, connection, db:* scripts, migrations, seed data
 packages/shared     code used by web, worker and db: enums, API result shape, error codes, input and job schemas
 design/             homepage prototype, Stitch prompts, API design

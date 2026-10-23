@@ -6,3 +6,4 @@ allowBuilds:
   '@google/genai': false
   protobufjs: false
   mongodb-memory-server: false
+  msgpackr-extract: false

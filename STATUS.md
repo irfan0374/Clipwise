@@ -6,11 +6,11 @@ Updated before every commit. One feature at a time: **plan → approve → build
 
 ## Now
 
-**Step B — Worker, queue and R2** · Planning
+**Step C — Make a video (Features 7 + 8)** · Planning
 
 ## Next up
 
-**Step C — Make a video**: Create screen + live progress and fact-check job.
+**Step D — Storyboard with silent preview** (Feature 9).
 
 ## Build plan
 
@@ -29,9 +29,9 @@ Legend: ✅ done · 🔍 in review · 🛠 building · ⏳ not started. Small fe
 
 | Step | Features | Status | Commit | Notes |
 | --- | --- | --- | --- | --- |
-| A | 4 Homepage · 5 Sign-in (email + password) | ✅ | (this commit) | Front door: GSAP/Lenis homepage, Better Auth email + password, open sign-up, workspace on first sign-up |
-| B | 6 Worker, queue and R2 | 🛠 | | BullMQ + Redis, Cloudflare R2 |
-| C | 7 Create screen · 8 Live progress and fact-check job | ⏳ | | SSE |
+| A | 4 Homepage · 5 Sign-in (email + password) | ✅ | `d4bca16` | Front door: GSAP/Lenis homepage, Better Auth email + password, open sign-up, workspace on first sign-up |
+| B | 6 Worker, queue and storage | ✅ | (this commit) | BullMQ + local Redis, storage interface (local folder now), jobs script→factcheck→voice→render, budgets, crash recovery |
+| C | 7 Create screen · 8 Live progress and fact-check job | 🛠 | | SSE |
 | D | 9 Storyboard with silent preview | ⏳ | | |
 | E | 10 Editing | ⏳ | | Optimistic locking with `expectedVersion` |
 | F | 11 Render and download · 12 Library | ⏳ | | |
@@ -51,6 +51,12 @@ Legend: ✅ done · 🔍 in review · 🛠 building · ⏳ not started. Small fe
 | Date | Decision |
 | --- | --- |
 | 2026-10-23 | Sign-in is email + password (Google OAuth dropped: needed a card). Open sign-up, no invites/waitlist, no emails in beta (admin resets passwords), per-IP sign-up limit 5/h |
+| 2026-10-23 | Storage: local folder in dev behind an S3-compatible interface; cloud provider chosen at deploy (R2 needs a card; Backblaze B2 doesn't) |
+| 2026-10-23 | Redis: local via Homebrew for dev; cloud Redis chosen at deploy (Upstash free tier, no card) |
+| 2026-10-23 | Pipeline logic split into storage-free steps (packages/pipeline/src/steps.ts) shared by CLI and worker |
+| 2026-10-23 | Script writer aims for the top of the word budget; a too-short/long script is handed back with per-scene counts to edit (not redone). Fact-check replies are read leniently (renamed fields, partial claims) |
+| 2026-10-23 | Review fixes: budgets are reserved atomically before every Gemini request and every ElevenLabs take (worker guards), each paid take is recorded at once; render retries finish a saved render; the voice step never rewrites the script (one speed correction 0.8–1.2x only) |
+| 2026-10-23 | ADMIN_EMAILS kept as-is (user's choice): the admin role goes to whoever first signs up with that email. Accepted risk while local-only; closed once the admin account exists |
 | 2026-10-23 | Small features may be merged with neighbours into one build step (user preference) |
 | 2026-10-23 | Build feature by feature; one commit per approved feature; STATUS.md updated before each commit and push |
 | 2026-10-23 | Biome for lint + format (not ESLint + Prettier). `noNonNullAssertion` off (works with strict index typing); array-index keys and SVG titles allowed in video frames |
@@ -68,4 +74,7 @@ Legend: ✅ done · 🔍 in review · 🛠 building · ⏳ not started. Small fe
 
 - ElevenLabs free plan is non-commercial — upgrade before real users (Feature 16).
 - Sidebar user and usage meter show placeholder values until sign-in (Feature 5) and limits (Feature 13).
+- **Before deploy (step H): create your admin account** with your ADMIN_EMAILS address, so nobody else can register it first (no email verification yet).
+- Hosting at launch (step H): Railway needs a card after its trial; pick a worker host and storage that fit the no-card preference.
+- Length "Auto" currently means 60s; let the script writer choose in Step C.
 - No GitHub remote yet — needed by Feature 16 (deploy). Commits are local until then.

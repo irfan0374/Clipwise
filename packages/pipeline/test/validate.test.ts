@@ -20,7 +20,33 @@ describe("validateScript", () => {
     script.scenes[1]!.narration = words(80);
     const result = validateScript(script, 30);
     expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.errors).toContain("You wrote 135 words of narration; write between 65 and 80.");
+    if (!result.ok) {
+      expect(result.errors).toContain(
+        "You wrote 135 words of narration; the maximum is 80. Remove about 55 words: shorten the longest scenes.",
+      );
+      expect(result.lengthOnly?.script.title).toBe("Why is the sky blue?"); // only the length is wrong
+    }
+  });
+
+  it("says how many words to add when a script is too short", () => {
+    const script = validScript();
+    script.scenes[1]!.narration = words(2);
+    const result = validateScript(script, 30);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.errors[0]).toMatch(
+        /^You wrote 57 words of narration; you need at least 65 \(aim for 80\)\. Add about 23 words/,
+      );
+      expect(result.lengthOnly).toBeDefined();
+    }
+  });
+
+  it("does not offer a length fix-up when other rules are broken too", () => {
+    const script = validScript();
+    script.scenes[1]!.narration = words(2);
+    script.lengthSeconds = 60;
+    const result = validateScript(script, 30);
+    expect(!result.ok && result.lengthOnly).toBeFalsy();
   });
 
   it("requires the length requested", () => {

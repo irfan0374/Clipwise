@@ -19,7 +19,8 @@ export const buildPrompt = async (topic: string, length: Length, feedback: strin
     .replaceAll("{{icons}}", curatedIcons.join(", "))
     .replaceAll(
       "{{wordsPerScene}}",
-      String(Math.round((rules.minWords + rules.maxWords) / 2 / ((rules.minScenes + rules.maxScenes) / 2))),
+      // Per-scene target from the top of the budget: the model tends to write short, so aim high.
+      String(Math.round(rules.maxWords / ((rules.minScenes + rules.maxScenes) / 2))),
     );
   if (!images) {
     prompt += `\n\nPhotos are not available for this video. Do not use the "imageFocus" template; use "title", "bullets" and "stat" only.`;

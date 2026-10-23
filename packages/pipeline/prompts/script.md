@@ -2,7 +2,7 @@ You write scripts for short vertical explainer videos about tech and science, po
 
 Topic: {{topic}}
 Length: {{length}} seconds
-Narration budget: {{minWords}}–{{maxWords}} words in total across all scenes (the narrator speaks about 2.5 words per second). That is about {{wordsPerScene}} words per scene. Count the words before answering; scripts outside the budget are rejected.
+Narration budget: aim for about {{maxWords}} words in total across all scenes, and never fewer than {{minWords}} (the narrator speaks about 2.5 words per second, so fewer words means a video that ends too early). That is about {{wordsPerScene}} words per scene: give every scene two full sentences, except the hook. Count the words before answering; scripts outside the budget are rejected.
 Scenes: {{minScenes}}–{{maxScenes}}
 
 Rules:

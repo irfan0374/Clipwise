@@ -1,0 +1,241 @@
+// The pipeline's decision logic, free of storage: each step takes data, calls the providers and returns data.
+// The CLI (run.ts) saves results to out/; the worker saves them to MongoDB and object storage.
+// Provider calls are injectable so tests never spend credits.
+import { estimateAlignment, lengthVerdict, spokenSeconds } from "./stages/align";
+import {
+  type Claim,
+  type FactCheck,
+  factCheck,
+  factFeedback,
+  issuesOf,
+  removeDoubtfulNumbers,
+} from "./stages/factcheck";
+import { generateScript, type ScriptAttempt } from "./stages/script";
+import { fixUnknownIcons, validateScript } from "./stages/validate";
+import { generateVoice, narrationText, type VoiceResult } from "./stages/voice";
+import type { Alignment, Length, Script } from "./types";
+import { creditsFor } from "./usage";
+
+export const MAX_SCRIPT_ATTEMPTS = 3;
+export const MAX_FACT_REWRITES = 2;
+
+export type Log = (message: string) => void;
+const quiet: Log = () => {};
+
+export type Providers = {
+  generateScript: typeof generateScript;
+  factCheck: typeof factCheck;
+  generateVoice: typeof generateVoice;
+};
+const real: Providers = { generateScript, factCheck, generateVoice };
+
+export class ScriptFailedError extends Error {
+  constructor(
+    readonly invalid: { raw: unknown; errors: string[] }[],
+    readonly tokens: number,
+    readonly requests: number,
+  ) {
+    // The reasons go into the run report (admin only); users see a friendly message instead.
+    super(
+      `Gemini did not produce a valid script in ${MAX_SCRIPT_ATTEMPTS} attempts: ${invalid
+        .map((a, i) => `#${i + 1} ${a.errors.join("; ")}`)
+        .join(" | ")
+        .slice(0, 1500)}`,
+    );
+  }
+}
+
+const countWords = (text: string) => text.trim().split(/\s+/).filter(Boolean).length;
+
+/** Feedback that returns the previous script with per-scene word counts, to be edited rather than redone. */
+export const lengthFixup = (script: Script) =>
+  [
+    "Edit your previous script below instead of starting over. Keep the title, hook, cta, scene order, templates, visuals and on-screen text; change only the narration so the total word count is right (the hook stays the first scene's narration and the cta stays at the end of the last one).",
+    `Current words per scene: ${script.scenes.map((s) => `scene ${s.index}: ${countWords(s.narration)}`).join(", ")}.`,
+    `Previous script: ${JSON.stringify(script)}`,
+  ].join("\n");
+
+export type ScriptResult = {
+  script: Script;
+  attempts: number;
+  /** Gemini API calls made, retries included (for the daily request budget). */
+  requests: number;
+  tokens: number;
+  model: string;
+  /** Invalid replies before the valid one, with their validation errors. */
+  invalid: { raw: unknown; errors: string[] }[];
+};
+
+/** Gemini script, validated with Zod; invalid replies are retried with the errors as feedback. */
+export async function writeScript(
+  opts: { topic: string; length: Length; feedback?: string[]; images?: boolean; log?: Log },
+  providers: Providers = real,
+): Promise<ScriptResult> {
+  const { topic, length, images = false, log = quiet } = opts;
+  const extra = opts.feedback ?? [];
+  let feedback = extra;
+  let tokens = 0;
+  let requests = 0;
+  const invalid: ScriptResult["invalid"] = [];
+  for (let attempt = 1; attempt <= MAX_SCRIPT_ATTEMPTS; attempt++) {
+    const result: ScriptAttempt = await providers.generateScript(topic, length, feedback, { images });
+    tokens += result.tokens;
+    requests += result.attempts;
+    const checked = validateScript(result.raw, length, { images });
+    if (checked.ok) {
+      for (const repair of checked.repairs) log(`repaired ${repair}`);
+      const replaced = fixUnknownIcons(checked.script);
+      if (replaced.length) log(`unknown icons replaced with "sparkles": ${replaced.join(", ")}`);
+      return { script: checked.script, attempts: attempt, requests, tokens, model: result.model, invalid };
+    }
+    log(`attempt ${attempt} invalid: ${checked.errors.join(" | ")}`);
+    invalid.push({ raw: result.raw, errors: checked.errors });
+    // Only the length is off: hand the script back to be lengthened/shortened instead of rewritten from scratch
+    // (a fresh attempt tends to repeat the same word count).
+    feedback = checked.lengthOnly
+      ? [...extra, ...checked.errors, lengthFixup(checked.lengthOnly.script)]
+      : [...extra, ...checked.errors];
+  }
+  throw new ScriptFailedError(invalid, tokens, requests);
+}
+
+export type FactCheckResult = {
+  /** The script after any fact-check rewrites and number removal. */
+  script: Script;
+  scriptChanged: boolean;
+  check: FactCheck;
+  rewrites: number;
+  fixed: Claim[];
+  remaining: Claim[];
+  unsure: Claim[];
+  numbersRemovedFromScenes: number[];
+  /** Scenes whose text changed (rewrites or number removal). */
+  changedScenes: number[];
+  factcheckTokens: number;
+  /** Tokens spent on rewrites (script calls). */
+  scriptTokens: number;
+  requests: number;
+  rewriteModel: string | null;
+};
+
+/** JSON with sorted keys, so validation's key order doesn't count as a change. */
+const stable = (value: unknown): string =>
+  JSON.stringify(value, (_k, v) =>
+    v && typeof v === "object" && !Array.isArray(v)
+      ? Object.fromEntries(Object.entries(v).sort(([a], [b]) => a.localeCompare(b)))
+      : v,
+  );
+
+const sceneDiff = (a: Script, b: Script) =>
+  b.scenes.filter((s, i) => stable(s) !== stable(a.scenes[i])).map((s) => s.index);
+
+/** Checks every claim; wrong or imprecise ones trigger up to two rewrites, then doubtful numbers are removed. */
+export async function checkFacts(
+  opts: { script: Script; topic: string; length: Length; images?: boolean; log?: Log },
+  providers: Providers = real,
+): Promise<FactCheckResult> {
+  const { topic, length, images = false, log = quiet } = opts;
+  const original = opts.script;
+  let script = structuredClone(original);
+  let check = await providers.factCheck(script);
+  let factcheckTokens = check.tokens;
+  let scriptTokens = 0;
+  let requests = 1;
+  let rewrites = 0;
+  let rewriteModel: string | null = null;
+  const fixed: Claim[] = [];
+  while (issuesOf(check).length && rewrites < MAX_FACT_REWRITES) {
+    const issues = issuesOf(check);
+    for (const c of issues) log(`✗ scene ${c.scene}: "${c.text}" (${c.verdict}) → ${c.fix || "remove"}`);
+    fixed.push(...issues);
+    const rewritten = await writeScript({ topic, length, feedback: factFeedback(issues), images, log }, providers);
+    script = rewritten.script;
+    scriptTokens += rewritten.tokens;
+    requests += rewritten.requests;
+    rewriteModel = rewritten.model;
+    rewrites++;
+    check = await providers.factCheck(script);
+    factcheckTokens += check.tokens;
+    requests++;
+  }
+  const remaining = issuesOf(check);
+  const numbersRemovedFromScenes = removeDoubtfulNumbers(script, remaining);
+  if (numbersRemovedFromScenes.length)
+    log(`removed doubtful numbers from scenes ${numbersRemovedFromScenes.join(", ")}`);
+  const unsure = check.claims.filter((c) => c.verdict === "unsure");
+  const changedScenes = sceneDiff(original, script);
+  return {
+    script,
+    scriptChanged: stable(original) !== stable(script),
+    check,
+    rewrites,
+    fixed,
+    remaining,
+    unsure,
+    numbersRemovedFromScenes,
+    changedScenes,
+    factcheckTokens,
+    scriptTokens,
+    requests,
+    rewriteModel,
+  };
+}
+
+/** Credits a voiceover of this script will cost (used for the budget check before recording). */
+export const estimateVoiceCredits = (script: Script, model: string) => creditsFor(narrationText(script).length, model);
+
+export type VoiceStepResult = {
+  audio: Buffer;
+  alignment: Alignment;
+  characters: number;
+  credits: number;
+  model: string;
+  seconds: number;
+  speed: number;
+  attempts: number;
+};
+
+const clampSpeed = (speed: number) => Math.min(1.2, Math.max(0.8, Number(speed.toFixed(2))));
+
+/**
+ * One ElevenLabs take for the whole narration. If it's off the target length, it is re-recorded once at a
+ * corrected speed (0.8–1.2x) and that take is kept. The script is never rewritten here, so what is voiced
+ * is always the fact-checked script.
+ */
+export async function recordVoice(
+  opts: { script: Script; length: Length; final?: boolean; voiceId?: string; log?: Log },
+  providers: Providers = real,
+): Promise<VoiceStepResult> {
+  const { script, length, final = false, voiceId, log = quiet } = opts;
+  let characters = 0;
+  let credits = 0;
+  let attempts = 0;
+  let speed = 1;
+  for (let take = 1; ; take++) {
+    const voice: VoiceResult = await providers.generateVoice(narrationText(script), { final, speed, voiceId });
+    attempts += voice.attempts;
+    characters += voice.characters;
+    credits += creditsFor(voice.characters, voice.model);
+    const seconds = spokenSeconds(voice.alignment);
+    const verdict = lengthVerdict(seconds, length);
+    log(`${seconds.toFixed(1)}s spoken (target ${length}s) → ${verdict.action === "accept" ? "accept" : `off target`}`);
+    if (verdict.action === "accept" || take === 2) {
+      if (verdict.action !== "accept") log("still off target after a speed correction; keeping this take");
+      return {
+        audio: voice.audio,
+        alignment: voice.alignment,
+        characters,
+        credits,
+        model: voice.model,
+        seconds: Number(seconds.toFixed(2)),
+        speed,
+        attempts,
+      };
+    }
+    // Faster when too long, slower when too short (ElevenLabs allows 0.7–1.2; we stay within 0.8–1.2).
+    speed = clampSpeed(verdict.action === "adjustSpeed" ? verdict.speed : seconds / length);
+  }
+}
+
+/** Silent preview timing: estimated from the narration at 2.5 words per second, no credits. */
+export const previewAlignment = (script: Script) => estimateAlignment(narrationText(script));

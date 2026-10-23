@@ -11,3 +11,6 @@ dist/
 *.tsbuildinfo
 next-env.d.ts
 .remotion/
+
+# local file storage (Step B)
+.storage/

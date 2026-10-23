@@ -100,7 +100,13 @@ export const narrationWords = (script: Script) => script.scenes.reduce((sum, s) 
 
 export type ValidationResult =
   | { ok: true; script: Script; repairs: string[] }
-  | { ok: false; errors: string[]; wordCount?: number };
+  | {
+      ok: false;
+      errors: string[];
+      wordCount?: number;
+      /** Set when the shape was valid and the word count is the only problem, so the script can be fixed up. */
+      lengthOnly?: { script: Script; minWords: number; maxWords: number };
+    };
 
 // Checks shape first, then the rules a schema can't express. Errors are written so they can be fed back to Gemini.
 export const validateScript = (raw: unknown, length: Length, { images = true } = {}): ValidationResult => {
@@ -117,8 +123,17 @@ export const validateScript = (raw: unknown, length: Length, { images = true } =
 
   // Accept ~10% either side of the asked-for budget; voice speed correction handles the rest.
   const words = narrationWords(script);
-  if (words < Math.round(rules.minWords * 0.9) || words > Math.round(rules.maxWords * 1.1)) {
-    errors.push(`You wrote ${words} words of narration; write between ${rules.minWords} and ${rules.maxWords}.`);
+  const tooShort = words < Math.round(rules.minWords * 0.9);
+  const tooLong = words > Math.round(rules.maxWords * 1.1);
+  if (tooShort) {
+    errors.push(
+      `You wrote ${words} words of narration; you need at least ${rules.minWords} (aim for ${rules.maxWords}). Add about ${rules.maxWords - words} words: make every scene's narration one sentence longer.`,
+    );
+  }
+  if (tooLong) {
+    errors.push(
+      `You wrote ${words} words of narration; the maximum is ${rules.maxWords}. Remove about ${words - rules.maxWords} words: shorten the longest scenes.`,
+    );
   }
 
   const sceneCount = script.scenes.length;
@@ -149,7 +164,15 @@ export const validateScript = (raw: unknown, length: Length, { images = true } =
     errors.push("The last scene's narration must end with the cta.");
   }
 
-  if (errors.length) return { ok: false, errors, wordCount: words };
+  if (errors.length) {
+    const lengthOnly = (tooShort || tooLong) && errors.length === 1;
+    return {
+      ok: false,
+      errors,
+      wordCount: words,
+      ...(lengthOnly ? { lengthOnly: { script, minWords: rules.minWords, maxWords: rules.maxWords } } : {}),
+    };
+  }
   const repairs = script.scenes.map(repairVisual).filter((r): r is string => r !== null);
   return { ok: true, script, repairs };
 };
