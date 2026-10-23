@@ -36,7 +36,7 @@ Legend: ✅ done · 🔍 in review · 🛠 building · ⏳ not started. Small fe
 | E | 10 Editing | ⏳ | | Optimistic locking with `expectedVersion` |
 | F | 11 Render and download · 12 Library | ⏳ | | |
 | G | 13 Limits and settings · 14 Admin | ⏳ | | |
-| H | 15 Polish and Sentry · 16 Deploy and private beta | ⏳ | | Needs a GitHub repo |
+| H | 15 Polish and Sentry · 16 Deploy and private beta | ⏳ | | GitHub repo ready |
 
 ### v1 (regrouped later)
 
