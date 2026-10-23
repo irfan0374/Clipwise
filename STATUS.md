@@ -1,6 +1,6 @@
 # Clipwise — build status
 
-Updated before every commit. One feature at a time: **plan → approve → build + tests → demo → review → fix → commit**.
+Repo: https://github.com/irfan0374/Clipwise (public). Updated before every commit and push. One feature at a time: **plan → approve → build + tests → demo → review → fix → commit**.
 
 **Last updated:** 2026-10-23
 
@@ -30,7 +30,7 @@ Legend: ✅ done · 🔍 in review · 🛠 building · ⏳ not started. Small fe
 | Step | Features | Status | Commit | Notes |
 | --- | --- | --- | --- | --- |
 | A | 4 Homepage · 5 Sign-in (email + password) | ✅ | `d4bca16` | Front door: GSAP/Lenis homepage, Better Auth email + password, open sign-up, workspace on first sign-up |
-| B | 6 Worker, queue and storage | ✅ | (this commit) | BullMQ + local Redis, storage interface (local folder now), jobs script→factcheck→voice→render, budgets, crash recovery |
+| B | 6 Worker, queue and storage | ✅ | `62021df` | BullMQ + local Redis, storage interface (local folder now), jobs script→factcheck→voice→render, budgets, crash recovery |
 | C | 7 Create screen · 8 Live progress and fact-check job | 🛠 | | SSE |
 | D | 9 Storyboard with silent preview | ⏳ | | |
 | E | 10 Editing | ⏳ | | Optimistic locking with `expectedVersion` |
@@ -77,4 +77,3 @@ Legend: ✅ done · 🔍 in review · 🛠 building · ⏳ not started. Small fe
 - **Before deploy (step H): create your admin account** with your ADMIN_EMAILS address, so nobody else can register it first (no email verification yet).
 - Hosting at launch (step H): Railway needs a card after its trial; pick a worker host and storage that fit the no-card preference.
 - Length "Auto" currently means 60s; let the script writer choose in Step C.
-- No GitHub remote yet — needed by Feature 16 (deploy). Commits are local until then.
