@@ -52,17 +52,17 @@ Layout shell for app screens:
 
 ## MVP screens
 
-### A1 · Sign-in and waitlist
+### A1 · Sign in and create account (email + password)
 
 ```text
 Clipwise sign-in page, desktop 1440px. Use this project's Clipwise design system (Paper #F6F7F2, white panels, 1px #E7E7E0 borders, ink #0F0F0F, lime #C6F432 only for the main action, teal #14B8A6 for status, Sora headings, Inter body, Lucide icons). Modern, futuristic, minimal. No emoji, no fake numbers.
 
 Split screen.
-Left half: centered white card 420px wide. Lime square logo + "Clipwise". Heading "Welcome back" (Sora). Subtext "Sign in to turn your next idea into a video." One full-width white button with the Google "G" logo: "Continue with Google". Small muted note: "Private beta: only invited emails can sign in." and a teal text link "Join the waitlist".
+Left half: centered white card 420px wide. Lime square logo + "Clipwise". Heading "Welcome back" (Sora), subtext "Sign in to turn your next idea into a video." Below it a two-option segmented tab bar on a light grey track: "Sign in" (selected, white) and "Create account". Sign-in form: "Email" field (placeholder you@example.com), "Password" field, full-width lime primary button "Sign in", small muted centered note "Forgot your password? Ask us and we'll reset it." and a muted link "← Back to home".
 
 Right half: Paper background with a faint dot grid. A floating composition (no phone): a white prompt card reading "Launch video for our new running shoes" with a blinking cursor, connected by thin dashed lines to three small floating chips: "Script ready" (teal dot), "Voice: Liam" (mic icon), "Captions synced" (waveform icon). A soft lime glow behind it.
 
-Also show a second state of the left card for a non-invited account: amber badge "You're on the waitlist", text "We'll email you as soon as a spot opens.", secondary button "Back to home".
+Also show the second tab state of the left card: heading "Create your account", subtext "Free during the beta. No card needed.", "Create account" tab selected, fields "Name", "Email", "Password" with a hint "At least 8 characters.", lime button "Create free account". And an error example: a soft red rounded banner above the form reading "Wrong email or password."
 ```
 
 ### A2 · Create video (paste this first; it defines the app shell)
@@ -173,7 +173,7 @@ USAGE (selected):
 3. Panel "Recent activity": rows with date, video title, action (Script, Render), status badge.
 
 Also show, as two smaller panels beside or below:
-- ACCOUNT: Google avatar, name and email (read-only, Google badge), secondary "Sign out"; danger zone row with red text button "Delete account" and note "Removes your videos and data within 30 days."
+- ACCOUNT: initials avatar, name and email (read-only), secondary "Change password" and "Sign out"; danger zone row with red text button "Delete account" and note "Removes your videos and data within 30 days."
 - DEFAULTS: length segmented control (30s / 60s / Auto), default voice list (Liam, Jessica, George) with play buttons, default format select.
 ```
 
@@ -182,13 +182,13 @@ Also show, as two smaller panels beside or below:
 Only you see this screen; it's the one place provider budgets appear.
 
 ```text
-Clipwise admin dashboard, desktop 1440px web app with the same left sidebar plus an "Admin" item with a shield icon (active). Use this project's Clipwise design system (Paper, white panels, 1px #E7E7E0 borders, ink #0F0F0F, lime #C6F432 for meters and the "Invite" button, teal #14B8A6 healthy, amber warning, red error, Sora + Inter, Lucide icons). Feels like a calm mission-control. No emoji.
+Clipwise admin dashboard, desktop 1440px web app with the same left sidebar plus an "Admin" item with a shield icon (active). Use this project's Clipwise design system (Paper, white panels, 1px #E7E7E0 borders, ink #0F0F0F, lime #C6F432 for meters, teal #14B8A6 healthy, amber warning, red error, Sora + Inter, Lucide icons). Feels like a calm mission-control. No emoji.
 
 1. Header: "Admin" (Sora) and on the right a large switch "Generation running" (teal); its off state reads "Paused" in red.
 2. Four compact stat tiles in one white strip with vertical dividers: "Active users 12", "Videos today 23", "Failures today 2" with an amber dot, "Avg render 2m 51s".
 3. Panel "Free-tier budgets": two wide meters with lime-to-teal fill and small tick marks at 50%, 80%, 100%: "Gemini requests today 41 / 80" and "ElevenLabs credits this month 3,250 / 10,000".
 4. Two panels side by side:
-   - "Invites": email input + lime "Invite"; list rows (email, badge Invited / Waitlist / Accepted, date, "⋯" with Approve and Revoke).
+   - "New sign-ups": rows (name, email, signed up date, videos so far) with "⋯" (View usage, Reset password, Suspend).
    - "Needs attention": rows of failed or stuck videos (title, user, stage badge "factcheck" or "render", time) with "Retry" and "View log".
 5. Panel "Users": table with avatar, name, email, videos this week, renders this week, status (Active teal / Suspended red), "⋯" (View usage, Suspend).
 ```

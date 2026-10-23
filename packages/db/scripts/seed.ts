@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { dbName } from "../src/connection";
-import { Invite, PipelineRun, Render, ScriptVersion, UsageEvent, Video, Workspace } from "../src/index";
+import { PipelineRun, Render, ScriptVersion, UsageEvent, Video, Workspace } from "../src/index";
 import { isProductionDb, runScript } from "./env";
 
 /**
@@ -26,19 +26,6 @@ await runScript(async () => {
     await PipelineRun.deleteMany({ workspaceId });
     await UsageEvent.deleteMany({ workspaceId });
     await old.deleteOne();
-  }
-
-  // Invites for the admin emails, so sign-in works once Feature 5 lands
-  const admins = (process.env.ADMIN_EMAILS ?? "")
-    .split(",")
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-  for (const email of admins) {
-    await Invite.updateOne(
-      { email },
-      { $setOnInsert: { email, status: "invited", note: "admin (seed)" }, $set: { revokedAt: null } },
-      { upsert: true },
-    );
   }
 
   const ws = await Workspace.create({ ownerUserId: SEED_OWNER, name: "Sample workspace" });
@@ -191,9 +178,4 @@ await runScript(async () => {
   });
 
   console.log(`✓ seeded workspace "${ws.name}" with 3 videos (rendered, previewed, failed)`);
-  console.log(
-    admins.length
-      ? `✓ admin invites: ${admins.join(", ")}`
-      : "  tip: set ADMIN_EMAILS in .env to seed your admin invite",
-  );
 });

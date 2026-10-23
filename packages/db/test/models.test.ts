@@ -1,6 +1,6 @@
 import { Types } from "mongoose";
 import { describe, expect, it } from "vitest";
-import { Invite, PipelineRun, Render, ScriptVersion, UsageEvent, Video, Workspace } from "../src/index";
+import { PipelineRun, Render, ScriptVersion, UsageEvent, Video, Workspace } from "../src/index";
 import { gpsScript, newVideo, skyScript } from "./fixtures";
 
 describe("videos", () => {
@@ -59,12 +59,6 @@ describe("videos", () => {
 });
 
 describe("unique rules", () => {
-  it("allows one invite per email, case-insensitive", async () => {
-    await Invite.create({ email: "Maya@Example.com" });
-    await expect(Invite.create({ email: "maya@example.com " })).rejects.toThrow(/duplicate key/);
-    expect((await Invite.findOne({ email: "maya@example.com" }))?.status).toBe("invited");
-  });
-
   it("allows one workspace per user, and many without a Stripe customer", async () => {
     await Workspace.create({ ownerUserId: "u1", name: "Maya" });
     await Workspace.create({ ownerUserId: "u2", name: "Sam" }); // both stripeCustomerId null

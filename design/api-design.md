@@ -80,15 +80,15 @@ Voices are an allow-list of the ElevenLabs default voices that work on the free 
 
 | Screen | Reads (server components) | Actions | Routes |
 | --- | --- | --- | --- |
-| Homepage | — | `joinWaitlist` | — |
-| A1 Sign-in | — | — | `/api/auth/*` |
+| Homepage | — | — ("Get started free" links to `/sign-in?tab=sign-up`) | — |
+| A1 Sign-in / Create account | — | — (Better Auth client: `signIn.email`, `signUp.email`) | `/api/auth/*` |
 | A2 Create | `getCreateScreen` | `brainstormIdeas`, `createVideo` | — |
 | A3 Generating | `getVideo` | `cancelVideo`, `retryVideo` | `/api/events/[videoId]` |
 | Storyboard + A4 Editor | `getVideo`, `getScriptVersions` | `updateScene`, `reorderScenes`, `addScene`, `deleteScene`, `regenerateScene`, `acceptClaim`, `restoreScriptVersion`, `renameVideo`, `renderFinal` | `/api/videos/[id]/timeline`, `/api/events/[videoId]` |
 | A5 Library | `listVideos` | `deleteVideo`, `duplicateVideo`, `retryVideo` | — |
 | A6 Video ready | `getVideo` | `writePostCaption` | `/api/videos/[id]/download` |
 | A7 Settings | `getUsage`, `getAccount` | `updateDefaults`, `deleteAccount` | `/api/auth/*` (sign out) |
-| A8 Admin | `getAdminOverview`, `listUsers`, `listInvites`, `listProblemVideos` | `inviteEmail`, `approveWaitlist`, `revokeInvite`, `setUserSuspended`, `setGenerationPaused`, `adminRetryVideo` | — |
+| A8 Admin | `getAdminOverview`, `listUsers`, `listProblemVideos` | `resetUserPassword`, `setUserSuspended`, `setGenerationPaused`, `adminRetryVideo` | — |
 | A9 Brand kit (v1) | `getBrandKit` | `saveBrandKit`, `resetBrandKit` | `/api/uploads/sign` |
 | A10 Connections + schedule (v1) | `listSocialAccounts` | `disconnectSocialAccount`, `schedulePost`, `reschedulePost`, `cancelPost` | `/api/oauth/instagram/*` |
 | A11 Calendar (v1) | `listScheduledPosts` | (same as A10) | — |
@@ -102,14 +102,19 @@ Voices are an allow-list of the ElevenLabs default voices that work on the free 
 
 Each block: input schema → output → what it does. Limits refer to section 6.
 
-### Public
+### Sign-up and sign-in (Better Auth, email + password)
+
+Not server actions: the browser calls Better Auth's own endpoints through its client (`authClient.signUp.email`, `authClient.signIn.email`, `authClient.signOut`), served by the `/api/auth/[...all]` route.
 
 ```typescript
-// joinWaitlist — homepage form
-input:  z.object({ email: z.string().email().max(254), source: z.enum(["hero", "cta"]).optional() })
-output: { status: "waitlisted" | "already_on_list" | "invited" }
+// POST /api/auth/sign-up/email  { name, email, password }   -> session cookie (auto sign-in)
+// POST /api/auth/sign-in/email  { email, password }         -> session cookie
+// POST /api/auth/sign-out                                   -> clears the cookie
 ```
-Upserts `invites` with `status: "waitlist"`. Rate-limited per IP (5 per hour). Never reveals whether an email belongs to a user.
+- Sign-up is open to anyone (decided 2026-10-23). Passwords: 8–128 characters, hashed by Better Auth and stored in its `account` collection (`providerId: "credential"`).
+- On sign-up a hook gives the `admin` role to emails in `ADMIN_EMAILS` and creates the user's workspace.
+- No emails are sent in the beta: no verification and no self-service reset. A forgotten password is reset by an admin (`resetUserPassword`). Add an email provider before the public launch.
+- Errors shown to people: wrong email or password (401), email already has an account (422), too many attempts (429).
 
 ### Create (A2)
 
@@ -276,9 +281,8 @@ output: {
   queues: Record<"ai" | "voice" | "render" | "publish", { waiting: number; active: number; failed: number }>;
 }
 
-// inviteEmail          input: z.object({ email: z.string().email() })                     output: { status: "invited" }
-// approveWaitlist      input: z.object({ inviteIds: z.array(Id).min(1).max(100) })        output: { approved: number }
-// revokeInvite         input: z.object({ inviteId: Id })                                  output: { revoked: true }
+// resetUserPassword    input: z.object({ userId: z.string(), newPassword: z.string().min(8).max(128) })  output: { reset: true }
+//                      // sets a temporary password (hashed via Better Auth) and signs the user out everywhere
 // setUserSuspended     input: z.object({ userId: z.string(), suspended: z.boolean() })    output: { suspended: boolean }
 // setGenerationPaused  input: z.object({ paused: z.boolean(), queue: z.enum(["all", "ai", "voice", "render", "publish"]).default("all") })
 //                      output: { paused: boolean }
@@ -347,7 +351,7 @@ Plan changes only take effect from the Stripe webhook, never from these actions.
 
 | Route | Method | Auth | Request | Response |
 | --- | --- | --- | --- | --- |
-| `/api/auth/[...all]` | GET, POST | — | Better Auth | Better Auth (Google OAuth, session cookie) |
+| `/api/auth/[...all]` | GET, POST | — | Better Auth | Better Auth (email + password, session cookie) |
 | `/api/events/[videoId]` | GET | user (owner) | — | `text/event-stream` of `VideoEvent` (section 5) |
 | `/api/videos/[id]/timeline` | GET | user (owner) | `?version=` optional | `302` to signed R2 URL of `timeline.json` (1 h) |
 | `/api/videos/[id]/download` | GET | user (owner) | `?renderId=` optional | `302` to signed R2 URL of the MP4 (1 h, `Content-Disposition: attachment`) |
@@ -391,7 +395,8 @@ export type VideoEvent =
 | `active.jobs` | `createVideo`, `regenerateScene` | 2 running | `active:{userId}` |
 | `active.render` | `renderFinal` | 1 running | `active:{userId}` |
 | global pause / budgets | every action that enqueues | admin switch, 80% Gemini, 90% ElevenLabs | `flag:pause:*`, `global:*` |
-| `waitlist.ip` | `joinWaitlist` | 5 / hour / IP | `limit:ip:{ip}:waitlist` |
+| `signup.ip` | `POST /api/auth/sign-up/email` | 5 / hour / IP | Better Auth rate limit (MongoDB `rateLimit` collection) |
+| `signin.ip` | `POST /api/auth/sign-in/email` | 10 / minute / IP | Better Auth rate limit (MongoDB `rateLimit` collection) |
 
 Counters increment when a job is accepted and are refunded if the job fails before spending provider credits. With paid plans (v1) the values come from `workspaces.plan`.
 
@@ -435,6 +440,8 @@ Small additions to the [Database Design](https://claude.ai/artifact/FP5BPiXzyp9c
 | `scenes[].role` (optional label: Hook, Feature, Proof, Offer, Outro…) | Storyboard frame labels; written by Gemini, editable |
 | `workspaces.settings.defaultFormat` | Settings → Defaults |
 | `scriptVersions.source` adds `"reordered"`, `"scene-added"`, `"scene-deleted"` | Undo history for Storyboard edits |
+| `invites` collection removed (migration `2026-10-23-drop-invites`) | Sign-up is open; no waitlist or invites |
+| Better Auth `account` holds the password hash; new `rateLimit` collection | Email + password sign-in with per-IP limits |
 
 ---
 

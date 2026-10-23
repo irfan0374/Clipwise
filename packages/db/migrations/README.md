@@ -5,7 +5,7 @@ One file per schema change, named `YYYY-MM-DD-what-changed.ts`, exporting:
 ```ts
 import type mongoose from "mongoose";
 export const up = async (db: mongoose.mongo.Db) => {
-  await db.collection("invites").updateMany({ status: { $exists: false } }, { $set: { status: "invited" } });
+  await db.collection("videos").updateMany({ format: { $exists: false } }, { $set: { format: "explainer" } });
 };
 ```
 

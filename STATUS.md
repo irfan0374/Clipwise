@@ -6,60 +6,51 @@ Updated before every commit. One feature at a time: **plan → approve → build
 
 ## Now
 
-**Next feature** · Planning
+**Step B — Worker, queue and R2** · Planning
 
 ## Next up
 
-**Feature 4 — Homepage with the waitlist**: port design/homepage (GSAP + Lenis) into Next.js; waitlist form saves to `invites`.
+**Step C — Make a video**: Create screen + live progress and fact-check job.
 
 ## Build plan
 
-Legend: ✅ done · 🔍 in review · 🛠 building · ⏳ not started
+Legend: ✅ done · 🔍 in review · 🛠 building · ⏳ not started. Small features are merged into steps (decided 2026-10-23).
 
-### Phase A — Foundation
+### Done
 
 | # | Feature | Status | Commit | Notes |
 | --- | --- | --- | --- | --- |
 | 0 | Prototype baseline | ✅ | `64f7db9` | Pipeline, 9 visual types, fact-check, CLI, design docs |
 | 1 | Project setup | ✅ | `ce4623c` | apps/web, apps/worker, packages/shared, Biome, `pnpm dev` / `pnpm check` |
 | 2 | Database and shared schemas | ✅ | `261315b` | packages/db (7 MVP collections), enums + job schemas in shared, `db:*` scripts, seed data |
-| 3 | App shell and design system | ✅ | (this commit) | Tailwind v4 + shadcn/ui, tokens, Sora/Inter, sidebar + mobile menu, `/design` style tile |
-| 4 | Homepage with the waitlist | ⏳ | | Port design/homepage (GSAP + Lenis) |
-| 5 | Sign-in (Better Auth, Google) with the invite gate | ⏳ | | |
+| 3 | App shell and design system | ✅ | `53e393a` | Tailwind v4 + shadcn/ui, tokens, Sora/Inter, sidebar + mobile menu, `/design` style tile |
 
-### Phase B — Making videos
+### To private beta
 
-| # | Feature | Status | Commit | Notes |
+| Step | Features | Status | Commit | Notes |
 | --- | --- | --- | --- | --- |
-| 6 | Worker and queue with R2 | ⏳ | | BullMQ + Redis, Cloudflare R2 |
-| 7 | Create screen | ⏳ | | |
-| 8 | Live progress and fact-check job | ⏳ | | SSE |
-| 9 | Storyboard tab with silent preview | ⏳ | | |
-| 10 | Editing | ⏳ | | Optimistic locking with `expectedVersion` |
-| 11 | Render and download | ⏳ | | |
-| 12 | Library | ⏳ | | |
+| A | 4 Homepage · 5 Sign-in (email + password) | ✅ | (this commit) | Front door: GSAP/Lenis homepage, Better Auth email + password, open sign-up, workspace on first sign-up |
+| B | 6 Worker, queue and R2 | 🛠 | | BullMQ + Redis, Cloudflare R2 |
+| C | 7 Create screen · 8 Live progress and fact-check job | ⏳ | | SSE |
+| D | 9 Storyboard with silent preview | ⏳ | | |
+| E | 10 Editing | ⏳ | | Optimistic locking with `expectedVersion` |
+| F | 11 Render and download · 12 Library | ⏳ | | |
+| G | 13 Limits and settings · 14 Admin | ⏳ | | |
+| H | 15 Polish and Sentry · 16 Deploy and private beta | ⏳ | | Needs a GitHub repo |
 
-### Phase C — Private beta
+### v1 (regrouped later)
 
-| # | Feature | Status | Commit | Notes |
-| --- | --- | --- | --- | --- |
-| 13 | Limits and settings | ⏳ | | |
-| 14 | Admin | ⏳ | | |
-| 15 | Polish and Sentry | ⏳ | | |
-| 16 | Deploy (Vercel + Railway) and private beta | ⏳ | | Needs a GitHub repo |
-
-### Phase D — v1
-
-| # | Feature | Status | Commit | Notes |
-| --- | --- | --- | --- | --- |
-| 17 | Brand kit | ⏳ | | |
-| 18 | Instagram, scheduling and calendar | ⏳ | | |
-| 19 | Stripe billing | ⏳ | | |
+| # | Feature | Status |
+| --- | --- | --- |
+| 17 | Brand kit | ⏳ |
+| 18 | Instagram, scheduling and calendar | ⏳ |
+| 19 | Stripe billing | ⏳ |
 
 ## Decisions log
 
 | Date | Decision |
 | --- | --- |
+| 2026-10-23 | Sign-in is email + password (Google OAuth dropped: needed a card). Open sign-up, no invites/waitlist, no emails in beta (admin resets passwords), per-IP sign-up limit 5/h |
 | 2026-10-23 | Small features may be merged with neighbours into one build step (user preference) |
 | 2026-10-23 | Build feature by feature; one commit per approved feature; STATUS.md updated before each commit and push |
 | 2026-10-23 | Biome for lint + format (not ESLint + Prettier). `noNonNullAssertion` off (works with strict index typing); array-index keys and SVG titles allowed in video frames |
@@ -75,8 +66,6 @@ Legend: ✅ done · 🔍 in review · 🛠 building · ⏳ not started
 
 ## Open items
 
-- Stitch: editor screens' Storyboard | Edit tab edit may not have applied — will be built in code (Feature 9) regardless.
 - ElevenLabs free plan is non-commercial — upgrade before real users (Feature 16).
 - Sidebar user and usage meter show placeholder values until sign-in (Feature 5) and limits (Feature 13).
-- Set `ADMIN_EMAILS` in `.env` before Feature 5 (sign-in), then re-run `pnpm db:seed` to create the admin invite.
 - No GitHub remote yet — needed by Feature 16 (deploy). Commits are local until then.

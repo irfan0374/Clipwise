@@ -60,10 +60,13 @@ copy_fixes = [
     ("Primary source verified", "Claims checked"),
     ("Claim timestamped", "Wrong numbers fixed"),
     ("Hallucination check passed", "Doubtful stats removed"),
-    ("Private Beta Cohort 04", "Private beta"),
+    ("Private Beta Cohort 04", "Free beta"),
     ("Turn thoughts, docs and notes into ready-to-post short video reels in minutes. Request an access key today.",
      "Turn any idea into a ready-to-post Reel, Short or TikTok in minutes."),
-    ("Single-seat beta keys issued daily", "Invite-only beta"),
+    ("Single-seat beta keys issued daily", "Free during the beta"),
+    # Open sign-up (email + password): no waitlist, every CTA goes to Create account
+    ("Now in private beta", "Now in open beta"),
+    ("Get early access", "Get started free"),
     ("AI video synthesis platform", "Ideas in. Videos out."),
     ("© 2026 Clipwise Inc. All rights reserved.", "© 2026 Clipwise"),
 ]

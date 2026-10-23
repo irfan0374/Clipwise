@@ -4,7 +4,6 @@ export const LengthModes = ["30", "60", "auto"] as const;
 export const LengthSeconds = [30, 60] as const;
 export const Formats = ["promo", "explainer", "story", "tips", "recap", "quote"] as const;
 
-export const InviteStatuses = ["waitlist", "invited"] as const;
 export const Plans = ["beta", "free", "creator", "pro", "business"] as const;
 export const PaymentStatuses = ["none", "active", "past_due", "canceled"] as const;
 
@@ -42,7 +41,6 @@ export const StageReportStatuses = ["ok", "skipped", "failed"] as const;
 export const Providers = ["gemini", "elevenlabs", "r2", "instagram"] as const;
 export const UsageUnits = ["tokens", "characters", "credits", "requests", "bytes"] as const;
 
-export type InviteStatus = (typeof InviteStatuses)[number];
 export type Plan = (typeof Plans)[number];
 export type VideoStatus = (typeof VideoStatuses)[number];
 export type Stage = (typeof Stages)[number];
