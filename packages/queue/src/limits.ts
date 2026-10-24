@@ -8,9 +8,10 @@ export const userLimits = () => ({
   videosPerDay: Number(process.env.LIMIT_VIDEOS_PER_DAY ?? 10),
   ideasPerDay: Number(process.env.LIMIT_IDEAS_PER_DAY ?? 30),
   activeVideos: Number(process.env.LIMIT_ACTIVE_VIDEOS ?? 2),
+  aiEditsPerDay: Number(process.env.LIMIT_AI_EDITS_PER_DAY ?? 30),
 });
 
-type DailyKind = "videos" | "ai";
+type DailyKind = "videos" | "ai" | "edits";
 const today = () => new Date().toISOString().slice(0, 10);
 const dailyKey = (userId: string, kind: DailyKind) => `limit:${userId}:${kind}:${today()}`;
 
@@ -26,7 +27,7 @@ export const takeDaily = (userId: string, kind: DailyKind) =>
   reserve(
     dailyKey(userId, kind),
     1,
-    kind === "videos" ? userLimits().videosPerDay : userLimits().ideasPerDay,
+    { videos: userLimits().videosPerDay, ai: userLimits().ideasPerDay, edits: userLimits().aiEditsPerDay }[kind],
     2 * 24 * 3600,
   );
 
@@ -36,17 +37,23 @@ export const refundDaily = async (userId: string, kind: DailyKind) => {
 };
 
 export async function dailyUsage(userId: string) {
-  const [videos, ai] = await redis().mget(dailyKey(userId, "videos"), dailyKey(userId, "ai"));
+  const [videos, ai, edits] = await redis().mget(
+    dailyKey(userId, "videos"),
+    dailyKey(userId, "ai"),
+    dailyKey(userId, "edits"),
+  );
   const limits = userLimits();
   return {
     videos: { used: Number(videos ?? 0), limit: limits.videosPerDay },
     ideas: { used: Number(ai ?? 0), limit: limits.ideasPerDay },
+    aiEdits: { used: Number(edits ?? 0), limit: limits.aiEditsPerDay },
   };
 }
 
-/** Videos of this workspace that are being written, checked, voiced or rendered right now. */
+/** Videos of this workspace that are being written, checked, voiced or rendered right now (quick re-checks of
+ * edited scenes don't count). */
 export const activeRunCount = (workspaceId: Types.ObjectId | string) =>
-  PipelineRun.countDocuments({ workspaceId, status: "running" });
+  PipelineRun.countDocuments({ workspaceId, status: "running", trigger: { $ne: "recheck" } });
 
 const UNLOCK = `if redis.call('GET', KEYS[1]) == ARGV[1] then return redis.call('DEL', KEYS[1]) else return 0 end`;
 

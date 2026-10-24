@@ -281,3 +281,20 @@ export async function recordVoice(
 
 /** Silent preview timing: estimated from the narration at 2.5 words per second, no credits. */
 export const previewAlignment = (script: Script) => estimateAlignment(narrationText(script));
+
+export type RecheckResult = { claims: Claim[]; tokens: number; model: string };
+
+/**
+ * Fact-checks only the given scenes (after the user edited them). Nothing is rewritten: the words are the
+ * user's, so wrong or doubtful claims become notes to review. Claims keep their scene index.
+ */
+export async function recheckScenes(
+  opts: { script: Script; scenes: number[]; topic: string; format?: VideoFormat },
+  providers: Providers = real,
+): Promise<RecheckResult> {
+  const wanted = new Set(opts.scenes);
+  const partial = { ...opts.script, scenes: opts.script.scenes.filter((s) => wanted.has(s.index)) };
+  if (!partial.scenes.length) return { claims: [], tokens: 0, model: "" };
+  const check = await providers.factCheck(partial, { brief: opts.topic, format: opts.format ?? "explainer" });
+  return { claims: check.claims.filter((c) => wanted.has(c.scene)), tokens: check.tokens, model: check.model };
+}

@@ -24,11 +24,13 @@ export {
   closeQueues,
   defaultJobOptions,
   enqueue,
+  enqueueRecheck,
   type JobData,
   JobDefs,
   type JobName,
   jobIdFor,
   queue,
+  recheckDelayMs,
 } from "./queues";
 export { closeRedis, newRedis, redis, redisUrl } from "./redis";
 export { cancelVideo, retryVideo, type StartVideoInput, startVideo } from "./videos";

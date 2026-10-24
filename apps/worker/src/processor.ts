@@ -6,11 +6,18 @@ import { type Job, UnrecoverableError } from "bullmq";
 import { emit, jobContext, type Loaded, load } from "./context";
 import { classify } from "./errors";
 import { factcheckJob } from "./jobs/factcheck";
+import { recheckJob } from "./jobs/recheck";
 import { renderJob } from "./jobs/render";
 import { scriptJob } from "./jobs/script";
 import { voiceJob } from "./jobs/voice";
 
-const stageOf: Record<JobName, Stage> = { script: "script", factcheck: "factcheck", voice: "voice", render: "render" };
+const stageOf: Record<JobName, Stage> = {
+  script: "script",
+  factcheck: "factcheck",
+  recheck: "factcheck",
+  voice: "voice",
+  render: "render",
+};
 
 /** Marks the video and run failed with a user-safe message (full error kept in the run report). */
 export async function markFailed(job: Job, error: unknown) {
@@ -57,7 +64,9 @@ export const makeProcessor = (providers?: Providers) => async (job: Job) => {
   const def = JobDefs[name];
   if (!def) throw new UnrecoverableError(`unknown job ${job.name}`);
   const data = def.schema.parse(job.data);
-  const ctx = await load(data);
+  // Re-checks of edited scenes have no pipeline run of their own yet and never fail the video.
+  if (name === "recheck") return recheckJob(job, data as JobData<"recheck">, providers);
+  const ctx = await load(data as { videoId: string; runId: string });
   if (!ctx) return; // video deleted or run missing: nothing to do
   if (ctx.run.status === "cancelled") return; // the user cancelled this run
   const attempt = job.attemptsMade + 1;
@@ -85,5 +94,7 @@ function runJob(name: JobName, ctx: Loaded, data: unknown, attempt: number, prov
       return voiceJob(ctx, data as JobData<"voice">, attempt, providers);
     case "render":
       return renderJob(ctx, data as JobData<"render">, attempt);
+    case "recheck":
+      return; // handled before a run is loaded
   }
 }

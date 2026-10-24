@@ -2,26 +2,36 @@ import { dailyUsage } from "@clipwise/queue";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { LiveVideo } from "@/components/video/live-video";
-import { Storyboard } from "@/components/video/storyboard";
+import { Studio } from "@/components/video/studio";
 import { requireUser } from "@/lib/session";
 import { videoForOwner } from "@/lib/videos";
 
 export const metadata: Metadata = { title: "Video" };
 
-export default async function VideoPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function VideoPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ tab?: string; scene?: string }>;
+}) {
   const { id } = await params;
+  const query = await searchParams;
   const { user, workspace } = await requireUser();
   const video = await videoForOwner(id, workspace._id);
   if (!video) notFound();
-  // Script written and checked: the Storyboard. Anything still running, stopped or failed: the progress view.
+  // Script written and checked: the Storyboard and Editor. Anything still running, stopped or failed: the progress view.
   const ready = video.timeline && video.steps.factcheck.state === "done" && video.status === "previewed";
   if (!ready) return <LiveVideo video={video} />;
   const usage = await dailyUsage(user.id);
+  // ?tab=edit&scene=2 opens the Editor on scene 2 (1-based in the address bar).
+  const scene = Math.max(0, Math.min(video.scenes.length - 1, (Number.parseInt(query.scene ?? "1", 10) || 1) - 1));
   return (
-    <Storyboard
+    <Studio
       video={video}
       user={{ name: user.name, email: user.email, image: user.image ?? null, role: user.role ?? "user" }}
       usage={usage.videos}
+      focus={{ tab: query.tab === "edit" ? "edit" : "storyboard", scene, panel: "script" }}
     />
   );
 }

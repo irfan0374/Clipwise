@@ -5,6 +5,7 @@ import {
   budgetKeys,
   cancelVideo,
   enqueue,
+  enqueueRecheck,
   queue,
   rebuildBudgetCounters,
   redis,
@@ -397,5 +398,88 @@ describe("review fixes", () => {
     );
     expect(results.filter(Boolean)).toHaveLength(1);
     expect(await withWorkspaceLock("ws1", async () => "again")).toEqual({ value: "again" }); // released after
+  });
+});
+
+describe("fact re-check after an edit", () => {
+  /** A checked video whose scene 1 was then edited by the user (as the web edit actions save it). */
+  async function editedVideo() {
+    const { videoId } = await newVideo("script");
+    await drain("ai", fakes());
+    const script = validScript();
+    script.scenes[1]!.narration = "Edited words about light.";
+    await Video.updateOne(
+      { _id: videoId },
+      { $set: { script, scriptVersion: 2, "factcheck.claims": [], "factcheck.pendingScenes": [1] } },
+    );
+    await enqueueRecheck(videoId, 2);
+    return videoId;
+  }
+
+  /** Runs the queued (delayed) re-checks now; `lastAttempt` makes a failure final. */
+  async function runRechecks(providers: Providers, lastAttempt = false) {
+    const processor = makeProcessor(providers);
+    const jobs = (await queue("ai").getJobs(["delayed", "waiting"])) as Job[];
+    for (const job of jobs) {
+      if (lastAttempt) job.attemptsMade = (job.opts.attempts ?? 1) - 1;
+      await processor(job).catch(() => {});
+      await job.remove();
+    }
+    return jobs.map((j) => j.id);
+  }
+
+  it("checks only the edited scenes, after a short delay, and marks the version checked", async () => {
+    const videoId = await editedVideo();
+    const delayed = await queue("ai").getJobs(["delayed"]);
+    expect(delayed.map((j) => j.id)).toEqual([`vid_${videoId}_recheck_v2`]);
+
+    const seen: unknown[] = [];
+    const providers = fakes({
+      checks: [
+        check([
+          { scene: 1, text: "Light bends", verdict: "wrong", fix: "Light scatters" },
+          { scene: 3, text: "Not shown", verdict: "wrong", fix: "" },
+        ]),
+      ],
+    });
+    const factCheck = providers.factCheck;
+    providers.factCheck = async (script, opts) => {
+      seen.push(script.scenes.map((s) => s.index));
+      return factCheck(script, opts);
+    };
+    await runRechecks(providers);
+
+    expect(seen).toEqual([[1]]); // only the edited scene is sent
+    const video = await Video.findById(videoId).lean();
+    expect(video?.factcheck?.pendingScenes).toEqual([]);
+    expect(video?.factcheck?.checkedVersion).toBe(2);
+    // Only claims about the re-checked scene are kept.
+    expect(video?.factcheck?.claims.map((c) => [c.scene, c.verdict])).toEqual([[1, "wrong"]]);
+    expect(video?.status).toBe("previewed");
+    expect(await PipelineRun.countDocuments({ videoId, trigger: "recheck", status: "ok" })).toBe(1);
+  });
+
+  it("stops before calling Gemini when the script changed again", async () => {
+    const videoId = await editedVideo();
+    await Video.updateOne({ _id: videoId }, { $set: { scriptVersion: 3 } });
+    const before = Number(await redis().get(budgetKeys.geminiRequests()));
+    await runRechecks(fakes());
+    expect(Number(await redis().get(budgetKeys.geminiRequests()))).toBe(before);
+    const video = await Video.findById(videoId).lean();
+    expect(video?.factcheck?.pendingScenes).toEqual([1]);
+    expect(await PipelineRun.countDocuments({ videoId, trigger: "recheck" })).toBe(0);
+  });
+
+  it("never fails the video: a scene that couldn't be checked gets a note to review", async () => {
+    const videoId = await editedVideo();
+    const providers = fakes();
+    providers.factCheck = async () => {
+      throw new Error("Gemini is down");
+    };
+    await runRechecks(providers, true);
+    const video = await Video.findById(videoId).lean();
+    expect(video?.status).toBe("previewed");
+    expect(video?.factcheck?.pendingScenes).toEqual([]);
+    expect(video?.factcheck?.claims.map((c) => [c.scene, c.verdict])).toEqual([[1, "unsure"]]);
   });
 });

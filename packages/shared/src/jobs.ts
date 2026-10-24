@@ -19,6 +19,8 @@ export const FactcheckJob = z.object({
   scriptVersion: z.number().int(),
   sceneIndexes: z.array(z.number().int()).optional(),
 });
+/** Re-checks the facts of edited scenes (factcheck.pendingScenes) once the script stops changing. */
+export const RecheckJob = z.object({ videoId: Id, scriptVersion: z.number().int() });
 export const VoiceJob = z.object({ videoId: Id, runId: Id, renderId: Id, scriptVersion: z.number().int() });
 export const RenderJob = z.object({
   videoId: Id,

@@ -1,4 +1,4 @@
-import { FactcheckJob, type QueueName, Queues, RenderJob, ScriptJob, VoiceJob } from "@clipwise/shared";
+import { FactcheckJob, type QueueName, Queues, RecheckJob, RenderJob, ScriptJob, VoiceJob } from "@clipwise/shared";
 import { type JobsOptions, Queue } from "bullmq";
 import type { z } from "zod";
 import { redis } from "./redis";
@@ -7,6 +7,7 @@ import { redis } from "./redis";
 export const JobDefs = {
   script: { queue: Queues.ai, schema: ScriptJob },
   factcheck: { queue: Queues.ai, schema: FactcheckJob },
+  recheck: { queue: Queues.ai, schema: RecheckJob },
   voice: { queue: Queues.voice, schema: VoiceJob },
   render: { queue: Queues.render, schema: RenderJob },
 } as const;
@@ -46,6 +47,8 @@ export const jobIdFor = <N extends JobName>(name: N, data: JobData<N>): string =
       return `${base}_${d.runId}`;
     case "factcheck":
       return `${base}_v${d.scriptVersion}_${d.runId}`;
+    case "recheck":
+      return `${base}_v${d.scriptVersion}`;
     default:
       // The run is part of the ID: a retry is a new run, so its jobs never collide with the failed ones
       // BullMQ keeps (adding an existing ID is silently ignored).
@@ -53,11 +56,21 @@ export const jobIdFor = <N extends JobName>(name: N, data: JobData<N>): string =
   }
 };
 
-export async function enqueue<N extends JobName>(name: N, data: JobData<N>) {
+export async function enqueue<N extends JobName>(name: N, data: JobData<N>, opts: { delay?: number } = {}) {
   const def = JobDefs[name];
   const payload = def.schema.parse(data) as JobData<N>;
-  return queue(def.queue).add(name, payload, { jobId: jobIdFor(name, payload) });
+  return queue(def.queue).add(name, payload, { jobId: jobIdFor(name, payload), ...opts });
 }
+
+/** Wait after the last edit before re-checking facts, so typing doesn't trigger a check per keystroke. */
+export const recheckDelayMs = () => Number(process.env.RECHECK_DELAY_MS ?? 4000);
+
+/**
+ * Queues a re-check of the edited scenes for this script version. An older queued re-check finds the script
+ * changed and stops before calling Gemini, so only the last edit in a burst costs a request.
+ */
+export const enqueueRecheck = (videoId: string, scriptVersion: number) =>
+  enqueue("recheck", { videoId, scriptVersion }, { delay: recheckDelayMs() });
 
 export const closeQueues = async () => {
   for (const q of cache.__clipwiseQueues?.values() ?? []) await q.close();

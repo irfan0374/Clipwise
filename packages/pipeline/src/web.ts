@@ -18,3 +18,26 @@ export const previewTimeline = (script: Script) =>
     audioFile: null,
     imageFiles: {},
   });
+
+export {
+  addScene,
+  afterEdit,
+  blankScene,
+  canUseBars,
+  changedForFactcheck,
+  deleteScene,
+  EDIT_SCENES,
+  EditError,
+  editScene,
+  isVisualColor,
+  MAX_LINE,
+  MAX_NARRATION,
+  MAX_TITLE,
+  renameScript,
+  reorderScenes,
+  type ScenePatch,
+  type StoredClaim,
+  switchVisual,
+} from "./edit";
+export { readScene, rewriteScene } from "./stages/rewrite";
+export { type Scene, SceneSchema, type Script, type Visual, VisualSchema } from "./types";

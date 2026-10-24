@@ -2,15 +2,15 @@
 
 Repo: https://github.com/irfan0374/Clipwise (public). Updated before every commit and push. One feature at a time: **plan → approve → build + tests → demo → review → fix → commit**.
 
-**Last updated:** 2026-10-23
+**Last updated:** 2026-10-24
 
 ## Now
 
-**Step E — Editing (Feature 10)** · Planning
+**Step F — Render and download · Library (Features 11, 12)** · Planning. Step E is approved for a commit and push checkpoint; joint code review and manual QA for Steps E + F will happen after Step F is complete.
 
 ## Next up
 
-**Step F — Render and download · Library** (Features 11, 12).
+**Build Step F**, then review and manually test Steps E + F together before approving the next step.
 
 ## Build plan
 
@@ -33,8 +33,8 @@ Legend: ✅ done · 🔍 in review · 🛠 building · ⏳ not started. Small fe
 | B | 6 Worker, queue and storage | ✅ | `62021df` | BullMQ + local Redis, storage interface (local folder now), jobs script→factcheck→voice→render, budgets, crash recovery |
 | C | 7 Create screen · 8 Live progress and fact-check job | ✅ | `9b2f2ca` | Create + Generating screens, live updates (SSE), formats, ideas, cancel/retry, per-user limits |
 | D | 9 Storyboard with silent preview | ✅ | `6a949ff` | Storyboard + Generating rebuilt to match Stitch exactly: icon rail, scene frame grid from real animation stills, timing bar, Mark as OK, click a frame for the in-browser player |
-| E | 10 Editing | 🛠 | | Optimistic locking with `expectedVersion` |
-| F | 11 Render and download · 12 Library | ⏳ | | |
+| E | 10 Editing | ✅ checkpoint; QA pending | See Git history: `Step E: scene editing and version history` | Stitch Studio Editor: scene list, live preview, Script/Visual inspector, fact-check strip. Autosave, undo/redo + history, add/delete/reorder, AI rewrite, re-check of edited scenes, rename, conflict banner |
+| F | 11 Render and download · 12 Library | Planning | | Final-render action, live progress, playback/download, searchable library |
 | G | 13 Limits and settings · 14 Admin | ⏳ | | |
 | H | 15 Polish and Sentry · 16 Deploy and private beta | ⏳ | | GitHub repo ready |
 
@@ -46,10 +46,21 @@ Legend: ✅ done · 🔍 in review · 🛠 building · ⏳ not started. Small fe
 | 18 | Instagram, scheduling and calendar | ⏳ |
 | 19 | Stripe billing | ⏳ |
 
+## Step F plan
+
+- Connect the Storyboard and Editor render buttons to an owner-checked, version-aware final-render action. Duplicate requests must not create duplicate voice charges or jobs; flush pending edits before rendering.
+- Reuse voice and alignment only when valid for the chosen script and voice. Reuse the existing worker rendering pipeline and provider budget guards.
+- Show voice/render progress, actionable failures and safe retry; keep the completed MP4 tied to the version it rendered so later edits are clearly distinguished.
+- Add the video-ready view with playback, file details and an authorized download link using the current storage interface.
+- Replace the library placeholder with workspace-scoped videos, thumbnails, status filters, search, pagination and links back to each project. Include loading, empty and error states; match the approved Stitch screens.
+- After Step F is built, perform combined code review and manual QA for Steps E + F: edit/autosave/history, stale versions, fact-check updates, render double clicks/retries, playback/download authorization and library filtering. Use fixtures and mocks for provider tests to conserve credits; record any real provider usage.
+- Run the required automated checks and production build as part of that validation, fix findings, then update this file with results before the next commit/push.
+
 ## Decisions log
 
 | Date | Decision |
 | --- | --- |
+| 2026-10-24 | User approved updating STATUS.md and committing/pushing Step E now. Combined code review and manual QA for Steps E + F are deferred until Step F is complete. Step E checkpoint does not mean that joint QA has passed. |
 | 2026-10-23 | Sign-in is email + password (Google OAuth dropped: needed a card). Open sign-up, no invites/waitlist, no emails in beta (admin resets passwords), per-IP sign-up limit 5/h |
 | 2026-10-23 | Storage: local folder in dev behind an S3-compatible interface; cloud provider chosen at deploy (R2 needs a card; Backblaze B2 doesn't) |
 | 2026-10-23 | Redis: local via Homebrew for dev; cloud Redis chosen at deploy (Upstash free tier, no card) |
@@ -65,6 +76,9 @@ Legend: ✅ done · 🔍 in review · 🛠 building · ⏳ not started. Small fe
 | 2026-10-23 | Storyboard preview plays in the browser (Remotion Player + Thumbnail) from the same composition the renderer uses; no preview MP4 is rendered |
 | 2026-10-23 | Small features may be merged with neighbours into one build step (user preference) |
 | 2026-10-23 | Build feature by feature; one commit per approved feature; STATUS.md updated before each commit and push |
+| 2026-10-23 | Editing: every edit is saved with the version the page last saw (`expectedVersion`); a different version is refused ("This video changed. Reload"). Typing autosaves ~1s after the user stops. Each edit is a new script version, so undo/redo and history restore old versions |
+| 2026-10-23 | Edited scenes are re-checked automatically: they go to `factcheck.pendingScenes` and a delayed `recheck` job (4s, one per version) checks only those scenes; an older job stops before calling Gemini. A failed re-check never fails the video: the scene gets a "couldn't be checked" note to review |
+| 2026-10-23 | AI rewrite / AI scene runs in the web server action (one Gemini call, same budget guards as the worker), limit 30 per user per day (`LIMIT_AI_EDITS_PER_DAY`). A video keeps 3–10 scenes while editing; the hook stays first |
 | 2026-10-23 | Biome for lint + format (not ESLint + Prettier). `noNonNullAssertion` off (works with strict index typing); array-index keys and SVG titles allowed in video frames |
 | 2026-10-23 | TypeScript 7 kept — verified with Next.js 16.4 build |
 | 2026-10-23 | MongoDB Atlas M0 connected. Databases: `clipwise_dev` (local), `clipwise_staging`, `clipwise` (production; seed refuses it) |

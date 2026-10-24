@@ -36,6 +36,7 @@ const VideoSchema = new Schema(
           claims: [ClaimSchema],
           rewrites: Number,
           numbersRemovedFromScenes: [Number],
+          pendingScenes: { type: [Number], default: [] }, // edited scenes waiting for a re-check
         },
         { _id: false },
       ),

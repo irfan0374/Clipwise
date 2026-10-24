@@ -14,6 +14,8 @@ export {
   type Log,
   type Providers,
   previewAlignment,
+  type RecheckResult,
+  recheckScenes,
   recordVoice,
   ScriptFailedError,
   type ScriptResult,
