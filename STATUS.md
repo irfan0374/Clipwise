@@ -2,15 +2,15 @@
 
 Repo: https://github.com/irfan0374/Clipwise (public). Updated before every commit and push. One feature at a time: **plan → approve → build + tests → demo → review → fix → commit**.
 
-**Last updated:** 2026-10-24
+**Last updated:** 2026-10-26
 
 ## Now
 
-**Step F — Render and download · Library (Features 11, 12)** · Planning. Step E is approved for a commit and push checkpoint; joint code review and manual QA for Steps E + F will happen after Step F is complete.
+**Steps F + G complete and approved.** User authorized updating status, committing and pushing on 2026-10-26. This checkpoint includes render/download/library, settings/allowances/admin, and their QA fixes. Validation: 180 passing tests, lint, typechecks, production build and browser QA.
 
 ## Next up
 
-**Build Step F**, then review and manually test Steps E + F together before approving the next step.
+Prepare the **Step H — polish, Sentry, deployment and private beta** plan: accessibility/error-state pass, monitoring and deployment configuration, hosting/storage decisions, staging smoke test and beta checklist. Step H development has not started.
 
 ## Build plan
 
@@ -33,9 +33,9 @@ Legend: ✅ done · 🔍 in review · 🛠 building · ⏳ not started. Small fe
 | B | 6 Worker, queue and storage | ✅ | `62021df` | BullMQ + local Redis, storage interface (local folder now), jobs script→factcheck→voice→render, budgets, crash recovery |
 | C | 7 Create screen · 8 Live progress and fact-check job | ✅ | `9b2f2ca` | Create + Generating screens, live updates (SSE), formats, ideas, cancel/retry, per-user limits |
 | D | 9 Storyboard with silent preview | ✅ | `6a949ff` | Storyboard + Generating rebuilt to match Stitch exactly: icon rail, scene frame grid from real animation stills, timing bar, Mark as OK, click a frame for the in-browser player |
-| E | 10 Editing | ✅ checkpoint; QA pending | See Git history: `Step E: scene editing and version history` | Stitch Studio Editor: scene list, live preview, Script/Visual inspector, fact-check strip. Autosave, undo/redo + history, add/delete/reorder, AI rewrite, re-check of edited scenes, rename, conflict banner |
-| F | 11 Render and download · 12 Library | Planning | | Final-render action, live progress, playback/download, searchable library |
-| G | 13 Limits and settings · 14 Admin | ⏳ | | |
+| E | 10 Editing | ✅ QA complete | `2188ec8` | Stitch Studio Editor: scene list, live preview, Script/Visual inspector, fact-check strip. Autosave, undo/redo + history, add/delete/reorder, AI rewrite, re-check of edited scenes, rename, conflict banner |
+| F | 11 Render and download · 12 Library | ✅ approved | F + G checkpoint | Final-render action, safe voice reuse/retry, playback/download, version labels, searchable/filterable list/grid library; combined E + F QA passed |
+| G | 13 Limits and settings · 14 Admin | ✅ approved | F + G checkpoint | Defaults/account/usage settings; admin queues, users, running/failed pipelines, suspension/reset/retry and audit; 180 tests + production build passed |
 | H | 15 Polish and Sentry · 16 Deploy and private beta | ⏳ | | GitHub repo ready |
 
 ### v1 (regrouped later)
@@ -56,10 +56,39 @@ Legend: ✅ done · 🔍 in review · 🛠 building · ⏳ not started. Small fe
 - After Step F is built, perform combined code review and manual QA for Steps E + F: edit/autosave/history, stale versions, fact-check updates, render double clicks/retries, playback/download authorization and library filtering. Use fixtures and mocks for provider tests to conserve credits; record any real provider usage.
 - Run the required automated checks and production build as part of that validation, fix findings, then update this file with results before the next commit/push.
 
+## Step E + F validation — 2026-10-26
+
+- `pnpm check`: passed lint, all workspace typechecks, and **163 tests**.
+- `NEXT_DIST_DIR=.next-check pnpm --filter @clipwise/web build`: passed production compilation, TypeScript and route generation.
+- Combined code review completed; fixes include preserving drafts on failed saves, keeping history after failed undo/redo, version-aware renders, missing-file recovery, final retries ignoring background re-check runs, consistent date formatting and client-mounted Remotion UI.
+- Manual browser QA passed editing/autosave, invalid-edit render blocking, undo/redo/history restore, scene add/delete, editor and storyboard pointer dragging, keyboard reordering, persistence after reload, fact-check acknowledgement, multi-tab conflict handling, render/retry, MP4 playback/download, old-render version labels, library search/filter/pagination/list/grid and desktop/mobile layouts.
+- Two real local MP4 renders used cached fixture audio. Playback metadata: 1080 × 1920, 30.87 seconds. The downloaded MP4 checksum matched the stored file. **No external Gemini or ElevenLabs requests or credits used.** Live-provider generation was intentionally not retested.
+- QA used temporary MongoDB and Redis database 14, separate local storage and port 3001. Preview stays available while that temporary QA process is running. Detailed record: `design/qa-step-e-f.md`.
+
+## Step G scope — implemented
+
+1. Settings: save workspace name and default format, length and voice; apply those defaults when opening Create.
+2. Allowances: show the user's beta usage and reset times; reconcile the existing create/AI-edit/final-render limits and retry behaviour. Provider keys, global spending ceilings and costs stay internal.
+3. Admin dashboard: user/workspace list, running/failed jobs and queue health, with searchable details.
+4. Admin controls: retry eligible failed jobs, pause/resume new processing, suspend/reactivate workspaces, and the agreed beta password-reset workflow. Enforce admin access on every server operation and record administrative changes.
+5. Validate settings persistence, default selection, limit boundaries/reset times, ordinary-user access denial, suspension and admin controls using isolated fixtures before user review.
+
+## Step G validation — 2026-10-26
+
+- `pnpm check`: lint, all workspace typechecks and **180 tests passed**. Production build passed with `NEXT_DIST_DIR=.next-check pnpm --filter @clipwise/web build`; `git diff --check` passed.
+- Added 17 regression tests for settings ownership/validation, every admin action's role checks, admin route denial, audit success/failure, suspension/reactivation, credential hashing/session revocation with a mocked auth adapter, fresh roles on existing sessions, workspace search/pagination, UTC daily refunds, Monday weekly allowances, failed retry reservation recovery, and suspension before queued AI/voice work.
+- Browser QA passed saved defaults → Create (Story, 30s, Jessica), persistence after reload, account/usage pages, admin search/empty results, pause/resume with audit, suspension/reactivation, suspended sign-in screen, run report, and ordinary-user admin 404/navigation hiding. Desktop 1440px and mobile 390px layouts inspected; no mobile page overflow.
+- Password reset form inspected without entering a replacement credential. Hash/update/session-revocation behavior was validated with the mocked adapter; no real account password was changed. No external Gemini or ElevenLabs requests or credits used.
+- QA used temporary MongoDB, Redis database 13, separate local storage, `.next-qa-g` and port 3002. Normal application data was not used. The preview is temporary while its harness runs. Detailed record: `design/qa-step-g.md`.
+- Suspension blocks subsequent workspace requests and provider calls; a request already in progress may finish. Existing signed storage URLs retain their original expiry (up to one hour); suspension prevents issuing new links.
+
 ## Decisions log
 
 | Date | Decision |
 | --- | --- |
+| 2026-10-26 | User approved updating STATUS.md, committing and pushing the completed F + G checkpoint. Changes share queue/render/auth files, so both steps are recorded together. Step H remains a planning task, not started. |
+| 2026-10-26 | Step G built after user approval. Roles are refreshed from stored account metadata per request; workspace suspension is enforced in web routes/actions, queue admission and worker/provider guards. Admin changes have pending/ok/failed audit records without passwords or secrets. F + G remain uncommitted pending review. |
+| 2026-10-26 | Completed combined Step E + F code review and QA. Scene reordering uses shared pointer capture for mouse/touch plus keyboard arrows; Remotion studio mounts client-side to avoid animation-style hydration differences. Step F is awaiting user review, not committed or pushed. |
 | 2026-10-24 | User approved updating STATUS.md and committing/pushing Step E now. Combined code review and manual QA for Steps E + F are deferred until Step F is complete. Step E checkpoint does not mean that joint QA has passed. |
 | 2026-10-23 | Sign-in is email + password (Google OAuth dropped: needed a card). Open sign-up, no invites/waitlist, no emails in beta (admin resets passwords), per-IP sign-up limit 5/h |
 | 2026-10-23 | Storage: local folder in dev behind an S3-compatible interface; cloud provider chosen at deploy (R2 needs a card; Backblaze B2 doesn't) |
@@ -93,6 +122,6 @@ Legend: ✅ done · 🔍 in review · 🛠 building · ⏳ not started. Small fe
 ## Open items
 
 - ElevenLabs free plan is non-commercial — upgrade before real users (Feature 16).
-- Sidebar user and usage meter show placeholder values until sign-in (Feature 5) and limits (Feature 13).
+- Review Step G settings/admin screens before the Git checkpoint. Step H monitoring and deployment are still pending.
 - Make yourself admin: create your account in the app, then run `pnpm user:admin you@example.com`.
 - Hosting at launch (step H): Railway needs a card after its trial; pick a worker host and storage that fit the no-card preference.

@@ -17,12 +17,17 @@ export type UsageRow = {
  * - ElevenLabs: a take's credits reserved before each call, released if it fails, recorded once charged.
  * `record` writes usage rows for whoever is spending (a job's video, or the CLI's workspace).
  */
-export const budgetGuards = (record: (rows: UsageRow[]) => Promise<void>): ProviderGuards => ({
+export const budgetGuards = (
+  record: (rows: UsageRow[]) => Promise<void>,
+  before: () => Promise<void> = async () => {},
+): ProviderGuards => ({
   beforeGeminiRequest: async () => {
+    await before();
     if (!(await reserveGeminiRequest())) throw new BudgetExceededError("Gemini daily request budget used up");
     await record([{ provider: "gemini", operation: "request", quantity: 1, unit: "requests" }]);
   },
   reserveVoiceCredits: async (credits) => {
+    await before();
     if (!(await reserveElevenLabsCredits(credits))) {
       throw new BudgetExceededError(`ElevenLabs monthly credit budget: not enough left for ${credits} credits`);
     }

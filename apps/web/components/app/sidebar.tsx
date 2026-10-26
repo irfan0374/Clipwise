@@ -18,15 +18,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { authClient } from "@/lib/auth-client";
-import { isActive, navItems } from "@/lib/nav";
+import { isActive, navigationFor } from "@/lib/nav";
 import { LiveUsageMeter } from "./live-usage-meter";
 import { Logo } from "./logo";
 
-function NavList({ onNavigate }: { onNavigate?: () => void }) {
+function NavList({ onNavigate, role }: { onNavigate?: () => void; role: string }) {
   const pathname = usePathname();
   return (
     <nav aria-label="Main" className="flex flex-col gap-1">
-      {navItems.map(({ label, href, icon: Icon, soon }) => {
+      {navigationFor(role).map(({ label, href, icon: Icon, soon }) => {
         if (soon) {
           return (
             <span
@@ -118,7 +118,7 @@ export function Sidebar({ user, usage }: { user: SidebarUser; usage: Usage }) {
     <>
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col gap-8 border-r border-line bg-sidebar px-4 py-5 lg:flex">
         <Logo href="/create" className="px-2" />
-        <NavList />
+        <NavList role={user.role} />
         <SidebarFooter user={user} usage={usage} />
       </aside>
 
@@ -134,7 +134,7 @@ export function Sidebar({ user, usage }: { user: SidebarUser; usage: Usage }) {
             <SheetTitle className="sr-only">Menu</SheetTitle>
             <SheetDescription className="sr-only">Main navigation</SheetDescription>
             <Logo href="/create" className="px-2" />
-            <NavList onNavigate={() => setOpen(false)} />
+            <NavList role={user.role} onNavigate={() => setOpen(false)} />
             <SidebarFooter user={user} usage={usage} />
           </SheetContent>
         </Sheet>
@@ -168,7 +168,7 @@ export function IconRail({ user, usage }: { user: SidebarUser; usage: Usage }) {
           </svg>
         </Link>
         <nav aria-label="Main" className="flex w-full flex-col items-center gap-2 px-2">
-          {navItems.map(({ label, href, icon: Icon, soon }) => {
+          {navigationFor(user.role).map(({ label, href, icon: Icon, soon }) => {
             if (soon) {
               return (
                 <span

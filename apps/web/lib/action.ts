@@ -1,4 +1,6 @@
 import "server-only";
+import { WorkspaceAccessError } from "@clipwise/db";
+import { FinalError } from "@clipwise/queue";
 import { type ActionResult, type ErrorCode, fail, ok } from "@clipwise/shared";
 import type { z } from "zod";
 import { requireUser } from "./session";
@@ -13,6 +15,10 @@ export class ActionError extends Error {
     super(message);
   }
 }
+
+export const assertAdmin = (ctx: { user: { role?: string } }) => {
+  if (ctx.user.role !== "admin") throw new ActionError("FORBIDDEN", "Administrator access required.");
+};
 
 const messages: Partial<Record<ErrorCode, string>> = {
   NOT_FOUND: "This video doesn't exist anymore.",
@@ -35,6 +41,8 @@ export const action =
     try {
       return ok(await handler(parsed.data, ctx));
     } catch (error) {
+      if (error instanceof WorkspaceAccessError) return fail("FORBIDDEN", "This workspace is suspended.");
+      if (error instanceof FinalError) return fail(error.code, error.message);
       if (error instanceof ActionError) return fail(error.code, error.message, error.retryAfter);
       console.error("[action]", error);
       return fail("INTERNAL", messages.INTERNAL ?? "Something went wrong.");

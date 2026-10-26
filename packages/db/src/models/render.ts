@@ -9,6 +9,7 @@ const RenderSchema = new Schema(
     videoId: { type: Schema.Types.ObjectId, ref: "Video", required: true },
     kind: { type: String, enum: RenderKinds, required: true }, // preview = optional silent MP4
     scriptVersion: { type: Number, required: true },
+    quotaAt: { type: Date, default: Date.now }, // latest final attempt; retries count in the week they run
     status: { type: String, enum: RenderStatuses, default: "queued" },
     r2Key: { type: String, default: null },
     thumbnailKey: { type: String, default: null },

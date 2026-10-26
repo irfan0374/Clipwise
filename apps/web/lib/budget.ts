@@ -1,8 +1,8 @@
 import "server-only";
 import { AsyncLocalStorage } from "node:async_hooks";
-import { connectDb, UsageEvent } from "@clipwise/db";
+import { assertWorkspaceActive, connectDb, UsageEvent } from "@clipwise/db";
 import { BudgetExceededError, setProviderGuards } from "@clipwise/pipeline/web";
-import { reserveGeminiRequest } from "@clipwise/queue";
+import { isGenerationPaused, reserveGeminiRequest } from "@clipwise/queue";
 
 // The web app calls Gemini directly only for idea suggestions. Like the worker, it reserves each request
 // against the global daily budget first and records it as a usage row.
@@ -14,6 +14,9 @@ if (!cache.__clipwiseGuards) {
   cache.__clipwiseGuards = true;
   setProviderGuards({
     beforeGeminiRequest: async () => {
+      const current = who.getStore();
+      if (current) await assertWorkspaceActive(current.workspaceId);
+      if (await isGenerationPaused("ai")) throw new BudgetExceededError("Generation paused");
       if (!(await reserveGeminiRequest())) throw new BudgetExceededError("Gemini daily request budget used up");
       const w = who.getStore();
       if (w) {

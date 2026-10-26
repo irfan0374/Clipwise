@@ -7,6 +7,7 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const session = await getSession();
   if (!session) return new Response("Unauthorized", { status: 401 });
+  if (session.user.suspendedAt) return new Response("Account suspended", { status: 403 });
   const usage = await dailyUsage(session.user.id);
   return Response.json(usage, { headers: { "Cache-Control": "no-store" } });
 }

@@ -1,3 +1,4 @@
+import { WorkspaceAccessError } from "@clipwise/db";
 import { BudgetExceededError, FatalError, ScriptFailedError } from "@clipwise/pipeline";
 import type { ErrorCode } from "@clipwise/shared";
 import { UnrecoverableError } from "bullmq";
@@ -20,6 +21,7 @@ export const budgetPaused = (detail: string) =>
 /** Maps any error to { code, user-safe message, retry? }. Full details only go to logs and the run report. */
 export function classify(error: unknown): JobError {
   if (error instanceof JobError) return error;
+  if (error instanceof WorkspaceAccessError) return new JobError("FORBIDDEN", "This workspace is suspended.", false);
   const message = error instanceof Error ? error.message : String(error);
   if (error instanceof BudgetExceededError) return budgetPaused(message);
   if (error instanceof ScriptFailedError) {

@@ -12,8 +12,8 @@ export const userLimits = () => ({
 });
 
 type DailyKind = "videos" | "ai" | "edits";
-const today = () => new Date().toISOString().slice(0, 10);
-const dailyKey = (userId: string, kind: DailyKind) => `limit:${userId}:${kind}:${today()}`;
+const today = (now = new Date()) => now.toISOString().slice(0, 10);
+const dailyKey = (userId: string, kind: DailyKind, at = new Date()) => `limit:${userId}:${kind}:${today(at)}`;
 
 /** Seconds until the daily counters reset (midnight UTC). */
 export const secondsUntilReset = (now = new Date()) => {
@@ -23,17 +23,21 @@ export const secondsUntilReset = (now = new Date()) => {
 };
 
 /** Takes one from today's allowance. False = the limit is reached (nothing taken). */
-export const takeDaily = (userId: string, kind: DailyKind) =>
+export const takeDaily = (userId: string, kind: DailyKind, at = new Date()) =>
   reserve(
-    dailyKey(userId, kind),
+    dailyKey(userId, kind, at),
     1,
     { videos: userLimits().videosPerDay, ai: userLimits().ideasPerDay, edits: userLimits().aiEditsPerDay }[kind],
     2 * 24 * 3600,
   );
 
 /** Gives one back (the action failed before anything was spent). */
-export const refundDaily = async (userId: string, kind: DailyKind) => {
-  await redis().decr(dailyKey(userId, kind));
+export const refundDaily = async (userId: string, kind: DailyKind, at = new Date()) => {
+  await redis().eval(
+    "local n = tonumber(redis.call('GET', KEYS[1]) or '0'); if n > 0 then return redis.call('DECR', KEYS[1]) end; return 0",
+    1,
+    dailyKey(userId, kind, at),
+  );
 };
 
 export async function dailyUsage(userId: string) {

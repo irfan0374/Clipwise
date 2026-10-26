@@ -1,5 +1,5 @@
 import "server-only";
-import { connectDb, PipelineRun, ScriptVersion, Video } from "@clipwise/db";
+import { connectDb, PipelineRun, Render, ScriptVersion, Video } from "@clipwise/db";
 import { previewTimeline, type Script, type Visual } from "@clipwise/pipeline/web";
 import { type ClaimVerdict, type Format, type Stage, type VideoStatus, Voices } from "@clipwise/shared";
 import { storage } from "@clipwise/storage";
@@ -88,7 +88,9 @@ export async function videoForOwner(id: string, workspaceId: Types.ObjectId): Pr
   await connectDb();
   const v = await Video.findOne({ _id: id, workspaceId, deletedAt: null }).lean();
   if (!v) return null;
-  const run = await PipelineRun.findOne({ videoId: v._id }).sort({ createdAt: -1 }).lean();
+  const run = await PipelineRun.findOne({ videoId: v._id, trigger: { $ne: "recheck" } })
+    .sort({ createdAt: -1 })
+    .lean();
   const stageMs = (stage: Stage) =>
     [...(run?.stages ?? [])].reverse().find((s) => s.stage === stage && s.status === "ok")?.durationMs ?? null;
 
@@ -199,4 +201,93 @@ export async function scriptVersions(videoId: string, workspaceId: Types.ObjectI
     createdAt: r.createdAt.toISOString(),
     changedScenes: r.changedScenes ?? [],
   }));
+}
+
+export type FinalView = {
+  id: string;
+  scriptVersion: number;
+  url: string | null;
+  thumbnailUrl: string | null;
+  durationMs: number;
+  sizeBytes: number;
+  renderMs: number;
+  width: number;
+  height: number;
+  createdAt: string;
+};
+
+/** Most recent completed final, including an older one after the script is edited. Never another workspace's file. */
+export async function finalForOwner(videoId: string, workspaceId: Types.ObjectId): Promise<FinalView | null> {
+  if (!isId(videoId)) return null;
+  await connectDb();
+  if (!(await Video.exists({ _id: videoId, workspaceId, deletedAt: null }))) return null;
+  const row = await Render.findOne({ videoId, workspaceId, kind: "final", status: "done", deletedAt: null })
+    .sort({ createdAt: -1 })
+    .lean();
+  if (!row?.r2Key) return null;
+  const store = storage();
+  const exists = await store.exists(row.r2Key);
+  return {
+    id: row._id.toString(),
+    scriptVersion: row.scriptVersion,
+    url: exists ? await store.signedUrl(row.r2Key) : null,
+    thumbnailUrl:
+      row.thumbnailKey && (await store.exists(row.thumbnailKey)) ? await store.signedUrl(row.thumbnailKey) : null,
+    durationMs: row.durationMs ?? 0,
+    sizeBytes: row.sizeBytes ?? 0,
+    renderMs: row.renderMs ?? 0,
+    width: row.width,
+    height: row.height,
+    createdAt: row.createdAt.toISOString(),
+  };
+}
+
+export type LibraryItem = RecentVideo & {
+  format: Format;
+  duration: number | null;
+  progress: number;
+  finalVersion: number | null;
+};
+
+export async function listVideos(workspaceId: Types.ObjectId, query: import("./library-query").LibraryQuery) {
+  const { libraryFilter } = await import("./library-query");
+  await connectDb();
+  const filter = libraryFilter(workspaceId, query);
+  const [total, all] = await Promise.all([
+    Video.countDocuments(filter),
+    Video.countDocuments({ workspaceId, deletedAt: null }),
+  ]);
+  const pages = Math.max(1, Math.ceil(total / 12));
+  const page = Math.min(query.page, pages);
+  const direction = query.sort === "oldest" ? 1 : -1;
+  const rows = await Video.find(filter)
+    .sort({ createdAt: direction, _id: direction })
+    .skip((page - 1) * 12)
+    .limit(12)
+    .lean();
+  const finals = await Render.find(
+    {
+      _id: { $in: rows.map((v) => v.finalRenderId).filter(Boolean) },
+      workspaceId,
+      kind: "final",
+      status: "done",
+      deletedAt: null,
+    },
+    { scriptVersion: 1 },
+  ).lean();
+  const versions = new Map(finals.map((row) => [row._id.toString(), row.scriptVersion]));
+  const items: LibraryItem[] = await Promise.all(
+    rows.map(async (v) => ({
+      id: v._id.toString(),
+      title: v.title || v.topic,
+      format: v.format as Format,
+      status: v.status,
+      createdAt: v.createdAt.toISOString(),
+      duration: v.lengthSeconds ?? null,
+      progress: v.progress ?? 0,
+      thumbnailUrl: v.files?.thumbnailKey ? await storage().signedUrl(v.files.thumbnailKey) : null,
+      finalVersion: v.finalRenderId ? (versions.get(v.finalRenderId.toString()) ?? null) : null,
+    })),
+  );
+  return { items, total, all, page, pages };
 }

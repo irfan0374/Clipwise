@@ -48,7 +48,7 @@ async function loadEditable(videoId: string, ctx: Ctx) {
   await connectDb();
   const video = await Video.findOne({ _id: videoId, workspaceId: ctx.workspace._id, deletedAt: null });
   if (!video?.script) throw new ActionError("NOT_FOUND", "This video doesn't exist anymore.");
-  if (video.status !== "previewed")
+  if (!["previewed", "rendered"].includes(video.status))
     throw new ActionError("CONFLICT", "This video can't be edited while it's being worked on.");
   return video;
 }
@@ -89,12 +89,13 @@ async function commit(
   });
   const version = expectedVersion + 1;
   const saved = await Video.findOneAndUpdate(
-    { _id: video._id, scriptVersion: expectedVersion, status: "previewed" },
+    { _id: video._id, scriptVersion: expectedVersion, status: { $in: ["previewed", "rendered"] } },
     {
       $set: {
         script: change.script,
         title: change.script.title,
         scriptVersion: version,
+        status: "previewed",
         factcheck: {
           checkedVersion: pending.length ? (fc?.checkedVersion ?? 0) : version,
           claims,
@@ -128,7 +129,8 @@ async function commit(
 
 /** Runs a Gemini edit under the user's daily AI-edit allowance (given back if nothing was spent). */
 async function withAiEdit<T>(ctx: Ctx, fn: () => Promise<T>): Promise<T> {
-  if (!(await takeDaily(ctx.user.id, "edits"))) {
+  const allowanceAt = new Date();
+  if (!(await takeDaily(ctx.user.id, "edits", allowanceAt))) {
     throw new ActionError(
       "LIMIT_REACHED",
       `You've used today's ${userLimits().aiEditsPerDay} AI rewrites. Edit by typing, or come back tomorrow.`,
@@ -139,7 +141,7 @@ async function withAiEdit<T>(ctx: Ctx, fn: () => Promise<T>): Promise<T> {
     return await asWorkspace({ workspaceId: ctx.workspace._id.toString(), userId: ctx.user.id }, fn);
   } catch (error) {
     if (error instanceof ActionError && error.code === "CONFLICT") throw error;
-    await refundDaily(ctx.user.id, "edits");
+    await refundDaily(ctx.user.id, "edits", allowanceAt);
     if (error instanceof ActionError) throw error;
     if (error instanceof BudgetExceededError || /quota/i.test(String(error))) {
       throw new ActionError("PAUSED", "AI rewrites are paused for a moment. Try again later.");

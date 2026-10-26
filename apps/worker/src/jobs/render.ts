@@ -54,7 +54,7 @@ export async function renderJob(ctx: Loaded, data: JobData<"render">, attempt: n
       const info = await renderVideo(timeline, media, out, {
         thumbnailFile: thumb,
         onProgress: (pct) => {
-          void emit(videoId, { type: "render", renderId: data.renderId, progress: pct });
+          void emit(videoId, { type: "render", renderId: data.renderId, progress: pct }).catch(() => {});
           // .exec(): a Mongoose query only runs when executed or awaited
           Video.updateOne({ _id: video._id }, { $set: { progress: Math.round(base + (pct / 100) * (99 - base)) } })
             .exec()

@@ -129,6 +129,9 @@ export function LiveVideo({ video }: { video: VideoView }) {
       if (opened) router.refresh();
       opened = true;
     });
+    on("render", (e) => {
+      if (e.type === "render") setLive((l) => ({ ...l, progress: Math.round(75 + e.progress * 0.24) }));
+    });
     on("step", (e) => {
       if (e.type !== "step") return;
       if (e.state === "started") setLive((l) => ({ ...l, stage: e.stage }));
@@ -147,7 +150,9 @@ export function LiveVideo({ video }: { video: VideoView }) {
     server === "done" || server === "failed" ? server : live.stage === stage && busy ? "active" : server;
   const scriptState = stepState("script", video.steps.script.state);
   const factState = stepState("factcheck", video.steps.factcheck.state);
-  const ready = video.steps.factcheck.state === "done";
+  const ready = ["previewed", "rendered"].includes(status);
+  const finalizing =
+    ["voicing", "rendering"].includes(status) || (failed && ["voice", "render"].includes(video.error?.stage ?? ""));
 
   const run = (fn: () => Promise<{ ok: boolean; error?: { message: string } }>) => {
     setActionError(null);
@@ -161,11 +166,24 @@ export function LiveVideo({ video }: { video: VideoView }) {
   const s = video.steps;
   // Claims about the creator's own product can't be verified by AI: promos are never labelled "Fact-checked".
   const promo = video.format === "promo";
-  const stepNo = ready ? 3 : factState === "done" || factState === "active" || factState === "failed" ? 2 : 1;
+  const stepNo = finalizing
+    ? 4
+    : ready
+      ? 3
+      : factState === "done" || factState === "active" || factState === "failed"
+        ? 2
+        : 1;
   // How far the teal-to-lime line down the stepper reaches: to the step being worked on.
-  const lineFill = ready ? "66%" : stepNo === 2 ? "38%" : "0%";
+  const lineFill = finalizing ? "100%" : ready ? "66%" : stepNo === 2 ? "38%" : "0%";
   const length = video.lengthSeconds ?? (video.timeline ? Math.round(video.timeline.durationInFrames / 30) : null);
-  const failedStep = scriptState === "failed" ? "Writing the script" : "Checking facts";
+  const failedStep =
+    video.error?.stage === "voice"
+      ? "Recording voice"
+      : video.error?.stage === "render"
+        ? "Rendering video"
+        : scriptState === "failed"
+          ? "Writing the script"
+          : "Checking facts";
   const caption = video.scenes[0]?.narration ?? video.topic;
   const format = `${video.format[0]?.toUpperCase()}${video.format.slice(1)}`;
 
@@ -185,9 +203,13 @@ export function LiveVideo({ video }: { video: VideoView }) {
     ? "Preview not available · Retry to continue"
     : stopped
       ? "Stopped · No preview for a stopped video"
-      : ready
-        ? "Preview ready · Opening your storyboard"
-        : `Preview loading · ${factState === "active" ? "Checking every claim" : "Writing your scenes"}`;
+      : finalizing
+        ? status === "voicing"
+          ? "Recording voiceover · Your scenes are saved"
+          : `Rendering final video · ${live.progress}% complete`
+        : ready
+          ? "Preview ready · Opening your storyboard"
+          : `Preview loading · ${factState === "active" ? "Checking every claim" : "Writing your scenes"}`;
 
   return (
     <>
@@ -197,7 +219,7 @@ export function LiveVideo({ video }: { video: VideoView }) {
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line/60 pb-2">
           <div className="flex flex-wrap items-center gap-3.5">
             <h1 className="text-[26px]/[34px] font-semibold tracking-[-0.02em] sm:text-[32px]/[40px]">
-              Building your video
+              {finalizing ? "Rendering your video" : "Building your video"}
             </h1>
             <span
               className={cn(
@@ -230,7 +252,9 @@ export function LiveVideo({ video }: { video: VideoView }) {
                 <div>
                   <h2 className="text-[18px]/[26px] font-semibold tracking-[-0.01em]">Generation pipeline</h2>
                   <p className="mt-0.5 text-[13px]/[18px] text-ink-2">
-                    Automated script drafting, validation, and layout compilation
+                    {finalizing
+                      ? "Recording voiceover, synchronizing captions and rendering scenes"
+                      : "Automated script drafting, validation, and layout compilation"}
                   </p>
                 </div>
                 <span className="shrink-0 rounded-full border border-line bg-wash px-2.5 py-1 text-[11px]/[14px] font-semibold tracking-[0.02em] text-ink tabular-nums">
@@ -292,10 +316,23 @@ export function LiveVideo({ video }: { video: VideoView }) {
                 <StepRow
                   n={3}
                   title="Preview"
-                  state={ready ? "done" : "waiting"}
-                  meta={ready ? "Your storyboard is ready" : "Plays here when ready"}
+                  state={s.script.state === "done" ? "done" : "waiting"}
+                  meta={s.script.state === "done" ? "Your storyboard is ready" : "Plays here when ready"}
                 />
-                <StepRow n={4} title="Voice and render" state="locked" meta="Starts when you click Render" />
+                <StepRow
+                  n={4}
+                  title="Voice and render"
+                  state={finalizing ? (failed ? "failed" : "active") : "locked"}
+                  meta={
+                    finalizing
+                      ? failed
+                        ? "Retry to continue from the saved step"
+                        : status === "voicing"
+                          ? "Recording narration and synchronizing captions…"
+                          : `Rendering animated scenes · ${live.progress}%`
+                      : "Starts when you click Render"
+                  }
+                />
               </div>
 
               {failed && video.error ? (
@@ -320,7 +357,7 @@ export function LiveVideo({ video }: { video: VideoView }) {
                   </div>
                   <div className="flex items-center justify-between text-[13px]/[18px] font-medium tabular-nums">
                     <span className="text-ink">{ready ? "Done" : `${live.progress}% complete`}</span>
-                    <span className="font-normal text-ink-2">{busy ? "Usually under a minute" : ""}</span>
+                    <span className="font-normal text-ink-2">{busy ? "Working in the background" : ""}</span>
                   </div>
                 </div>
               )}
@@ -373,7 +410,7 @@ export function LiveVideo({ video }: { video: VideoView }) {
               {busy && (
                 <div className="flex max-w-xs items-center gap-1.5 text-right text-[11px]/[14px] font-semibold tracking-[0.02em] text-ink-2/80">
                   <Info className="size-[15px] shrink-0 text-ink-3" strokeWidth={1.75} />
-                  <span>You can leave this page. We'll keep working and notify you.</span>
+                  <span>You can leave this page. We'll keep working. Come back to see the result.</span>
                 </div>
               )}
             </div>

@@ -15,6 +15,7 @@ import {
   rewriteScene,
   updateScene,
 } from "@/app/(app)/edit-actions";
+import { renderFinal } from "@/app/(app)/render-actions";
 import type { VideoView } from "@/lib/videos";
 
 type Scene = VideoView["scenes"][number];
@@ -40,6 +41,8 @@ const applyText = (scene: Scene, patch: TextPatch): Scene => ({
 export function useStudio(initial: VideoView) {
   const router = useRouter();
   const [video, setVideo] = useState(initial);
+  const [rendering, setRendering] = useState(false);
+  const renderingRef = useRef(false);
   const [save, setSave] = useState<SaveState>("idle");
   const [conflict, setConflict] = useState(false);
   const [busyScene, setBusyScene] = useState<number | null>(null); // AI rewriting this scene
@@ -113,20 +116,31 @@ export function useStudio(initial: VideoView) {
     [adopt],
   );
 
-  /** Sends everything typed so far (one save per edited scene). */
+  /** Sends valid drafts in order. Failed/invalid drafts stay pending, so rendering can't silently skip them. */
   const flush = useCallback(() => {
     if (timer.current) clearTimeout(timer.current);
     timer.current = null;
     const pending = [...drafts.current.entries()];
     drafts.current.clear();
     for (const [sceneIndex, patch] of pending) {
-      // Not saved (the server would refuse it): kept on screen with a hint, sent once it's valid.
-      if (patch.narration !== undefined && !patch.narration.trim()) continue;
-      if (patch.onScreenText !== undefined && !patch.onScreenText.some((l) => l.trim())) continue;
-      if (patch.stat !== undefined && !/\d/.test(patch.stat.value)) continue;
-      void run((v) => updateScene({ videoId: video.id, expectedVersion: v, sceneIndex, patch }), { undoable: true });
+      if (
+        (patch.narration !== undefined && !patch.narration.trim()) ||
+        (patch.onScreenText !== undefined && !patch.onScreenText.some((l) => l.trim())) ||
+        (patch.stat !== undefined && !/\d/.test(patch.stat.value))
+      ) {
+        drafts.current.set(sceneIndex, patch);
+        setSave("error");
+        continue;
+      }
+      const task = run((v) => updateScene({ videoId: video.id, expectedVersion: v, sceneIndex, patch }), {
+        undoable: true,
+      });
+      chain.current = task.then((ok) => {
+        if (!ok) drafts.current.set(sceneIndex, { ...patch, ...drafts.current.get(sceneIndex) });
+        return ok;
+      });
     }
-    return chain.current;
+    return chain.current.then(() => !drafts.current.size && !conflictRef.current);
   }, [run, video.id]);
 
   /** Typing: shown at once, saved shortly after the user pauses. */
@@ -153,8 +167,8 @@ export function useStudio(initial: VideoView) {
 
   /** Any non-typing edit: first saves what's typed, then runs. */
   const edit = useCallback(
-    (call: (expectedVersion: number) => Promise<Edited>, scene?: number) => {
-      void flush();
+    async (call: (expectedVersion: number) => Promise<Edited>, scene?: number) => {
+      if (!(await flush())) return false;
       return run(call, { undoable: true, scene });
     },
     [flush, run],
@@ -162,6 +176,26 @@ export function useStudio(initial: VideoView) {
 
   const id = video.id;
   const actions = {
+    startRender: async () => {
+      if (renderingRef.current) return;
+      renderingRef.current = true;
+      setRendering(true);
+      try {
+        if (!(await flush())) {
+          toast.error("Save or fix your pending edits before rendering.");
+          return;
+        }
+        const res = await renderFinal({ videoId: id, expectedVersion: version.current });
+        if (!res.ok) toast.error(res.error.message);
+        else router.push(`/videos/${id}`);
+        router.refresh();
+      } catch {
+        toast.error("Couldn't start rendering. Try again.");
+      } finally {
+        renderingRef.current = false;
+        setRendering(false);
+      }
+    },
     setLayout: (sceneIndex: number, template: "title" | "bullets" | "stat", stat?: { value: string; label: string }) =>
       edit((v) =>
         updateScene({ videoId: id, expectedVersion: v, sceneIndex, patch: { template, ...(stat ? { stat } : {}) } }),
@@ -179,22 +213,27 @@ export function useStudio(initial: VideoView) {
     reorder: (order: number[]) => edit((v) => reorderScenes({ videoId: id, expectedVersion: v, order })),
     restore: (target: number) => edit((v) => restoreVersion({ videoId: id, expectedVersion: v, version: target })),
     undo: async () => {
-      const target = undoStack.at(-1);
+      const beforeFlush = version.current;
+      if (!(await flush())) return;
+      const target = beforeFlush !== version.current ? beforeFlush : undoStack.at(-1);
       if (target === undefined) return;
-      await flush();
       const from = version.current;
-      setUndo((u) => u.slice(0, -1));
       const ok = await run((v) => restoreVersion({ videoId: id, expectedVersion: v, version: target }));
-      if (ok) setRedo((r) => [...r, from]);
+      if (ok) {
+        setUndo((u) => u.slice(0, -1));
+        setRedo((r) => [...r, from]);
+      }
     },
     redo: async () => {
       const target = redoStack.at(-1);
       if (target === undefined) return;
-      await flush();
+      if (!(await flush())) return;
       const from = version.current;
-      setRedo((r) => r.slice(0, -1));
       const ok = await run((v) => restoreVersion({ videoId: id, expectedVersion: v, version: target }));
-      if (ok) setUndo((u) => [...u, from]);
+      if (ok) {
+        setRedo((r) => r.slice(0, -1));
+        setUndo((u) => [...u, from]);
+      }
     },
     rename: async (title: string) => {
       const res = await renameVideo({ videoId: id, title });
@@ -219,6 +258,7 @@ export function useStudio(initial: VideoView) {
     const source = new EventSource(`/api/events/${id}`);
     const refresh = () => router.refresh();
     source.addEventListener("claims", refresh);
+    for (const event of ["status", "done", "error"]) source.addEventListener(event, refresh);
     source.addEventListener("script", (m) => {
       const e = JSON.parse((m as MessageEvent).data) as VideoEvent;
       if (e.type === "script" && e.scriptVersion > version.current) refresh(); // not our own save
@@ -228,6 +268,7 @@ export function useStudio(initial: VideoView) {
 
   return {
     video,
+    rendering,
     save,
     conflict,
     busyScene,

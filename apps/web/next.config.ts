@@ -6,6 +6,7 @@ import type { NextConfig } from "next";
 loadEnv({ path: path.resolve(import.meta.dirname, "../../.env"), quiet: true });
 
 const config: NextConfig = {
+  distDir: process.env.NEXT_DIST_DIR ?? ".next",
   // Workspace packages ship TypeScript source, so Next compiles them.
   transpilePackages: [
     "@clipwise/shared",

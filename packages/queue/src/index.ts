@@ -1,3 +1,4 @@
+export { finalsPerWeek, weeklyFinalCount, weekWindow } from "./allowances";
 export {
   budgetKeys,
   budgetLimits,
@@ -8,6 +9,7 @@ export {
   reserveGeminiRequest,
 } from "./budget";
 export { publishVideoEvent, subscribeAllVideoEvents, subscribeVideoEvents } from "./events";
+export { FinalError, startFinal, usableVoice, voiceIsCurrent } from "./finals";
 export { budgetGuards, type UsageRow } from "./guards";
 export {
   activeRunCount,

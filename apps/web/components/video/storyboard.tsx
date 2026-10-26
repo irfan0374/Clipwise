@@ -22,6 +22,7 @@ import {
 import { useState } from "react";
 import { Soon } from "@/components/app/soon";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import { sceneDragHandlers } from "./scene-drag";
 import { Composition, clock, FPS, moveOrder, quoteOf, REVIEW, roleOf, type Scene, sceneColors } from "./studio-shared";
 import type { Studio } from "./use-studio";
 
@@ -51,12 +52,6 @@ export function StoryboardView({
   const checking = video.scenes.some((s) => s.checking);
   const count = video.scenes.length;
   const busy = studio.save === "saving";
-
-  const drop = (to: number) => {
-    if (dragging !== null && dragging !== to && to > 0) void studio.reorder(moveOrder(count, dragging, to));
-    setDragging(null);
-    setOver(null);
-  };
 
   return (
     <>
@@ -180,13 +175,7 @@ export function StoryboardView({
             return (
               <li
                 key={`${scene.index}-${video.scriptVersion}`}
-                onDragOver={(e) => {
-                  if (dragging === null || i === 0) return;
-                  e.preventDefault();
-                  setOver(i);
-                }}
-                onDragLeave={() => setOver((o) => (o === i ? null : o))}
-                onDrop={() => drop(i)}
+                data-reorder-scene={i}
                 className={cn(
                   "group relative flex flex-col justify-between overflow-hidden rounded-xl bg-panel transition-all",
                   review ? "border-2 border-amber shadow-sm" : "border border-line shadow-xs hover:border-ink",
@@ -353,18 +342,23 @@ export function StoryboardView({
                     ) : (
                       <button
                         type="button"
-                        aria-label="Drag to reorder"
-                        draggable
-                        onDragStart={(e) => {
-                          e.dataTransfer.effectAllowed = "move";
-                          setDragging(i);
+                        aria-label={`Drag scene ${i + 1} to reorder`}
+                        disabled={studio.save === "saving"}
+                        onKeyDown={(e) => {
+                          if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
+                          e.preventDefault();
+                          const next = i + (e.key === "ArrowUp" ? -1 : 1);
+                          if (next > 0 && next < video.scenes.length)
+                            void studio.reorder(moveOrder(video.scenes.length, i, next));
                         }}
-                        onDragEnd={() => {
-                          setDragging(null);
-                          setOver(null);
-                        }}
-                        className="cursor-grab p-1.5 text-ink-3 hover:text-ink active:cursor-grabbing"
-                        title="Drag to reorder"
+                        {...sceneDragHandlers(
+                          i,
+                          (from, to) => void studio.reorder(moveOrder(video.scenes.length, from, to)),
+                          setDragging,
+                          setOver,
+                        )}
+                        className="touch-none cursor-grab p-1.5 text-ink-3 hover:text-ink active:cursor-grabbing"
+                        title="Drag to reorder, or focus and use the up/down arrow keys"
                       >
                         <GripVertical className="size-4" strokeWidth={1.75} />
                       </button>
@@ -424,16 +418,17 @@ export function StoryboardView({
             <SlidersHorizontal className="size-4" strokeWidth={1.75} />
             Open in editor
           </button>
-          <Soon label="Rendering with voice arrives soon">
+          <div>
             <button
               type="button"
-              disabled
+              disabled={studio.rendering || studio.conflict}
+              onClick={() => void studio.startRender()}
               className="flex items-center gap-2 rounded-lg bg-lime px-5 py-2.5 text-xs font-semibold whitespace-nowrap text-ink shadow-[0_0_24px_rgba(198,244,50,0.4)]"
             >
               <CirclePlay className="size-[18px]" strokeWidth={1.75} />
-              Looks good, render video
+              {studio.rendering ? "Starting…" : "Looks good, render video"}
             </button>
-          </Soon>
+          </div>
         </div>
       </footer>
 

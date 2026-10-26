@@ -1,7 +1,11 @@
-import { connectDb, PipelineRun, Render, Video } from "@clipwise/db";
+import { assertWorkspaceActive, connectDb, PipelineRun, Render, Video } from "@clipwise/db";
 import type { Format, LengthMode, RunTarget } from "@clipwise/shared";
 import type { Types } from "mongoose";
+import { finalsPerWeek, weeklyFinalCount } from "./allowances";
 import { publishVideoEvent } from "./events";
+import { FinalError, usableVoice } from "./finals";
+import { activeRunCount, userLimits, withWorkspaceLock } from "./limits";
+import { isGenerationPaused } from "./pause";
 import { enqueue, queue } from "./queues";
 
 export type StartVideoInput = {
@@ -18,6 +22,8 @@ export type StartVideoInput = {
 /** Creates the video and its pipeline run, then queues the script job. Returns at once; work happens in the worker. */
 export async function startVideo(input: StartVideoInput) {
   await connectDb();
+  await assertWorkspaceActive(input.workspaceId);
+  if (await isGenerationPaused("ai")) throw new FinalError("PAUSED", "Generation is paused. Try again later.");
   const video = await Video.create({
     workspaceId: input.workspaceId,
     createdByUserId: input.userId,
@@ -62,10 +68,29 @@ export async function cancelVideo(videoId: string) {
  */
 export async function retryVideo(videoId: string) {
   await connectDb();
+  const video = await Video.findById(videoId, { workspaceId: 1 }).lean();
+  if (!video) return null;
+  const locked = await withWorkspaceLock(video.workspaceId, async () => {
+    await assertWorkspaceActive(video.workspaceId);
+    if (await isGenerationPaused()) throw new FinalError("PAUSED", "Generation is paused. Try again later.");
+    if ((await activeRunCount(video.workspaceId)) >= userLimits().activeVideos)
+      throw new FinalError("BUSY", "Wait for a running video to finish.");
+    return retryFailedVideo(videoId);
+  });
+  if (!locked) throw new FinalError("BUSY", "Another request is starting. Try again in a moment.");
+  return locked.value;
+}
+
+async function retryFailedVideo(videoId: string) {
+  await connectDb();
   const video = await Video.findById(videoId);
   if (video?.status !== "failed") return null;
-  const last = await PipelineRun.findOne({ videoId: video._id }).sort({ createdAt: -1 }).lean();
+  const last = await PipelineRun.findOne({ videoId: video._id, trigger: { $ne: "recheck" } })
+    .sort({ createdAt: -1 })
+    .lean();
   const target = last?.target ?? "script";
+  if (target === "final" && (await weeklyFinalCount(video.workspaceId)) >= finalsPerWeek())
+    throw new FinalError("LIMIT_REACHED", "You have reached the beta rendering limit. Try again next week.");
   const run = await PipelineRun.create({
     workspaceId: video.workspaceId,
     videoId: video._id,
@@ -83,12 +108,13 @@ export async function retryVideo(videoId: string) {
   await Video.updateOne({ _id: video._id }, { $set: { status: "draft", stage: null, error: null, progress: 0 } });
   await publishVideoEvent(videoId, { type: "status", status: "draft", stage: null, progress: 0 });
 
+  let retryRender: InstanceType<typeof Render> | undefined;
   try {
     if (!video.script || v < 1) {
       await enqueue("script", ids);
       return "script" as const;
     }
-    if (!checked || target === "script") {
+    if (target === "script" || (!checked && target !== "final")) {
       await Video.updateOne({ _id: video._id }, { $unset: { "factcheck.checkedVersion": "" } });
       await enqueue("factcheck", { ...ids, scriptVersion: v });
       return "factcheck" as const;
@@ -97,13 +123,14 @@ export async function retryVideo(videoId: string) {
     const render = await Render.findOneAndUpdate(
       { videoId: video._id, kind, scriptVersion: v, status: { $in: ["queued", "failed", "rendering"] } },
       {
-        $set: { status: "queued", error: null },
+        $set: { status: "queued", error: null, quotaAt: new Date() },
         $setOnInsert: { workspaceId: video.workspaceId, videoId: video._id, kind, scriptVersion: v },
       },
       { upsert: true, returnDocument: "after" },
     );
+    retryRender = render;
     const next = { ...ids, renderId: render._id.toString(), scriptVersion: v };
-    const voiced = video.voice?.scriptVersion === v && !!video.files?.voiceKey;
+    const voiced = await usableVoice(video);
     if (kind === "final" && !voiced) {
       await enqueue("voice", next);
       return "voice" as const;
@@ -111,6 +138,8 @@ export async function retryVideo(videoId: string) {
     await enqueue("render", { ...next, kind });
     return "render" as const;
   } catch (error) {
+    if (retryRender)
+      await Render.updateOne({ _id: retryRender._id }, { $set: { status: "failed", error: "Couldn't queue retry" } });
     // Couldn't queue: put the video back the way it was so the user can retry again.
     await PipelineRun.updateOne({ _id: run._id }, { $set: { status: "failed", finishedAt: new Date() } });
     await Video.updateOne({ _id: video._id }, { $set: { status: "failed", error: previousError } });

@@ -13,6 +13,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ vide
   const { videoId } = await params;
   const session = await getSession();
   if (!session) return new Response("Unauthorized", { status: 401 });
+  if (session.user.suspendedAt) return new Response("Account suspended", { status: 403 });
   if (!/^[a-f0-9]{24}$/.test(videoId)) return new Response("Not found", { status: 404 });
   await connectDb();
   const { Workspace } = await import("@clipwise/db");

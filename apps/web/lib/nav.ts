@@ -1,4 +1,4 @@
-import { CalendarDays, Clapperboard, type LucideIcon, Palette, Settings, Sparkles } from "lucide-react";
+import { CalendarDays, Clapperboard, type LucideIcon, Palette, Settings, Shield, Sparkles } from "lucide-react";
 
 export type NavItem = {
   label: string;
@@ -18,3 +18,6 @@ export const navItems: NavItem[] = [
 
 /** An item is active on its own page and on any page below it (/videos/123 → Videos). */
 export const isActive = (pathname: string, href: string) => pathname === href || pathname.startsWith(`${href}/`);
+
+export const navigationFor = (role: string): NavItem[] =>
+  role === "admin" ? [...navItems, { label: "Admin", href: "/admin", icon: Shield }] : navItems;

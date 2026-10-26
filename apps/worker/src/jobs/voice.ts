@@ -1,7 +1,7 @@
 import { Video } from "@clipwise/db";
 import { type Providers, recordVoice } from "@clipwise/pipeline";
 import type { JobData } from "@clipwise/queue";
-import { enqueue } from "@clipwise/queue";
+import { enqueue, usableVoice } from "@clipwise/queue";
 import { keys, storage } from "@clipwise/storage";
 import { type Loaded, plainScript, resolveLength, runStage, setStatus } from "../context";
 
@@ -13,7 +13,8 @@ export async function voiceJob(ctx: Loaded, data: JobData<"voice">, attempt: num
   if (!video.script) return;
 
   // Already recorded for this version by an earlier attempt: continue to the render.
-  if (video.voice?.scriptVersion === video.scriptVersion && video.files?.voiceKey) {
+  if (video.scriptVersion !== data.scriptVersion) return; // stale, before any enqueue or provider call
+  if (await usableVoice(video)) {
     await enqueue("render", { ...data, scriptVersion: video.scriptVersion, kind: "final" });
     return;
   }

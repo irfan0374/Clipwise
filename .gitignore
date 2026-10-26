@@ -7,6 +7,8 @@ out/
 
 # build output and caches
 .next/
+.next-qa/
+.next-check/
 dist/
 *.tsbuildinfo
 next-env.d.ts
@@ -14,3 +16,5 @@ next-env.d.ts
 
 # local file storage (Step B)
 .storage/
+
+apps/web/.next-qa-g/

@@ -1,4 +1,4 @@
-import { PipelineRun, Video } from "@clipwise/db";
+import { assertWorkspaceActive, PipelineRun, Video, WorkspaceAccessError } from "@clipwise/db";
 import { type Providers, recheckScenes, type Script, type VideoFormat } from "@clipwise/pipeline";
 import type { JobData } from "@clipwise/queue";
 import type { Job } from "bullmq";
@@ -18,6 +18,12 @@ export async function recheckJob(job: Job, data: JobData<"recheck">, providers?:
   const pending = video?.factcheck?.pendingScenes ?? [];
   if (!video?.script || video.scriptVersion !== data.scriptVersion || !pending.length) return;
 
+  try {
+    await assertWorkspaceActive(video.workspaceId);
+  } catch (error) {
+    if (error instanceof WorkspaceAccessError) return;
+    throw error;
+  }
   const run = await PipelineRun.create({
     workspaceId: video.workspaceId,
     videoId: video._id,

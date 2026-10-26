@@ -28,6 +28,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { sceneDragHandlers } from "./scene-drag";
 import type { Focus } from "./studio";
 import {
   Composition,
@@ -90,18 +91,7 @@ function SceneList({ studio, selected, select }: { studio: Studio; selected: num
           return (
             <li
               key={s.index}
-              onDragOver={(e) => {
-                if (dragging === null || i === 0) return;
-                e.preventDefault();
-                setOver(i);
-              }}
-              onDragLeave={() => setOver((o) => (o === i ? null : o))}
-              onDrop={() => {
-                if (dragging !== null && dragging !== i && i > 0)
-                  void studio.reorder(moveOrder(scenes.length, dragging, i));
-                setDragging(null);
-                setOver(null);
-              }}
+              data-reorder-scene={i}
               className={cn(
                 "group relative rounded-lg transition-all",
                 active
@@ -152,17 +142,21 @@ function SceneList({ studio, selected, select }: { studio: Studio; selected: num
                   <button
                     type="button"
                     aria-label={`Drag scene ${i + 1} to reorder`}
-                    draggable
-                    onDragStart={(e) => {
-                      e.dataTransfer.effectAllowed = "move";
-                      setDragging(i);
+                    disabled={studio.save === "saving"}
+                    onKeyDown={(e) => {
+                      if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
+                      e.preventDefault();
+                      const next = i + (e.key === "ArrowUp" ? -1 : 1);
+                      if (next > 0 && next < scenes.length) void studio.reorder(moveOrder(scenes.length, i, next));
                     }}
-                    onDragEnd={() => {
-                      setDragging(null);
-                      setOver(null);
-                    }}
-                    className="cursor-grab rounded p-1 text-ink-3 hover:bg-paper hover:text-ink"
-                    title="Drag to reorder"
+                    {...sceneDragHandlers(
+                      i,
+                      (from, to) => void studio.reorder(moveOrder(scenes.length, from, to)),
+                      setDragging,
+                      setOver,
+                    )}
+                    className="touch-none cursor-grab rounded p-1 text-ink-3 hover:bg-paper hover:text-ink"
+                    title="Drag to reorder, or focus and use the up/down arrow keys"
                   >
                     <GripVertical className="size-3.5" />
                   </button>
@@ -556,6 +550,7 @@ function Inspector({
                   <span className="w-5 text-[12px] text-ink-3">L{k + 1}</span>
                   <input
                     value={line}
+                    aria-label={`On-screen text line ${k + 1}`}
                     maxLength={60}
                     disabled={rewriting || (k > 0 && !lines[k - 1] && !line)}
                     placeholder={k === 0 ? "Main line" : "Optional"}

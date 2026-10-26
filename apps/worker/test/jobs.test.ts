@@ -9,16 +9,23 @@ import {
   queue,
   rebuildBudgetCounters,
   redis,
+  refundDaily,
   reserveGeminiRequest,
   retryVideo,
+  setGenerationPaused,
+  startFinal,
   startVideo,
   subscribeVideoEvents,
   takeDaily,
+  voiceIsCurrent,
+  weeklyFinalCount,
+  weekWindow,
   withWorkspaceLock,
 } from "@clipwise/queue";
 import type { RunTarget, VideoEvent } from "@clipwise/shared";
+import { storage } from "@clipwise/storage";
 import type { Job } from "bullmq";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { narrationText } from "../../../packages/pipeline/src/stages/voice";
 import { fakeAlignment, validScript as fixtureScript } from "../../../packages/pipeline/test/fixtures";
 import { makeProcessor } from "../src/processor";
@@ -482,4 +489,205 @@ describe("fact re-check after an edit", () => {
     expect(video?.factcheck?.pendingScenes).toEqual([]);
     expect(video?.factcheck?.claims.map((c) => [c.scene, c.verdict])).toEqual([[1, "unsure"]]);
   });
+});
+
+describe("final rendering from the approved script", () => {
+  async function ready() {
+    const { videoId } = await newVideo("script");
+    await drain("ai", fakes());
+    const video = await Video.findById(videoId);
+    return { videoId, workspaceId: video!.workspaceId, expectedVersion: video!.scriptVersion };
+  }
+  it("deduplicates repeated starts and queues only one voice request", async () => {
+    const input = await ready();
+    const first = await startFinal(input);
+    const second = await startFinal(input);
+    expect(first.startsWithVoice).toBe(true);
+    expect(second.renderId).toBe(first.renderId);
+    expect(await Render.countDocuments({ videoId: input.videoId, kind: "final" })).toBe(1);
+    expect(await queue("voice").count()).toBe(1);
+    expect(await PipelineRun.countDocuments({ videoId: input.videoId, trigger: "render" })).toBe(1);
+  });
+  it("refuses stale versions and requests from another workspace before making jobs", async () => {
+    const input = await ready();
+    await expect(startFinal({ ...input, expectedVersion: 99 })).rejects.toMatchObject({ code: "CONFLICT" });
+    await expect(startFinal({ ...input, workspaceId: "000000000000000000000001" })).rejects.toMatchObject({
+      code: "NOT_FOUND",
+    });
+    expect(await queue("voice").count()).toBe(0);
+  });
+  it("reuses matching voice and alignment, but not a different voice", async () => {
+    const input = await ready();
+    await Video.updateOne(
+      { _id: input.videoId },
+      {
+        $set: {
+          voice: { scriptVersion: 1, voiceId: "TX3LPaxmHKxFdv7VOQHJ" },
+          "files.voiceKey": "voice.mp3",
+          "files.alignmentKey": "alignment.json",
+        },
+      },
+    );
+    await storage().put("voice.mp3", "fixture audio");
+    await storage().put("alignment.json", "{}");
+    const result = await startFinal(input);
+    expect(result.startsWithVoice).toBe(false);
+    expect(await queue("voice").count()).toBe(0);
+    expect(await queue("render").count()).toBe(1);
+    const video = (await Video.findById(input.videoId))!;
+    expect(voiceIsCurrent(video)).toBe(true);
+    video.voiceId = "another-voice";
+    expect(voiceIsCurrent(video)).toBe(false);
+    video.voiceId = "TX3LPaxmHKxFdv7VOQHJ";
+    video.files!.alignmentKey = null;
+    expect(voiceIsCurrent(video)).toBe(false);
+  });
+  it("regenerates a missing completed file instead of returning a broken download", async () => {
+    const input = await ready();
+    const old = await Render.create({
+      workspaceId: input.workspaceId,
+      videoId: input.videoId,
+      scriptVersion: input.expectedVersion,
+      kind: "final",
+      status: "done",
+      r2Key: "missing-final.mp4",
+    });
+    await Video.updateOne({ _id: input.videoId }, { $set: { status: "rendered", finalRenderId: old._id } });
+    const result = await startFinal(input);
+    expect(result.reused).toBe(false);
+    expect(result.renderId).not.toBe(old._id.toString());
+    expect((await Render.findById(old._id))?.status).toBe("failed");
+  });
+  it("doesn't reuse voice metadata whose stored files are missing", async () => {
+    const input = await ready();
+    await Video.updateOne(
+      { _id: input.videoId },
+      {
+        $set: {
+          voice: { scriptVersion: 1, voiceId: "TX3LPaxmHKxFdv7VOQHJ" },
+          "files.voiceKey": "missing-voice.mp3",
+          "files.alignmentKey": "missing-alignment.json",
+        },
+      },
+    );
+    expect((await startFinal(input)).startsWithVoice).toBe(true);
+    expect(await queue("voice").count()).toBe(1);
+  });
+  it("enforces the internal weekly ceiling without queuing or changing the project", async () => {
+    const input = await ready();
+    await Render.create(
+      [1, 2].map((n) => ({
+        workspaceId: input.workspaceId,
+        videoId: input.videoId,
+        scriptVersion: n + 3,
+        kind: "final" as const,
+        status: "done" as const,
+      })),
+    );
+    await expect(startFinal(input)).rejects.toMatchObject({ code: "LIMIT_REACHED" });
+    expect((await Video.findById(input.videoId))?.status).toBe("previewed");
+    expect(await queue("voice").count()).toBe(0);
+  });
+  it("retries the saved final script without rewriting it even when edit re-checks are pending", async () => {
+    const input = await ready();
+    await Video.updateOne(
+      { _id: input.videoId },
+      { $set: { "factcheck.checkedVersion": 0, "factcheck.pendingScenes": [1] } },
+    );
+    await startFinal(input);
+    await redis().set(budgetKeys.elevenLabsCredits(), 10000);
+    await drain("voice", fakes());
+    expect((await Video.findById(input.videoId))?.status).toBe("failed");
+    await redis().set(budgetKeys.elevenLabsCredits(), 0);
+    // A completed edit re-check may be newer than the failed final run.
+    await PipelineRun.create({
+      workspaceId: input.workspaceId,
+      videoId: input.videoId,
+      trigger: "recheck",
+      target: "script",
+      status: "ok",
+    });
+    expect(await retryVideo(input.videoId)).toBe("voice");
+    await drain("voice", fakes());
+    expect((await Video.findById(input.videoId))?.scriptVersion).toBe(input.expectedVersion);
+    expect(await queue("ai").count()).toBe(0);
+  });
+});
+
+describe("Step G allowance and suspension enforcement", () => {
+  it("blocks a suspended workspace before queueing or charging", async () => {
+    const { videoId } = await newVideo();
+    const video = (await Video.findById(videoId))!;
+    await Workspace.updateOne({ _id: video.workspaceId }, { $set: { suspendedAt: new Date() } });
+    await expect(newVideo()).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await drain("ai", fakes());
+    expect(await UsageEvent.countDocuments()).toBe(0);
+    expect(await redis().get(budgetKeys.geminiRequests())).toBeNull();
+    expect((await Video.findById(videoId))?.error?.code).toBe("FORBIDDEN");
+    await expect(retryVideo(videoId)).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+  it("blocks queued voice work after suspension without reserving credits", async () => {
+    const { videoId } = await newVideo("final");
+    await drain("ai", fakes());
+    const video = (await Video.findById(videoId))!;
+    await Workspace.updateOne({ _id: video.workspaceId }, { $set: { suspendedAt: new Date() } });
+    await drain("voice", fakes());
+    expect(await UsageEvent.countDocuments({ provider: "elevenlabs" })).toBe(0);
+    expect(await redis().get(budgetKeys.elevenLabsCredits())).toBeNull();
+  });
+  it("pauses and resumes queue admission without consuming provider budget", async () => {
+    await setGenerationPaused(true, "all");
+    await expect(newVideo()).rejects.toMatchObject({ code: "PAUSED" });
+    expect(await Video.countDocuments()).toBe(0);
+    await setGenerationPaused(false, "all");
+    await newVideo();
+    expect(await Video.countDocuments()).toBe(1);
+    expect(await UsageEvent.countDocuments()).toBe(0);
+  });
+  it("refunds the original UTC day after midnight and never makes a counter negative", async () => {
+    const before = new Date("2026-10-25T23:59:59Z"),
+      after = new Date("2026-10-26T00:00:01Z");
+    await takeDaily("u1", "videos", before);
+    await takeDaily("u1", "videos", after);
+    await refundDaily("u1", "videos", before);
+    await refundDaily("u1", "videos", before);
+    expect(await redis().get("limit:u1:videos:2026-10-25")).toBe("0");
+    expect(await redis().get("limit:u1:videos:2026-10-26")).toBe("1");
+  });
+  it("uses Monday UTC and the retry reservation date for weekly finals", async () => {
+    const { videoId } = await newVideo();
+    const video = (await Video.findById(videoId))!;
+    expect(weekWindow(new Date("2026-10-25T23:59:59Z")).reset.toISOString()).toBe("2026-10-26T00:00:00.000Z");
+    const start = new Date("2026-10-26T00:00:00Z");
+    await Render.create([
+      {
+        workspaceId: video.workspaceId,
+        videoId,
+        scriptVersion: 1,
+        kind: "final",
+        status: "done",
+        quotaAt: new Date(start.getTime() - 1),
+      },
+      { workspaceId: video.workspaceId, videoId, scriptVersion: 2, kind: "final", status: "queued", quotaAt: start },
+      { workspaceId: video.workspaceId, videoId, scriptVersion: 3, kind: "final", status: "failed", quotaAt: start },
+    ]);
+    expect(await weeklyFinalCount(video.workspaceId, start)).toBe(1);
+  });
+});
+
+it("releases the weekly retry reservation when enqueueing fails", async () => {
+  const { videoId } = await newVideo("final");
+  await drain("ai", fakes());
+  await redis().set(budgetKeys.elevenLabsCredits(), 10_000);
+  await drain("voice", fakes());
+  const v = (await Video.findById(videoId))!;
+  expect(await weeklyFinalCount(v.workspaceId)).toBe(0);
+  const spy = vi.spyOn(queue("voice"), "add").mockRejectedValueOnce(new Error("fixture enqueue failure"));
+  try {
+    await expect(retryVideo(videoId)).rejects.toThrow("fixture enqueue failure");
+  } finally {
+    spy.mockRestore();
+  }
+  expect(await weeklyFinalCount(v.workspaceId)).toBe(0);
+  expect((await Video.findById(videoId))?.status).toBe("failed");
 });

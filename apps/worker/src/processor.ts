@@ -1,4 +1,4 @@
-import { PipelineRun, Render, Video } from "@clipwise/db";
+import { assertWorkspaceActive, PipelineRun, Render, Video } from "@clipwise/db";
 import type { Providers } from "@clipwise/pipeline";
 import { type JobData, JobDefs, type JobName } from "@clipwise/queue";
 import type { Stage } from "@clipwise/shared";
@@ -68,9 +68,10 @@ export const makeProcessor = (providers?: Providers) => async (job: Job) => {
   if (name === "recheck") return recheckJob(job, data as JobData<"recheck">, providers);
   const ctx = await load(data as { videoId: string; runId: string });
   if (!ctx) return; // video deleted or run missing: nothing to do
-  if (ctx.run.status === "cancelled") return; // the user cancelled this run
+  if (ctx.run.status !== "running") return; // the user cancelled this run
   const attempt = job.attemptsMade + 1;
   try {
+    await assertWorkspaceActive(ctx.video.workspaceId);
     return await jobContext.run(ctx, () => runJob(name, ctx, data, attempt, providers));
   } catch (error) {
     const failure = classify(error);

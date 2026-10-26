@@ -1,26 +1,22 @@
-import { Clapperboard } from "lucide-react";
 import type { Metadata } from "next";
-import Link from "next/link";
-import { EmptyState } from "@/components/app/empty-state";
-import { PageHeader } from "@/components/app/page-header";
-import { Button } from "@/components/ui/button";
-
-export const metadata: Metadata = { title: "Videos" };
-
-export default function VideosPage() {
+import { TopBar } from "@/components/app/top-bar";
+import { Library } from "@/components/video/library";
+import { libraryQuery } from "@/lib/library-query";
+import { requireUser } from "@/lib/session";
+import { listVideos } from "@/lib/videos";
+export const metadata: Metadata = { title: "Your videos" };
+export default async function VideosPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const { workspace } = await requireUser();
+  const query = libraryQuery.parse(await searchParams);
+  const data = await listVideos(workspace._id, query);
   return (
     <>
-      <PageHeader title="Videos" description="Everything you've made, newest first." />
-      <EmptyState
-        icon={Clapperboard}
-        title="No videos yet"
-        description="The library arrives in Feature 12. Your first video will show up here."
-        action={
-          <Button asChild>
-            <Link href="/create">Create a video</Link>
-          </Button>
-        }
-      />
+      <TopBar title="Your videos" />
+      <Library {...data} query={query} />
     </>
   );
 }

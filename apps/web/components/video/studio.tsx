@@ -225,7 +225,7 @@ function TopBar({ studio, tab, onTab }: { studio: StudioState; tab: Tab; onTab: 
         <div className="flex shrink-0 items-center gap-2 whitespace-nowrap">
           <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-paper px-2.5 py-1 text-xs font-medium text-ink-2">
             <span className="size-1.5 rounded-full bg-teal" />
-            Preview ready
+            {studio.video.status === "rendered" ? "Video ready" : "Preview ready"}
           </span>
           <span className="inline-flex items-center rounded-md border border-line bg-panel px-2.5 py-1 text-xs font-medium text-ink-2 tabular-nums">
             {Math.round(total / FPS)}s
@@ -270,17 +270,22 @@ function TopBar({ studio, tab, onTab }: { studio: StudioState; tab: Tab; onTab: 
           </button>
         </Soon>
         <div className="flex flex-col items-end">
-          <Soon label="Rendering with voice arrives soon">
-            <button
-              type="button"
-              disabled
-              className="flex items-center gap-1.5 rounded-lg bg-lime px-4 py-2 text-xs font-semibold text-ink shadow-[0_0_20px_rgba(198,244,50,0.35)]"
-            >
+          <button
+            type="button"
+            disabled={studio.rendering || studio.conflict}
+            onClick={() => void studio.startRender()}
+            className="flex items-center gap-1.5 rounded-lg bg-lime px-4 py-2 text-xs font-semibold text-ink shadow-[0_0_20px_rgba(198,244,50,0.35)] disabled:opacity-50"
+          >
+            {studio.rendering ? (
+              <Loader2 className="size-[17px] animate-spin" />
+            ) : (
               <Sparkles className="size-[17px]" strokeWidth={1.75} />
-              Render Video
-            </button>
-          </Soon>
-          <span className="mt-1 text-[11px] font-medium text-ink-3">Rendering arrives soon</span>
+            )}
+            {studio.rendering ? "Starting…" : studio.video.status === "rendered" ? "View video" : "Render Video"}
+          </button>
+          <span className="mt-1 text-[11px] font-medium text-ink-3">
+            {studio.video.status === "rendered" ? "MP4 ready to download" : "Includes voiceover and captions"}
+          </span>
         </div>
       </div>
     </header>
@@ -293,15 +298,20 @@ function TopBar({ studio, tab, onTab }: { studio: StudioState; tab: Tab; onTab: 
  */
 export function Studio({
   video: initial,
+  lastFinal,
   user,
   usage,
   focus: initialFocus,
 }: {
   video: VideoView;
+  lastFinal: { id: string; scriptVersion: number } | null;
   user: SidebarUser;
   usage: { used: number; limit: number };
   focus: Focus;
 }) {
+  // Remotion animation styles contain floating-point values; render the interactive studio only after mounting.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
   const studio = useStudio(initial);
   const [focus, setFocus] = useState<Focus>(initialFocus);
 
@@ -326,12 +336,34 @@ export function Studio({
     if (focus.scene >= count) setFocus((f) => ({ ...f, scene: Math.max(0, count - 1) }));
   }, [count, focus.scene]);
 
+  if (!mounted)
+    return (
+      <div role="status" className="p-8 text-sm text-ink-2">
+        Loading video editor…
+      </div>
+    );
   if (!studio.video.timeline) return null;
   return (
     <div className="fixed inset-0 z-40 overflow-y-auto bg-paper">
       <IconRail user={user} usage={usage} />
       <div className="flex min-h-screen flex-col lg:pl-16">
         <TopBar studio={studio} tab={focus.tab} onTab={(tab) => go({ tab })} />
+        {lastFinal && lastFinal.scriptVersion !== studio.video.scriptVersion && (
+          <div
+            role="status"
+            className="flex flex-wrap items-center justify-between gap-2 border-b border-line bg-panel px-4 py-2 text-xs text-ink-2 sm:px-8"
+          >
+            <span>
+              Your edits aren't in the previous MP4 (version {lastFinal.scriptVersion}). Render again to include them.
+            </span>
+            <a
+              href={`/api/videos/${studio.video.id}/download?renderId=${lastFinal.id}`}
+              className="font-medium text-teal-ink underline"
+            >
+              Download previous MP4
+            </a>
+          </div>
+        )}
         {studio.conflict && (
           <div
             role="alert"
@@ -347,11 +379,13 @@ export function Studio({
             </button>
           </div>
         )}
-        {focus.tab === "edit" ? (
-          <Editor studio={studio} focus={focus} go={go} />
-        ) : (
-          <StoryboardView studio={studio} open={(scene, panel = "script") => go({ tab: "edit", scene, panel })} />
-        )}
+        <fieldset disabled={studio.rendering} className="m-0 min-w-0 border-0 p-0">
+          {focus.tab === "edit" ? (
+            <Editor studio={studio} focus={focus} go={go} />
+          ) : (
+            <StoryboardView studio={studio} open={(scene, panel = "script") => go({ tab: "edit", scene, panel })} />
+          )}
+        </fieldset>
       </div>
     </div>
   );

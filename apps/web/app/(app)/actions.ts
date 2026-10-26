@@ -31,10 +31,11 @@ const busy = () =>
 export const createVideo = action(
   z.object({ topic: Topic, format: Format, lengthMode: LengthMode, voiceId: VoiceId }),
   async (input, { user, workspace }) => {
+    const allowanceAt = new Date();
     // Count running videos and start the new one under a lock, so simultaneous clicks can't all pass the limit.
     const locked = await withWorkspaceLock(workspace._id, async () => {
       if ((await activeRunCount(workspace._id)) >= userLimits().activeVideos) throw busy();
-      if (!(await takeDaily(user.id, "videos"))) {
+      if (!(await takeDaily(user.id, "videos", allowanceAt))) {
         throw new ActionError(
           "LIMIT_REACHED",
           `You've made ${userLimits().videosPerDay} videos today, the daily limit in the beta. Come back tomorrow.`,
@@ -44,7 +45,7 @@ export const createVideo = action(
       try {
         return await startVideo({ ...input, workspaceId: workspace._id, userId: user.id, target: "script" });
       } catch (error) {
-        await refundDaily(user.id, "videos");
+        await refundDaily(user.id, "videos", allowanceAt);
         throw error;
       }
     });
@@ -57,7 +58,8 @@ export const createVideo = action(
 export const brainstormIdeas = action(
   z.object({ niche: z.string().trim().min(2, "Type a niche, e.g. fitness").max(120), format: Format }),
   async ({ niche, format }, { user, workspace }) => {
-    if (!(await takeDaily(user.id, "ai"))) {
+    const allowanceAt = new Date();
+    if (!(await takeDaily(user.id, "ai", allowanceAt))) {
       throw new ActionError(
         "LIMIT_REACHED",
         `You've used today's ${userLimits().ideasPerDay} idea suggestions. Come back tomorrow.`,
@@ -70,7 +72,7 @@ export const brainstormIdeas = action(
       );
       return { ideas };
     } catch (error) {
-      await refundDaily(user.id, "ai");
+      await refundDaily(user.id, "ai", allowanceAt);
       if (error instanceof BudgetExceededError || /quota/i.test(String(error))) {
         throw new ActionError("PAUSED", "Idea suggestions are paused for a moment. Try again later.");
       }
@@ -93,13 +95,9 @@ export const cancelVideo = action(z.object({ videoId: Id }), async ({ videoId },
 
 export const retryVideo = action(z.object({ videoId: Id }), async ({ videoId }, { workspace }) => {
   await ownVideo(videoId, workspace._id);
-  const locked = await withWorkspaceLock(workspace._id, async () => {
-    if ((await activeRunCount(workspace._id)) >= userLimits().activeVideos) throw busy();
-    return retryRun(videoId);
-  });
-  if (!locked) throw starting();
-  if (!locked.value) throw new ActionError("CONFLICT", "This video isn't waiting for a retry.");
-  return { stage: locked.value };
+  const stage = await retryRun(videoId);
+  if (!stage) throw new ActionError("CONFLICT", "This video isn't waiting for a retry.");
+  return { stage };
 });
 
 /** "Mark as OK" on a fact-check note: the user checked it. Notes are warnings; they never block rendering. */
