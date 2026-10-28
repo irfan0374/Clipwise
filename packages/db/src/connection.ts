@@ -17,6 +17,9 @@ export const connectDb = (opts: ConnectOptions = {}) => {
     .connect(uri, {
       autoIndex: opts.autoIndex ?? process.env.NODE_ENV !== "production",
       serverSelectionTimeoutMS: 10_000,
+      // Serverless hosting starts many small copies of the web app; keep each one's pool small so the free
+      // Atlas cluster's connection limit (500) is never reached.
+      maxPoolSize: Number(process.env.MONGODB_MAX_POOL ?? 10),
     })
     .catch((err: unknown) => {
       cache.__clipwiseDb = undefined; // let the next call retry

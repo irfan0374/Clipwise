@@ -3,3 +3,4 @@ export * from "./api/events";
 export * from "./api/result";
 export * from "./enums";
 export * from "./jobs";
+export * from "./monitoring";

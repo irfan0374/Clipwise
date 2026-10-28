@@ -4,6 +4,10 @@ import type { VideoEvent } from "@clipwise/shared";
 import { getSession } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
+// Hosting platforms end long requests (Vercel: 300 s on the free plan). The stream closes itself a little before
+// that and the browser's EventSource reconnects at once, receiving the current status again.
+export const maxDuration = 300;
+const STREAM_MS = 270_000;
 
 /**
  * Live progress for one video (server-sent events). Owner only. Sends the current status first, so a page that
@@ -24,6 +28,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ vide
   const encoder = new TextEncoder();
   let stop: (() => Promise<void>) | undefined;
   let ping: ReturnType<typeof setInterval> | undefined;
+  let end: ReturnType<typeof setTimeout> | undefined;
 
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
@@ -32,6 +37,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ vide
           controller.enqueue(encoder.encode(`event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`));
         } catch {}
       };
+      controller.enqueue(encoder.encode("retry: 2000\n\n")); // reconnect after 2 s
       // Subscribe FIRST, then read the snapshot: an event published in between is delivered, not lost.
       stop = await subscribeVideoEvents(videoId, send);
       const video = await Video.findById(videoId, { status: 1, stage: 1, progress: 1 }).lean();
@@ -48,16 +54,20 @@ export async function GET(request: Request, { params }: { params: Promise<{ vide
           controller.enqueue(encoder.encode(": ping\n\n"));
         } catch {}
       }, 15_000);
-      request.signal.addEventListener("abort", () => {
+      const close = () => {
         clearInterval(ping);
+        clearTimeout(end);
         void stop?.();
         try {
           controller.close();
         } catch {}
-      });
+      };
+      end = setTimeout(close, STREAM_MS);
+      request.signal.addEventListener("abort", close);
     },
     cancel() {
       clearInterval(ping);
+      clearTimeout(end);
       void stop?.();
     },
   });

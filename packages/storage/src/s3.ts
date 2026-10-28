@@ -34,6 +34,10 @@ export class S3Storage implements Storage {
       region: config.region,
       credentials: { accessKeyId: config.accessKeyId, secretAccessKey: config.secretAccessKey },
       forcePathStyle: true,
+      // Newer AWS SDKs add CRC checksums to every upload; Backblaze B2 rejects some of them. Only send and check
+      // checksums when an operation requires one (works the same on R2 and AWS).
+      requestChecksumCalculation: "WHEN_REQUIRED",
+      responseChecksumValidation: "WHEN_REQUIRED",
     });
   }
 

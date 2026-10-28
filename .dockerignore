@@ -1,0 +1,16 @@
+# Keep secrets, local data and build output out of Docker images.
+.env
+.env.*
+!.env.example
+.git
+.storage
+backups
+out
+design
+**/node_modules
+**/.next*
+**/.remotion
+**/*.log
+**/.DS_Store
+apps/web
+apps/cli

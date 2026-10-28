@@ -1,5 +1,7 @@
+import { workerStatus } from "@clipwise/queue";
 import { type Format, Formats, type LengthMode, LengthModes, type VoiceId, Voices } from "@clipwise/shared";
 import type { Metadata } from "next";
+import { WorkerNotice } from "@/components/app/worker-notice";
 import { CreateStudio } from "@/components/video/create-studio";
 import { RecentStrip } from "@/components/video/recent-strip";
 import { requireUser } from "@/lib/session";
@@ -9,7 +11,7 @@ export const metadata: Metadata = { title: "Create" };
 
 export default async function CreatePage() {
   const { workspace } = await requireUser();
-  const recent = await recentVideos(workspace._id, 3);
+  const [recent, worker] = await Promise.all([recentVideos(workspace._id, 3), workerStatus()]);
   const s = workspace.settings;
   const defaults = {
     format: (Formats.includes(s?.defaultFormat as Format) ? s?.defaultFormat : "explainer") as Format,
@@ -22,6 +24,7 @@ export default async function CreatePage() {
         <h1 className="text-h1 sm:text-[36px]">What do you want to make?</h1>
         <p className="text-ink-2">Describe an idea. Clipwise writes, checks, voices and animates it.</p>
       </header>
+      <WorkerNotice online={worker.online} />
       <CreateStudio defaults={defaults} />
       <RecentStrip videos={recent} />
     </div>

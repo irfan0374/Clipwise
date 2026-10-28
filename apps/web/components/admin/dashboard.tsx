@@ -25,6 +25,7 @@ import {
 } from "@/app/(app)/admin/actions";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import type { AdminOverview } from "@/lib/admin";
+import { timeAgo } from "@/lib/time";
 
 const panel = "rounded-xl border border-line bg-panel p-5 shadow-xs sm:p-6";
 const button =
@@ -101,6 +102,23 @@ export function AdminDashboard({ data, search, actorId }: { data: AdminOverview;
           <Activity className="size-4 text-teal-ink" />
           Queue health
         </h2>
+        <div
+          className={`mb-4 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border px-3 py-2 text-sm ${
+            data.worker.online ? "border-line bg-paper" : "border-[#FDE68A] bg-amber-soft text-amber-ink"
+          }`}
+        >
+          <span className={`size-2 rounded-full ${data.worker.online ? "bg-teal" : "bg-amber"}`} aria-hidden="true" />
+          <strong>Worker {data.worker.online ? "online" : "offline"}</strong>
+          <span className="text-xs text-ink-2">
+            {data.worker.online
+              ? data.worker.startedAt
+                ? `· started ${timeAgo(data.worker.startedAt)}`
+                : ""
+              : data.worker.lastSeen
+                ? `· last seen ${timeAgo(data.worker.lastSeen)}. New work waits in line until it's back.`
+                : "· never seen. Start it with pnpm worker:live (see design/deploy.md)."}
+          </span>
+        </div>
         <p className="mb-4 text-xs text-ink-2">Pausing stops new queued work. A stage already running may finish.</p>
         <div className="grid gap-3 sm:grid-cols-3">
           {data.health.map((q) => (

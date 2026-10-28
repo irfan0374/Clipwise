@@ -2,15 +2,15 @@
 
 Repo: https://github.com/irfan0374/Clipwise (public). Updated before every commit and push. One feature at a time: **plan → approve → build + tests → demo → review → fix → commit**.
 
-**Last updated:** 2026-10-26
+**Last updated:** 2026-10-28
 
 ## Now
 
-**Steps F + G complete and approved.** User authorized updating status, committing and pushing on 2026-10-26. This checkpoint includes render/download/library, settings/allowances/admin, and their QA fixes. Validation: 180 passing tests, lint, typechecks, production build and browser QA.
+**Step H1–H3 complete and approved** (polish, Sentry, deploy setup). User approved committing and pushing on 2026-10-28, after a real video was made end to end on the Mac worker with this code (voice 31.3s, 252 credits; render 31.8s). Validation: 187 passing tests, lint, typechecks, production build, browser QA, accessibility pass, backup/restore test and a tested worker Docker image.
 
 ## Next up
 
-Prepare the **Step H — polish, Sentry, deployment and private beta** plan: accessibility/error-state pass, monitoring and deployment configuration, hosting/storage decisions, staging smoke test and beta checklist. Step H development has not started.
+**Step H4 — staging test.** First the owner creates the Vercel, Redis Cloud, Backblaze B2 and Sentry accounts following `design/deploy.md`, then H4 (staging test) and H5 (beta checklist).
 
 ## Build plan
 
@@ -36,7 +36,7 @@ Legend: ✅ done · 🔍 in review · 🛠 building · ⏳ not started. Small fe
 | E | 10 Editing | ✅ QA complete | `2188ec8` | Stitch Studio Editor: scene list, live preview, Script/Visual inspector, fact-check strip. Autosave, undo/redo + history, add/delete/reorder, AI rewrite, re-check of edited scenes, rename, conflict banner |
 | F | 11 Render and download · 12 Library | ✅ approved | F + G checkpoint | Final-render action, safe voice reuse/retry, playback/download, version labels, searchable/filterable list/grid library; combined E + F QA passed |
 | G | 13 Limits and settings · 14 Admin | ✅ approved | F + G checkpoint | Defaults/account/usage settings; admin queues, users, running/failed pipelines, suspension/reset/retry and audit; 180 tests + production build passed |
-| H | 15 Polish and Sentry · 16 Deploy and private beta | ⏳ | | GitHub repo ready |
+| H | 15 Polish and Sentry · 16 Deploy and private beta | 🔨 H1–H3 done · H4 next | | Vercel (web) · worker on the owner's Mac · Redis Cloud · Backblaze B2 · Sentry; staging + live |
 
 ### v1 (regrouped later)
 
@@ -45,6 +45,29 @@ Legend: ✅ done · 🔍 in review · 🛠 building · ⏳ not started. Small fe
 | 17 | Brand kit | ⏳ |
 | 18 | Instagram, scheduling and calendar | ⏳ |
 | 19 | Stripe billing | ⏳ |
+
+## Step H plan
+
+Hosting (chosen 2026-10-28): web on **Vercel free** (Preview deployments = staging, Production = live) · worker on **the owner's Mac** (it only connects outward, so no server or tunnel is needed) · **Redis Cloud free** (30 MB, one database, separate `REDIS_NAMESPACE` for staging and live) · **MongoDB Atlas M0** (`clipwise_staging` and `clipwise`) · **Backblaze B2** for files (one bucket per environment) · **Sentry free**. Nothing here needs a card.
+
+1. **H1 Polish:** error, not-found and loading screens for every app page; accessibility pass (keyboard, focus, labels, contrast); worker heartbeat every 30s, with a "Rendering is paused right now" message on Create and Render and an offline badge in Admin when the worker is off; security headers; check that no server values reach the browser.
+2. **H2 Sentry:** errors from pages, server actions and API routes (web) and from failed jobs (worker, tagged with the video id). No passwords, scripts or keys are sent. One test error proves each side works.
+3. **H3 Deploy setup:** Vercel project settings for the monorepo; live-progress stream (SSE) made safe for Vercel's time limit (the browser reconnects on its own); worker Docker image with Chrome and fonts for a later move to a server; `pnpm worker:staging` / `pnpm worker:live` on the Mac, each with its own env file; `design/deploy.md` listing every setting by name (never values); a MongoDB backup script (M0 has no backups).
+4. **H4 Staging test:** deploy to staging and run one real video end to end (Create → Storyboard → Edit → Render → Download), plus sign-up, sign-in, admin and phone layouts. Expected cost: about 3 Gemini requests and 500–1,000 ElevenLabs credits (reported exactly).
+5. **H5 Beta checklist:** promote to live, make the owner admin, confirm beta limits, ElevenLabs paid plan (owner), final secrets check before the push, invite steps for the first users.
+
+Owner actions (accounts and keys are never entered by Claude): create the Vercel, Redis Cloud, Backblaze B2 and Sentry accounts and put each key straight into Vercel or the Mac's env files, following `design/deploy.md`.
+
+## Step H validation — 2026-10-28
+
+- `pnpm check`: lint, all typechecks and **187 tests passed** (7 new: privacy filter for error reports, live-progress event reading, worker heartbeat, staging/live key namespacing, one shared Redis listener connection). Production build passed.
+- Browser QA on a separate dev server (port 3005) with a temporary test user: "Video making is paused" notice on Create and while a video waits, gone when the worker is online; Admin shows Worker online / offline · last seen; 404 pages (unknown page, wrong video id); error screens; security headers present, `X-Powered-By` removed.
+- Accessibility pass on Create, Videos, Storyboard, Editor, Settings, Admin, Sign-in and Home: every button, link and field has a name, every image has alt text, one main heading per page, no skipped heading levels, all 59 focusable items in the editor show a focus ring. Fixed: a second main heading inside the video's title scene, the "Add Scene" heading level, and an unnamed play button on the home page.
+- Backup/restore tested on an in-memory database only: ids, exact dates, large numbers and binary data come back unchanged; restore refuses a database with data (without `--replace`) and the live database (without `--production`).
+- Secrets check: no `.env` file other than `.env.example` in the changes; no key values in the changed files or the browser bundle (only setting *names* inside the sign-in library).
+- Test user, its workspace, sessions and 2 copied videos removed from `clipwise_dev` (database rows only; no stored files touched); temporary scripts, QA build folder and the local heartbeat key removed.
+- Worker Docker image built and tested (2.1 GB): no env files, backups or `.git` inside; runs as user `node`; the built-in sample video (600 frames) renders in Chrome inside the container in about 13s with correct fonts and icons; the worker starts as staging against a temporary database and an empty Redis database, sends its heartbeat under `staging:`, refuses a wrong Redis namespace or database name, and stops cleanly (exit 0, marked offline at once) on `docker stop`. Fixed during this test: the image now starts the worker directly (pnpm re-downloaded packages on every start and kept the stop signal from the worker), and Linux uses Remotion's headless Chrome (Chrome for Testing, needed on macOS 26, has no Linux ARM build). Test image, container, temporary database and Redis test keys removed.
+- Not tested: Sentry with real DSNs (needs the owner's Sentry projects, H4).
 
 ## Step F plan
 
@@ -86,6 +109,13 @@ Legend: ✅ done · 🔍 in review · 🛠 building · ⏳ not started. Small fe
 
 | Date | Decision |
 | --- | --- |
+| 2026-10-28 | User approved H1–H3; committed and pushed. H4 waits for the owner's accounts |
+| 2026-10-28 | H1–H3 built: Redis keys and BullMQ queues are prefixed by `REDIS_NAMESPACE` (`staging:` / `live:`), except the Gemini/ElevenLabs budget counters, which stay shared because the free quotas are shared; the worker refuses to start if its namespace or database name belongs to another environment |
+| 2026-10-28 | One Redis listener connection per process for live progress (Redis Cloud free allows 30 connections); the progress stream closes itself after 270s and the browser reconnects (Vercel limit 300s) |
+| 2026-10-28 | Sentry v11: all personal data collection switched off (`dataCollection`), and reports are scrubbed of user, request, emails and anything named like a key/token/password before sending. Only a job's last failed attempt is reported; paused/forbidden are not errors |
+| 2026-10-28 | Rendering uses Chrome for Testing on macOS (the headless shell crashes on macOS 26) and Remotion's headless shell on Linux (Docker image); the image starts the worker with tsx directly, not through pnpm |
+| 2026-10-28 | Worker heartbeat every 30s (online = seen in the last 90s); the app shows "Video making is paused right now" instead of failing when the Mac is off |
+| 2026-10-28 | Step H hosting chosen: Vercel free for the web app, the worker runs on the owner's Mac during the private beta (moves to a server later via the Docker image), Redis Cloud free (Upstash rejected: BullMQ's constant polling uses up its command allowance), Backblaze B2 storage, Sentry free, separate staging and live |
 | 2026-10-26 | User approved updating STATUS.md, committing and pushing the completed F + G checkpoint. Changes share queue/render/auth files, so both steps are recorded together. Step H remains a planning task, not started. |
 | 2026-10-26 | Step G built after user approval. Roles are refreshed from stored account metadata per request; workspace suspension is enforced in web routes/actions, queue admission and worker/provider guards. Admin changes have pending/ok/failed audit records without passwords or secrets. F + G remain uncommitted pending review. |
 | 2026-10-26 | Completed combined Step E + F code review and QA. Scene reordering uses shared pointer capture for mouse/touch plus keyboard arrows; Remotion studio mounts client-side to avoid animation-style hydration differences. Step F is awaiting user review, not committed or pushed. |
@@ -122,6 +152,5 @@ Legend: ✅ done · 🔍 in review · 🛠 building · ⏳ not started. Small fe
 ## Open items
 
 - ElevenLabs free plan is non-commercial — upgrade before real users (Feature 16).
-- Review Step G settings/admin screens before the Git checkpoint. Step H monitoring and deployment are still pending.
 - Make yourself admin: create your account in the app, then run `pnpm user:admin you@example.com`.
-- Hosting at launch (step H): Railway needs a card after its trial; pick a worker host and storage that fit the no-card preference.
+- While the worker runs on the Mac, videos are only made while the Mac is on and awake. Move it to a server (Railway or a VPS, needs a card) before a wider launch.

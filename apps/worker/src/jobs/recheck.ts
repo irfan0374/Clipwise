@@ -4,6 +4,7 @@ import type { JobData } from "@clipwise/queue";
 import type { Job } from "bullmq";
 import { emit, jobContext, recordUsage } from "../context";
 import { classify } from "../errors";
+import { reportJobFailure } from "../monitoring";
 
 const toReviewOf = (claims: { verdict?: string | null; acceptedAt?: Date | null }[]) =>
   claims.filter((c) => c.verdict !== "correct" && !c.acceptedAt).length;
@@ -81,6 +82,7 @@ export async function recheckJob(job: Job, data: JobData<"recheck">, providers?:
     const last = !failure.retry || attempt >= (job.opts.attempts ?? 1);
     if (!last) throw error; // BullMQ retries with backoff
     console.error(`[worker] recheck gave up for video ${data.videoId}: ${failure.message}`);
+    reportJobFailure(error, { name: "recheck", videoId: data.videoId, attempt, code: failure.code });
     // Not verified is not "correct": each scene gets a note to review.
     found = scenes.map((scene) => ({
       scene,

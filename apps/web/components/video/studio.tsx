@@ -21,6 +21,7 @@ import { useEffect, useRef, useState } from "react";
 import { listVersions } from "@/app/(app)/edit-actions";
 import { IconRail, type SidebarUser } from "@/components/app/sidebar";
 import { Soon } from "@/components/app/soon";
+import { WorkerNotice } from "@/components/app/worker-notice";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -302,12 +303,15 @@ export function Studio({
   user,
   usage,
   focus: initialFocus,
+  workerOnline = true,
 }: {
   video: VideoView;
   lastFinal: { id: string; scriptVersion: number } | null;
   user: SidebarUser;
   usage: { used: number; limit: number };
   focus: Focus;
+  /** Rendering needs the worker; when it's off, a notice says renders wait in line. */
+  workerOnline?: boolean;
 }) {
   // Remotion animation styles contain floating-point values; render the interactive studio only after mounting.
   const [mounted, setMounted] = useState(false);
@@ -364,6 +368,11 @@ export function Studio({
             </a>
           </div>
         )}
+        <WorkerNotice
+          online={workerOnline}
+          className="rounded-none border-x-0 border-t-0 sm:px-8"
+          waiting={["voicing", "rendering"].includes(studio.video.status)}
+        />
         {studio.conflict && (
           <div
             role="alert"

@@ -381,7 +381,7 @@ export function StoryboardView({
               >
                 <Plus className="size-5" strokeWidth={1.75} />
               </button>
-              <h3 className="text-sm font-semibold">Add Scene</h3>
+              <h2 className="text-sm font-semibold">Add Scene</h2>
               <p className="mt-1 max-w-[180px] text-xs leading-relaxed text-ink-3">
                 Add a blank scene to write, or let AI write the next one
               </p>

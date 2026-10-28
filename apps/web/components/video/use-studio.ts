@@ -1,6 +1,6 @@
 "use client";
 
-import type { ActionResult, VideoEvent } from "@clipwise/shared";
+import type { ActionResult } from "@clipwise/shared";
 import type { VisualColor, VisualType } from "@clipwise/video";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -16,6 +16,7 @@ import {
   updateScene,
 } from "@/app/(app)/edit-actions";
 import { renderFinal } from "@/app/(app)/render-actions";
+import { onVideoEvent } from "@/lib/video-events";
 import type { VideoView } from "@/lib/videos";
 
 type Scene = VideoView["scenes"][number];
@@ -257,10 +258,8 @@ export function useStudio(initial: VideoView) {
   useEffect(() => {
     const source = new EventSource(`/api/events/${id}`);
     const refresh = () => router.refresh();
-    source.addEventListener("claims", refresh);
-    for (const event of ["status", "done", "error"]) source.addEventListener(event, refresh);
-    source.addEventListener("script", (m) => {
-      const e = JSON.parse((m as MessageEvent).data) as VideoEvent;
+    for (const event of ["claims", "status", "done", "error"] as const) onVideoEvent(source, event, refresh);
+    onVideoEvent(source, "script", (e) => {
       if (e.type === "script" && e.scriptVersion > version.current) refresh(); // not our own save
     });
     return () => source.close();

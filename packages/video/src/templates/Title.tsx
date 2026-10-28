@@ -22,7 +22,7 @@ export const Title = ({ text, compact = false }: { text: string; compact?: boole
       {compact ? null : (
         <div style={{ width: 96, height: 8, borderRadius: 4, backgroundColor: theme.accent, marginBottom: 48 }} />
       )}
-      <h1 style={{ margin: 0, fontSize: compact ? 92 : 112, fontWeight: 800, lineHeight: 1.05, letterSpacing: -3 }}>
+      <div style={{ margin: 0, fontSize: compact ? 92 : 112, fontWeight: 800, lineHeight: 1.05, letterSpacing: -3 }}>
         {words.map((word, i) => {
           const progress = spring({ frame: frame - i * 4, fps, config: { damping: 200 } });
           return (
@@ -39,7 +39,7 @@ export const Title = ({ text, compact = false }: { text: string; compact?: boole
             </span>
           );
         })}
-      </h1>
+      </div>
     </AbsoluteFill>
   );
 };

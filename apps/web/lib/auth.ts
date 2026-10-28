@@ -10,7 +10,8 @@ if (!uri) throw new Error("Missing MONGODB_URI in .env (see .env.example)");
 
 // One client per server process (Next.js hot reload re-imports this module).
 const cache = globalThis as typeof globalThis & { __clipwiseAuthMongo?: MongoClient };
-if (!cache.__clipwiseAuthMongo) cache.__clipwiseAuthMongo = new MongoClient(uri);
+if (!cache.__clipwiseAuthMongo)
+  cache.__clipwiseAuthMongo = new MongoClient(uri, { maxPoolSize: Number(process.env.MONGODB_MAX_POOL ?? 10) });
 const client = cache.__clipwiseAuthMongo;
 
 export const PASSWORD_MIN = 8;

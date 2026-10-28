@@ -1,13 +1,54 @@
+import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { config } from "dotenv";
+import { flushMonitoring, initMonitoring } from "./monitoring";
 
+// Settings: `.env` for local development; CLIPWISE_ENV=staging / live reads `.env.staging` / `.env.live`, so
+// one Mac can run the staging and the live worker side by side (pnpm worker:staging / pnpm worker:live).
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
-config({ path: path.join(repoRoot, ".env"), quiet: true });
+const env = process.env.CLIPWISE_ENV;
+const envFile = path.join(repoRoot, env ? `.env.${env}` : ".env");
+// On a server (Docker) the settings come from the environment itself, so the file is optional there.
+if (env && !existsSync(envFile) && !process.env.MONGODB_URI) {
+  console.error(`[worker] ${path.basename(envFile)} not found. Create it from .env.example (see design/deploy.md).`);
+  process.exit(1);
+}
+config({ path: envFile, quiet: true });
+
+// Guard against mixing environments: each worker must use its own Redis namespace and database.
+if (env) {
+  const expected = ({ staging: "clipwise_staging", live: "clipwise" } as Record<string, string>)[env];
+  const database = /\/([^/?]+)(\?|$)/.exec(
+    (process.env.MONGODB_URI ?? "").replace(/^mongodb(\+srv)?:\/\/[^/]+/, ""),
+  )?.[1];
+  const problems = [
+    !expected && `CLIPWISE_ENV must be "staging" or "live", not "${env}"`,
+    process.env.REDIS_NAMESPACE !== `${env}:` && `REDIS_NAMESPACE must be "${env}:"`,
+    expected && database !== expected && `MONGODB_URI must use the "${expected}" database`,
+  ].filter(Boolean);
+  if (problems.length) {
+    console.error(
+      `[worker] settings (${path.basename(envFile)} or the environment) are not set up for ${env}:\n  - ${problems.join("\n  - ")}`,
+    );
+    process.exit(1);
+  }
+}
+const monitoring = initMonitoring();
 
 const { connectDb, disconnectDb } = await import("@clipwise/db");
-const { closeQueues, closeRedis, newRedis, rebuildBudgetCounters, subscribeAllVideoEvents, budgetStatus } =
-  await import("@clipwise/queue");
+const {
+  beatWorker,
+  budgetStatus,
+  bullPrefix,
+  closeQueues,
+  closeRedis,
+  HEARTBEAT_MS,
+  newRedis,
+  rebuildBudgetCounters,
+  stopWorkerBeat,
+  subscribeAllVideoEvents,
+} = await import("@clipwise/queue");
 const { Queues } = await import("@clipwise/shared");
 const { Worker } = await import("bullmq");
 const { makeProcessor } = await import("./processor");
@@ -29,7 +70,7 @@ const workers = (["ai", "voice", "render"] as const).map(
     new Worker(Queues[name], processor, {
       connection: newRedis(`worker:${name}`),
       concurrency: concurrency[name],
-      prefix: "bull",
+      prefix: bullPrefix(),
       // How long a job may go without a heartbeat before another worker takes it over (crash recovery).
       lockDuration: name === "render" ? 90_000 : 60_000,
     }),
@@ -47,18 +88,30 @@ const stopEvents = await subscribeAllVideoEvents((videoId, e) => {
   else if (e.type === "error") console.log(`[video …${id}] ✗ ${e.stage}: ${e.message} (${e.code})`);
 });
 
-console.log(`[worker] ready (node ${process.version}, pid ${process.pid}) · queues: ai×2, voice×1, render×1`);
+// "I'm alive" for the web app: without it, Create and Render say video making is paused.
+const beat = { pid: process.pid, startedAt: new Date().toISOString(), node: process.version };
+const sendBeat = () =>
+  beatWorker(beat).catch((err: unknown) => console.error("[worker] heartbeat failed:", (err as Error).message));
+await sendBeat();
+const heartbeat = setInterval(() => void sendBeat(), HEARTBEAT_MS);
+
+console.log(
+  `[worker] ready (${env ?? "development"}, node ${process.version}, pid ${process.pid}) · queues: ai×2, voice×1, render×1${monitoring ? " · error reports on" : ""}`,
+);
 
 let stopping = false;
 const shutdown = async (signal: string) => {
   if (stopping) return;
   stopping = true;
   console.log(`[worker] ${signal}: finishing current jobs, then stopping…`);
+  clearInterval(heartbeat);
+  await stopWorkerBeat().catch(() => {});
   await Promise.all(workers.map((w) => w.close()));
   await stopEvents();
   await closeQueues();
   await closeRedis();
   await disconnectDb();
+  await flushMonitoring();
   process.exit(0);
 };
 process.on("SIGINT", () => void shutdown("SIGINT"));

@@ -1,6 +1,7 @@
 import { PipelineRun } from "@clipwise/db";
 import type { Types } from "mongoose";
 import { reserve } from "./budget";
+import { nsKey } from "./namespace";
 import { redis } from "./redis";
 
 // Per-user limits for the beta (open sign-up). Counters are reserved atomically, like the global budgets.
@@ -13,7 +14,7 @@ export const userLimits = () => ({
 
 type DailyKind = "videos" | "ai" | "edits";
 const today = (now = new Date()) => now.toISOString().slice(0, 10);
-const dailyKey = (userId: string, kind: DailyKind, at = new Date()) => `limit:${userId}:${kind}:${today(at)}`;
+const dailyKey = (userId: string, kind: DailyKind, at = new Date()) => nsKey(`limit:${userId}:${kind}:${today(at)}`);
 
 /** Seconds until the daily counters reset (midnight UTC). */
 export const secondsUntilReset = (now = new Date()) => {
@@ -66,7 +67,7 @@ const UNLOCK = `if redis.call('GET', KEYS[1]) == ARGV[1] then return redis.call(
  * interleave between simultaneous requests. Returns null if another request holds the lock.
  */
 export async function withWorkspaceLock<T>(workspaceId: Types.ObjectId | string, fn: () => Promise<T>) {
-  const key = `lock:active:${workspaceId}`;
+  const key = nsKey(`lock:active:${workspaceId}`);
   const token = `${process.pid}:${Date.now()}:${Math.random()}`;
   if ((await redis().set(key, token, "PX", 15_000, "NX")) !== "OK") return null;
   try {

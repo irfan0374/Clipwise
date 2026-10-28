@@ -5,6 +5,8 @@
   "packageManager": "pnpm@11.27.1",
   "scripts": {
     "dev": "pnpm --parallel --filter @clipwise/web --filter @clipwise/worker dev",
+    "worker:staging": "CLIPWISE_ENV=staging caffeinate -ims pnpm --filter @clipwise/worker start",
+    "worker:live": "CLIPWISE_ENV=live caffeinate -ims pnpm --filter @clipwise/worker start",
     "check": "pnpm lint && pnpm typecheck && pnpm test",
     "lint": "biome check .",
     "format": "biome check --write .",
@@ -18,6 +20,8 @@
     "db:migrate": "tsx packages/db/scripts/migrate.ts",
     "db:seed": "tsx packages/db/scripts/seed.ts",
     "db:status": "tsx packages/db/scripts/status.ts",
+    "db:backup": "tsx packages/db/scripts/backup.ts backup",
+    "db:restore": "tsx packages/db/scripts/backup.ts restore",
     "user:admin": "tsx packages/db/scripts/user-admin.ts",
     "job:make": "tsx apps/worker/scripts/make.ts"
   },

@@ -7,7 +7,9 @@ import { repoRoot } from "../env";
 const entryPoint = path.join(repoRoot, "packages/video/src/index.ts");
 
 // The default headless shell crashes on macOS 26 (missing ICU data in child processes); Chrome for Testing works.
-export const chromeMode = "chrome-for-testing" as const;
+// Linux servers (the Docker image) keep the headless shell: Chrome for Testing has no Linux ARM build.
+export const chromeMode: "chrome-for-testing" | "headless-shell" =
+  process.platform === "darwin" ? "chrome-for-testing" : "headless-shell";
 
 export type RenderOptions = {
   /** Called with 0–100 as frames render (default: prints every 10%). */

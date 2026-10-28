@@ -8,9 +8,17 @@ export {
   reserveElevenLabsCredits,
   reserveGeminiRequest,
 } from "./budget";
-export { publishVideoEvent, subscribeAllVideoEvents, subscribeVideoEvents } from "./events";
+export { closeSubscriptions, publishVideoEvent, subscribeAllVideoEvents, subscribeVideoEvents } from "./events";
 export { FinalError, startFinal, usableVoice, voiceIsCurrent } from "./finals";
 export { budgetGuards, type UsageRow } from "./guards";
+export {
+  beatWorker,
+  HEARTBEAT_MS,
+  stopWorkerBeat,
+  type WorkerBeat,
+  type WorkerStatus,
+  workerStatus,
+} from "./heartbeat";
 export {
   activeRunCount,
   dailyUsage,
@@ -20,6 +28,7 @@ export {
   userLimits,
   withWorkspaceLock,
 } from "./limits";
+export { bullPrefix, ns, nsKey } from "./namespace";
 export { isGenerationPaused, setGenerationPaused } from "./pause";
 export {
   allQueues,

@@ -1,6 +1,7 @@
 import { FactcheckJob, type QueueName, Queues, RecheckJob, RenderJob, ScriptJob, VoiceJob } from "@clipwise/shared";
 import { type JobsOptions, Queue } from "bullmq";
 import type { z } from "zod";
+import { bullPrefix } from "./namespace";
 import { redis } from "./redis";
 
 /** Job name → payload schema and queue. Payloads carry IDs only; the worker reads current data from MongoDB. */
@@ -27,7 +28,7 @@ export const queue = (name: QueueName): Queue => {
   cache.__clipwiseQueues ??= new Map();
   let q = cache.__clipwiseQueues.get(name);
   if (!q) {
-    q = new Queue(name, { connection: redis(), defaultJobOptions, prefix: "bull" });
+    q = new Queue(name, { connection: redis(), defaultJobOptions, prefix: bullPrefix() });
     cache.__clipwiseQueues.set(name, q);
   }
   return q;

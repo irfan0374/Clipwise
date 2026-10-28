@@ -1,6 +1,6 @@
 import "server-only";
 import { AuditEvent, accountUsers, authUserId, PipelineRun, Video, Workspace } from "@clipwise/db";
-import { budgetStatus, queue, weeklyFinalCount } from "@clipwise/queue";
+import { budgetStatus, queue, weeklyFinalCount, workerStatus } from "@clipwise/queue";
 import { notFound } from "next/navigation";
 import { escapeSearch } from "./library-query";
 import { requireUser } from "./session";
@@ -37,7 +37,7 @@ export async function adminOverview(search = "", requestedPage = 1) {
     : {};
   const start = new Date();
   start.setUTCHours(0, 0, 0, 0);
-  const [total, budgets, stats, failures, health, audit, running] = await Promise.all([
+  const [total, budgets, stats, failures, health, audit, running, worker] = await Promise.all([
     Workspace.countDocuments(filter),
     budgetStatus(),
     Promise.all([
@@ -59,6 +59,7 @@ export async function adminOverview(search = "", requestedPage = 1) {
       .sort({ createdAt: -1 })
       .limit(20)
       .lean(),
+    workerStatus(),
   ]);
   const runningVideos = await Video.find(
     { _id: { $in: running.map((r) => r.videoId) }, deletedAt: null },
@@ -108,6 +109,7 @@ export async function adminOverview(search = "", requestedPage = 1) {
       workspaceId: v.workspaceId.toString(),
     })),
     health,
+    worker,
     running: running.map((r) => ({
       id: r._id.toString(),
       videoId: r.videoId.toString(),

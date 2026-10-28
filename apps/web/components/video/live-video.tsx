@@ -8,6 +8,8 @@ import { useRouter } from "next/navigation";
 import { type ReactNode, useEffect, useState, useTransition } from "react";
 import { cancelVideo, retryVideo } from "@/app/(app)/actions";
 import { TopBar } from "@/components/app/top-bar";
+import { WorkerNotice } from "@/components/app/worker-notice";
+import { onVideoEvent } from "@/lib/video-events";
 import type { StepState, VideoView } from "@/lib/videos";
 
 const secs = (ms: number | null) => (ms == null ? "" : ` · ${Math.max(1, Math.round(ms / 1000))}s`);
@@ -95,7 +97,7 @@ function StepRow({ title, meta, state, n, extra }: Row) {
 }
 
 /** The Generating screen: live steps (server-sent events), cancel/retry, and a placeholder 9:16 preview. */
-export function LiveVideo({ video }: { video: VideoView }) {
+export function LiveVideo({ video, workerOnline = true }: { video: VideoView; workerOnline?: boolean }) {
   const router = useRouter();
   const [live, setLive] = useState<{ status: VideoStatus; stage: Stage | null; progress: number }>({
     status: video.status,
@@ -114,8 +116,7 @@ export function LiveVideo({ video }: { video: VideoView }) {
   useEffect(() => {
     if (!working.includes(video.status) || video.stopped) return;
     const source = new EventSource(`/api/events/${video.id}`);
-    const on = (type: string, fn: (e: VideoEvent) => void) =>
-      source.addEventListener(type, (m) => fn(JSON.parse((m as MessageEvent).data) as VideoEvent));
+    const on = (type: VideoEvent["type"], fn: (e: VideoEvent) => void) => onVideoEvent(source, type, fn);
     on("status", (e) => {
       if (e.type !== "status") return;
       setLive({ status: e.status, stage: e.stage, progress: e.progress });
@@ -138,7 +139,7 @@ export function LiveVideo({ video }: { video: VideoView }) {
       if (e.detail) setDetail((d) => ({ ...d, [e.stage]: e.detail }));
       if (e.state !== "started") router.refresh();
     });
-    for (const t of ["script", "claims", "done", "error"]) on(t, () => router.refresh());
+    for (const t of ["script", "claims", "done", "error"] as const) on(t, () => router.refresh());
     return () => source.close();
   }, [video.id, video.status, video.stopped, router]);
 
@@ -215,6 +216,7 @@ export function LiveVideo({ video }: { video: VideoView }) {
     <>
       <TopBar title={video.title} />
       <main className="mx-auto flex w-full max-w-[1240px] flex-col gap-10 p-4 sm:p-8">
+        {busy && <WorkerNotice online={workerOnline} waiting className="-mb-4" />}
         {/* Title row */}
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line/60 pb-2">
           <div className="flex flex-wrap items-center gap-3.5">

@@ -306,6 +306,7 @@ export function HomeMarkup() {
                     <button
                       className="w-7 h-7 rounded-[4px] bg-[#F6F7F2] flex items-center justify-center text-[#0F0F0F] hover:bg-[#EAECE3]"
                       type="button"
+                      aria-label="Play preview"
                     >
                       <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24" aria-hidden="true">
                         <polygon points="5 3 19 12 5 21 5 3" />

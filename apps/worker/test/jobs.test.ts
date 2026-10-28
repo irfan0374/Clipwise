@@ -2,10 +2,14 @@ import { PipelineRun, Render, ScriptVersion, UsageEvent, Video, Workspace } from
 import { type FactCheck, type Providers, providerGuards } from "@clipwise/pipeline";
 import {
   activeRunCount,
+  beatWorker,
   budgetKeys,
+  bullPrefix,
   cancelVideo,
   enqueue,
   enqueueRecheck,
+  nsKey,
+  publishVideoEvent,
   queue,
   rebuildBudgetCounters,
   redis,
@@ -15,12 +19,14 @@ import {
   setGenerationPaused,
   startFinal,
   startVideo,
+  stopWorkerBeat,
   subscribeVideoEvents,
   takeDaily,
   voiceIsCurrent,
   weeklyFinalCount,
   weekWindow,
   withWorkspaceLock,
+  workerStatus,
 } from "@clipwise/queue";
 import type { RunTarget, VideoEvent } from "@clipwise/shared";
 import { storage } from "@clipwise/storage";
@@ -651,8 +657,8 @@ describe("Step G allowance and suspension enforcement", () => {
     await takeDaily("u1", "videos", after);
     await refundDaily("u1", "videos", before);
     await refundDaily("u1", "videos", before);
-    expect(await redis().get("limit:u1:videos:2026-10-25")).toBe("0");
-    expect(await redis().get("limit:u1:videos:2026-10-26")).toBe("1");
+    expect(await redis().get("test:limit:u1:videos:2026-10-25")).toBe("0");
+    expect(await redis().get("test:limit:u1:videos:2026-10-26")).toBe("1");
   });
   it("uses Monday UTC and the retry reservation date for weekly finals", async () => {
     const { videoId } = await newVideo();
@@ -690,4 +696,59 @@ it("releases the weekly retry reservation when enqueueing fails", async () => {
   }
   expect(await weeklyFinalCount(v.workspaceId)).toBe(0);
   expect((await Video.findById(videoId))?.status).toBe("failed");
+});
+
+describe("hosting: environments share one Redis", () => {
+  it("knows whether the worker is running from its heartbeat", async () => {
+    expect(await workerStatus()).toEqual({ online: false, lastSeen: null, startedAt: null });
+    await beatWorker({ pid: 1, startedAt: "2026-10-28T10:00:00.000Z", node: "v22" }, new Date("2026-10-28T10:05:00Z"));
+    expect(await workerStatus()).toEqual({
+      online: true,
+      lastSeen: "2026-10-28T10:05:00.000Z",
+      startedAt: "2026-10-28T10:00:00.000Z",
+    });
+    const ttl = await redis().ttl(nsKey("worker:alive"));
+    expect(ttl).toBeGreaterThan(60);
+    expect(ttl).toBeLessThanOrEqual(90);
+    await stopWorkerBeat(); // clean shutdown: offline at once, last seen kept
+    expect(await workerStatus()).toMatchObject({ online: false, lastSeen: "2026-10-28T10:05:00.000Z" });
+  });
+
+  it("keeps each environment's keys and queues apart, but shares the provider budgets", async () => {
+    expect(nsKey("worker:alive")).toBe("test:worker:alive");
+    expect(bullPrefix()).toBe("test:bull");
+    expect(queue("ai").opts.prefix).toBe("test:bull");
+    await takeDaily("u-ns", "videos");
+    expect(await redis().keys("limit:*")).toEqual([]);
+    expect((await redis().keys("test:limit:u-ns:*")).length).toBe(1);
+    expect(budgetKeys.geminiRequests()).toMatch(/^global:/); // same API keys → one shared count
+  });
+
+  it("serves every open video page from one Redis connection", async () => {
+    const clients = async () =>
+      ((await redis().client("LIST")) as string).split("\n").filter((l) => l.includes("name=clipwise:sub:videos"))
+        .length;
+    const a: VideoEvent[] = [];
+    const b: VideoEvent[] = [];
+    const c: VideoEvent[] = [];
+    const stopA = await subscribeVideoEvents("v1", (e) => a.push(e));
+    const stopB = await subscribeVideoEvents("v1", (e) => b.push(e));
+    const stopC = await subscribeVideoEvents("v2", (e) => c.push(e));
+    expect(await clients()).toBe(1);
+    const status: VideoEvent = { type: "status", status: "scripting", stage: "script", progress: 10 };
+    await publishVideoEvent("v1", status);
+    await new Promise((r) => setTimeout(r, 50));
+    expect(a).toEqual([status]);
+    expect(b).toEqual([status]);
+    expect(c).toEqual([]);
+    await stopA();
+    await stopA(); // stopping twice is harmless
+    await publishVideoEvent("v1", status);
+    await new Promise((r) => setTimeout(r, 50));
+    expect(a).toHaveLength(1);
+    expect(b).toHaveLength(2);
+    await stopB();
+    await stopC();
+    expect(await redis().pubsub("NUMSUB", "test:video:v1")).toEqual(["test:video:v1", 0]);
+  });
 });

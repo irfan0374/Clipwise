@@ -18,6 +18,7 @@
     "@clipwise/storage": "workspace:*",
     "@clipwise/video": "workspace:*",
     "@remotion/player": "4.0.536",
+    "@sentry/nextjs": "11.7.0",
     "better-auth": "1.7.12",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.5.0",
@@ -41,8 +42,8 @@
     "@tailwindcss/postcss": "^4.3.3",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "mongodb-memory-server": "^11.3.0",
     "shadcn": "4.22.1",
-    "tailwindcss": "^4.3.3",
-    "mongodb-memory-server": "^11.3.0"
+    "tailwindcss": "^4.3.3"
   }
 }

@@ -39,6 +39,11 @@ vi.mock("@clipwise/queue", () => ({
   retryVideo: state.retry,
   budgetStatus: async () => ({ gemini: { used: 0, limit: 80 }, elevenlabs: { used: 0, limit: 10000 } }),
   weeklyFinalCount: async () => 0,
+  workerStatus: async () => ({
+    online: true,
+    lastSeen: "2026-10-28T10:00:00.000Z",
+    startedAt: "2026-10-28T09:00:00.000Z",
+  }),
   queue: () => ({
     isPaused: async () => false,
     getJobCounts: async () => ({ active: 0, waiting: 0, failed: 0, delayed: 0 }),

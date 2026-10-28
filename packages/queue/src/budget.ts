@@ -7,6 +7,7 @@ import { redis } from "./redis";
 const day = (d = new Date()) => d.toISOString().slice(0, 10);
 const month = (d = new Date()) => d.toISOString().slice(0, 7);
 
+// Not namespaced on purpose: staging and live use the same provider keys, so they share one budget.
 export const budgetKeys = {
   geminiRequests: (d = new Date()) => `global:gemini:requests:${day(d)}`,
   elevenLabsCredits: (d = new Date()) => `global:elevenlabs:${month(d)}`,

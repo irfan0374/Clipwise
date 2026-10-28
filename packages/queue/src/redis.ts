@@ -18,6 +18,12 @@ export const redis = () => {
 };
 
 export const closeRedis = async () => {
+  // The shared video-events subscriber (events.ts) lives on its own connection.
+  const sub = (globalThis as typeof globalThis & { __clipwiseSub?: { conn: Redis } }).__clipwiseSub;
+  if (sub) {
+    (globalThis as typeof globalThis & { __clipwiseSub?: unknown }).__clipwiseSub = undefined;
+    await sub.conn.quit().catch(() => {});
+  }
   if (cache.__clipwiseRedis) {
     await cache.__clipwiseRedis.quit();
     cache.__clipwiseRedis = undefined;

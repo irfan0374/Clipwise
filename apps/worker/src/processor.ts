@@ -10,6 +10,7 @@ import { recheckJob } from "./jobs/recheck";
 import { renderJob } from "./jobs/render";
 import { scriptJob } from "./jobs/script";
 import { voiceJob } from "./jobs/voice";
+import { reportJobFailure } from "./monitoring";
 
 const stageOf: Record<JobName, Stage> = {
   script: "script",
@@ -78,6 +79,7 @@ export const makeProcessor = (providers?: Providers) => async (job: Job) => {
     const last = !failure.retry || attempt >= (job.opts.attempts ?? 1);
     console.error(`[worker] ${name} failed for video ${data.videoId} (attempt ${attempt}): ${failure.message}`);
     if (last) {
+      reportJobFailure(error, { name, videoId: data.videoId, attempt, code: failure.code });
       await markFailed(job, error);
       throw new UnrecoverableError(failure.message);
     }
