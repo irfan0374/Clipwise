@@ -9,7 +9,7 @@ Two environments, kept fully apart:
 | Worker settings file | `.env.staging` (repo root) | `.env.live` (repo root) |
 | Database (Atlas M0) | `clipwise_staging` | `clipwise` |
 | Redis (Redis Cloud, one database) | keys start with `staging:` | keys start with `live:` |
-| Files (Backblaze B2) | its own bucket | its own bucket |
+| Files (Cloudflare R2) | bucket `clipwise` | its own bucket (e.g. `clipwise-live`) |
 | Errors (Sentry) | environment `staging` | environment `live` |
 
 This file names settings only. **Never paste a value into chat, an issue or a commit.** `.env`, `.env.staging`
@@ -21,15 +21,26 @@ and `.env.live` are git-ignored; `.env.example` lists every setting with a short
 
 1. **MongoDB Atlas** – one free M0 cluster.
    - Two database users, each with *readWrite* on one database only: one for `clipwise_staging`, one for `clipwise`.
+     (Staging currently reuses the owner's admin login; live must get its own limited user.)
    - Network Access: allow `0.0.0.0/0` (Vercel has no fixed addresses). The per-database users and long random
      passwords are what protect the data.
    - The connection string's database name (before the `?`) decides the environment. The worker refuses to
      start if it doesn't match.
-2. **Redis Cloud** – one free database (30 MB, 30 connections). Both environments share it; `REDIS_NAMESPACE`
-   keeps their keys apart. Copy its `rediss://` address (with TLS).
-3. **Backblaze B2** – two **private** buckets (staging, live) and one application key per bucket, limited to that
-   bucket. Note the bucket's S3 endpoint and region. No CORS rules are needed: uploads go through the server and
-   videos are played from short-lived signed links.
+2. **Redis Cloud** – one free database ("Try 30 MB for free", not the paid Essentials plan): 30 MB, 30 connections,
+   100 operations/s, **5 GB network traffic per month**. Both environments share it; `REDIS_NAMESPACE` keeps their
+   keys apart. Pick AWS `us-east-1` (next to Vercel's `iad1`).
+   - Set **Configuration → Edit → Data eviction policy → `noeviction`** (BullMQ needs it; with the default
+     `volatile-lru`, Redis may silently drop queued jobs when full).
+   - `REDIS_URL` is only the address `redis://default:<password>@<endpoint>:<port>` — not the whole
+     `redis-cli -u …` command that the Connect screen shows.
+   - The free plan has **no TLS** (encryption): `rediss://` is refused. Accepted for the private beta, because
+     Redis only carries ids and progress numbers (no personal data); move to a paid plan with TLS before a wider launch.
+   - An idle worker uses about 1 GB of traffic a month; stop the staging worker when not testing.
+3. **Cloudflare R2** (chosen 2026-10-29; needs a payment method on the Cloudflare account, downloads are free) –
+   one **private** bucket per environment and an *Object Read & Write* API token, ideally limited to that bucket.
+   `S3_ENDPOINT` is `https://<account id>.r2.cloudflarestorage.com`, `S3_REGION` is `auto`. Backblaze B2 works too
+   (same settings, its own endpoint and region; free downloads only up to 3× the stored data). No CORS rules are
+   needed: uploads go through the server and videos are played from short-lived signed links.
 4. **Sentry** – one organisation, two projects: a Next.js project (web) and a Node project (worker). Each gives a
    DSN. Personal data collection is switched off in the code; leave "Store IP addresses" off in project settings.
 5. **Vercel** – import the GitHub repo (see step 3).
@@ -76,6 +87,14 @@ Notes:
    **Preview** limited to the branch `staging`.
 6. Deployment Protection: keep Vercel Authentication on for Preview, so only you can open staging.
 7. Push to `staging` → staging deploys. Merge `staging` into `main` → live deploys.
+
+Current setup (2026-10-29): project `clipwise` in the owner's existing Vercel account, region `iad1`; staging is
+https://clipwise-git-staging-irfaans-projects.vercel.app. The settings can be copied without pasting values by hand:
+`npx vercel@64.0.2 login` (owner), `npx vercel@64.0.2 link --project clipwise`, then
+`vercel env add NAME preview --git-branch staging --sensitive` with the value on standard input. `vercel link`
+also writes `.env.local` and adds `.env*` to `.gitignore`; delete both (`.env*` would hide `.env.example`).
+A new branch pointing at an already-built commit is not built automatically; push a commit or start a deployment of
+the branch from the dashboard. Staging pages show the Vercel Toolbar to the owner only.
 
 The live-progress stream closes itself after 270 seconds and the browser reconnects (Vercel limit: 300 s).
 

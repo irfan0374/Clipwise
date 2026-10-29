@@ -22,3 +22,4 @@ apps/web/.next-qa-g/
 
 # database backups (personal data)
 backups/
+.vercel

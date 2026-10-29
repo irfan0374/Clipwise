@@ -2,7 +2,7 @@ import { FactcheckJob, type QueueName, Queues, RecheckJob, RenderJob, ScriptJob,
 import { type JobsOptions, Queue } from "bullmq";
 import type { z } from "zod";
 import { bullPrefix } from "./namespace";
-import { redis } from "./redis";
+import { quietError, redis } from "./redis";
 
 /** Job name → payload schema and queue. Payloads carry IDs only; the worker reads current data from MongoDB. */
 export const JobDefs = {
@@ -29,6 +29,7 @@ export const queue = (name: QueueName): Queue => {
   let q = cache.__clipwiseQueues.get(name);
   if (!q) {
     q = new Queue(name, { connection: redis(), defaultJobOptions, prefix: bullPrefix() });
+    q.on("error", quietError(`queue:${name}`)); // BullMQ prints the raw error when nothing listens
     cache.__clipwiseQueues.set(name, q);
   }
   return q;

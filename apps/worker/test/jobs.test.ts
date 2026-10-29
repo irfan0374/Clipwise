@@ -6,6 +6,7 @@ import {
   budgetKeys,
   bullPrefix,
   cancelVideo,
+  closeSubscriptions,
   enqueue,
   enqueueRecheck,
   nsKey,
@@ -728,13 +729,17 @@ describe("hosting: environments share one Redis", () => {
     const clients = async () =>
       ((await redis().client("LIST")) as string).split("\n").filter((l) => l.includes("name=clipwise:sub:videos"))
         .length;
+    // CLIENT LIST covers the whole Redis server, where a running dev web app may have its own subscriber; earlier
+    // tests may have opened this process's shared one, so start without it and count only the new connection.
+    await closeSubscriptions();
+    const before = await clients();
     const a: VideoEvent[] = [];
     const b: VideoEvent[] = [];
     const c: VideoEvent[] = [];
     const stopA = await subscribeVideoEvents("v1", (e) => a.push(e));
     const stopB = await subscribeVideoEvents("v1", (e) => b.push(e));
     const stopC = await subscribeVideoEvents("v2", (e) => c.push(e));
-    expect(await clients()).toBe(1);
+    expect(await clients()).toBe(before + 1);
     const status: VideoEvent = { type: "status", status: "scripting", stage: "script", progress: 10 };
     await publishVideoEvent("v1", status);
     await new Promise((r) => setTimeout(r, 50));

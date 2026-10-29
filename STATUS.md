@@ -6,11 +6,11 @@ Repo: https://github.com/irfan0374/Clipwise (public). Updated before every commi
 
 ## Now
 
-**Step H1–H3 complete and approved** (polish, Sentry, deploy setup). User approved committing and pushing on 2026-10-28, after a real video was made end to end on the Mac worker with this code (voice 31.3s, 252 credits; render 31.8s). Validation: 187 passing tests, lint, typechecks, production build, browser QA, accessibility pass, backup/restore test and a tested worker Docker image.
+**Step H4 (staging test) passed on 2026-10-29** — a real video was made on the staging website end to end (see "Step H4 validation"). Before that: **Step H1–H3 complete and approved** (polish, Sentry, deploy setup). User approved committing and pushing on 2026-10-28, after a real video was made end to end on the Mac worker with this code (voice 31.3s, 252 credits; render 31.8s). Validation: 187 passing tests, lint, typechecks, production build, browser QA, accessibility pass, backup/restore test and a tested worker Docker image.
 
 ## Next up
 
-**Step H4 — staging test.** First the owner creates the Vercel, Redis Cloud, Backblaze B2 and Sentry accounts following `design/deploy.md`, then H4 (staging test) and H5 (beta checklist).
+**Step H5 — go live (private beta).** Staging passed (H4). Next: a limited live MongoDB user, a live R2 bucket and token, `.env.live`, Vercel Production settings, owner admin on live, first backup, invite steps.
 
 ## Build plan
 
@@ -36,7 +36,7 @@ Legend: ✅ done · 🔍 in review · 🛠 building · ⏳ not started. Small fe
 | E | 10 Editing | ✅ QA complete | `2188ec8` | Stitch Studio Editor: scene list, live preview, Script/Visual inspector, fact-check strip. Autosave, undo/redo + history, add/delete/reorder, AI rewrite, re-check of edited scenes, rename, conflict banner |
 | F | 11 Render and download · 12 Library | ✅ approved | F + G checkpoint | Final-render action, safe voice reuse/retry, playback/download, version labels, searchable/filterable list/grid library; combined E + F QA passed |
 | G | 13 Limits and settings · 14 Admin | ✅ approved | F + G checkpoint | Defaults/account/usage settings; admin queues, users, running/failed pipelines, suspension/reset/retry and audit; 180 tests + production build passed |
-| H | 15 Polish and Sentry · 16 Deploy and private beta | 🔨 H1–H3 done · H4 next | | Vercel (web) · worker on the owner's Mac · Redis Cloud · Backblaze B2 · Sentry; staging + live |
+| H | 15 Polish and Sentry · 16 Deploy and private beta | 🔨 H1–H4 done · H5 next | | Vercel (web) · worker on the owner's Mac · Redis Cloud · Backblaze B2 · Sentry; staging + live |
 
 ### v1 (regrouped later)
 
@@ -57,6 +57,15 @@ Hosting (chosen 2026-10-28): web on **Vercel free** (Preview deployments = stagi
 5. **H5 Beta checklist:** promote to live, make the owner admin, confirm beta limits, ElevenLabs paid plan (owner), final secrets check before the push, invite steps for the first users.
 
 Owner actions (accounts and keys are never entered by Claude): create the Vercel, Redis Cloud, Backblaze B2 and Sentry accounts and put each key straight into Vercel or the Mac's env files, following `design/deploy.md`.
+
+## Step H4 validation — 2026-10-29
+
+- Staging is online: https://clipwise-git-staging-irfaans-projects.vercel.app (Vercel Preview of branch `staging`, region `iad1`, protected by Vercel Authentication — only the owner can open it).
+- Services connected and tested without showing any value: Redis Cloud free (AWS us-east-1, Redis 8.6, no TLS on the free plan), MongoDB `clipwise_staging` on the existing Atlas cluster (indexes created), Cloudflare R2 bucket `clipwise` (upload, download, signed link, private bucket, delete), staging worker on the Mac (`pnpm worker:staging`). 23 settings copied to Vercel from `.env.staging` through the Vercel CLI (7 stored as secrets; a new sign-in secret generated directly).
+- Owner signed up on staging and was made admin. One real video end to end on staging: script (5 scenes, 73 words after one automatic shortening) → fact-check (6 claims, none to fix) → voice (29.7s, 236 ElevenLabs credits) → render (30.2s, 11.4 MB in R2). The owner played and downloaded it; Admin showed "Worker online". Website: 0 errors.
+- Found on the way: Atlas blocked the Mac after its internet address changed (fixed with `0.0.0.0/0`, needed for Vercel anyway); the Redis address was pasted with the `redis-cli -u` prefix; the Vercel CLI added `.env*` to `.gitignore` (removed). Recorded in `design/deploy.md`.
+- Redis eviction policy set to `noeviction` by the owner (confirmed from Redis; the BullMQ warning is gone). Redis Cloud drops connections now and then (`ECONNRESET`); connections and queues now log one short line instead of raw stack traces, and reconnect as before.
+- Open: staging uses the owner's Atlas admin login and an R2 token that can see all buckets — live gets limited ones.
 
 ## Step H validation — 2026-10-28
 
@@ -109,6 +118,8 @@ Owner actions (accounts and keys are never entered by Claude): create the Vercel
 
 | Date | Decision |
 | --- | --- |
+| 2026-10-29 | Every Redis connection and BullMQ queue has an error listener (one short line per 30s per source): cloud Redis resets connections now and then and ioredis/BullMQ reconnect by themselves. The subscriber test counts only its own connection |
+| 2026-10-29 | H4 passed on staging. File storage: Cloudflare R2 instead of Backblaze B2 (owner's Cloudflare account already has payment set up; R2 downloads are free). Redis Cloud free kept for the beta without TLS (only ids and progress numbers pass through it). Staging reuses the owner's Atlas login (owner's choice); live gets a limited user |
 | 2026-10-28 | User approved H1–H3; committed and pushed. H4 waits for the owner's accounts |
 | 2026-10-28 | H1–H3 built: Redis keys and BullMQ queues are prefixed by `REDIS_NAMESPACE` (`staging:` / `live:`), except the Gemini/ElevenLabs budget counters, which stay shared because the free quotas are shared; the worker refuses to start if its namespace or database name belongs to another environment |
 | 2026-10-28 | One Redis listener connection per process for live progress (Redis Cloud free allows 30 connections); the progress stream closes itself after 270s and the browser reconnects (Vercel limit 300s) |
@@ -153,4 +164,5 @@ Owner actions (accounts and keys are never entered by Claude): create the Vercel
 
 - ElevenLabs free plan is non-commercial — upgrade before real users (Feature 16).
 - Make yourself admin: create your account in the app, then run `pnpm user:admin you@example.com`.
+- Redis Cloud free plan has no TLS and 5 GB traffic/month — upgrade before a wider launch.
 - While the worker runs on the Mac, videos are only made while the Mac is on and awake. Move it to a server (Railway or a VPS, needs a card) before a wider launch.
