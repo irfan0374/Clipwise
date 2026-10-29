@@ -28,9 +28,9 @@ describe("enqueue", () => {
 });
 
 describe("budget keys", () => {
-  it("are per day for Gemini and per month for ElevenLabs", () => {
+  it("are per day for Gemini and per month for ElevenLabs, one part per environment", () => {
     const d = new Date("2026-10-23T10:00:00Z");
-    expect(budgetKeys.geminiRequests(d)).toBe("global:gemini:requests:2026-10-23");
-    expect(budgetKeys.elevenLabsCredits(d)).toBe("global:elevenlabs:2026-10");
+    expect(budgetKeys.geminiRequests(d, "live")).toBe("global:gemini:requests:2026-10-23:live");
+    expect(budgetKeys.elevenLabsCredits(d, "staging")).toBe("global:elevenlabs:2026-10:staging");
   });
 });

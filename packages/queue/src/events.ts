@@ -11,9 +11,13 @@ export const publishVideoEvent = (videoId: string, event: VideoEvent) =>
   redis().publish(videoChannel(videoId), JSON.stringify(event));
 
 type Listener = (event: VideoEvent) => void;
-const cache = globalThis as typeof globalThis & {
-  __clipwiseSub?: { conn: Redis; listeners: Map<string, Set<Listener>> };
+type Shared = {
+  conn: Redis;
+  listeners: Map<string, Set<Listener>>;
+  /** The SUBSCRIBE in progress (or done) for each channel, so every caller can wait until it's in place. */
+  subscribed: Map<string, Promise<unknown>>;
 };
+const cache = globalThis as typeof globalThis & { __clipwiseSub?: Shared };
 
 /**
  * One subscriber connection per process, shared by every open video page: the free Redis plan allows only
@@ -38,14 +42,14 @@ const shared = () => {
         } catch {}
       }
     });
-    cache.__clipwiseSub = { conn, listeners };
+    cache.__clipwiseSub = { conn, listeners, subscribed: new Map() };
   }
   return cache.__clipwiseSub;
 };
 
 /** Listens to one video's events until the returned function is called. */
 export const subscribeVideoEvents = async (videoId: string, onEvent: Listener) => {
-  const { conn, listeners } = shared();
+  const { conn, listeners, subscribed } = shared();
   const channel = videoChannel(videoId);
   let set = listeners.get(channel);
   if (!set) {
@@ -53,18 +57,33 @@ export const subscribeVideoEvents = async (videoId: string, onEvent: Listener) =
     listeners.set(channel, set);
   }
   set.add(onEvent);
-  if (set.size === 1) await conn.subscribe(channel);
   let stopped = false;
-  return async () => {
+  const stop = async () => {
     if (stopped) return;
     stopped = true;
     const current = listeners.get(channel);
     current?.delete(onEvent);
     if (current && !current.size) {
       listeners.delete(channel);
+      subscribed.delete(channel);
       await conn.unsubscribe(channel).catch(() => {});
     }
   };
+  let pending = subscribed.get(channel);
+  if (!pending) {
+    pending = conn.subscribe(channel);
+    subscribed.set(channel, pending);
+  }
+  try {
+    // A second page for the same video waits too, so its snapshot is read only once events are flowing.
+    await pending;
+  } catch (err) {
+    // Forget the failed SUBSCRIBE so the next page tries again instead of trusting a channel never subscribed.
+    if (subscribed.get(channel) === pending) subscribed.delete(channel);
+    await stop();
+    throw err;
+  }
+  return stop;
 };
 
 /** Closes the shared subscriber (tests and shutdown). */

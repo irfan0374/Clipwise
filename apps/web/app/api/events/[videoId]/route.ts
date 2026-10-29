@@ -29,9 +29,27 @@ export async function GET(request: Request, { params }: { params: Promise<{ vide
   let stop: (() => Promise<void>) | undefined;
   let ping: ReturnType<typeof setInterval> | undefined;
   let end: ReturnType<typeof setTimeout> | undefined;
+  let closed = false;
+  // Safe to call at any point, including while start() is still subscribing: whatever has been set up so far is
+  // undone, and the rest of start() stops instead of setting up more.
+  const cleanUp = () => {
+    closed = true;
+    clearInterval(ping);
+    clearTimeout(end);
+    void stop?.();
+  };
 
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
+      const close = () => {
+        cleanUp();
+        try {
+          controller.close();
+        } catch {}
+      };
+      // Listen for the browser leaving before anything async, so a tab closed mid-setup is still cleaned up.
+      request.signal.addEventListener("abort", close, { once: true });
+      if (request.signal.aborted) return close();
       const send = (event: VideoEvent) => {
         try {
           controller.enqueue(encoder.encode(`event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`));
@@ -39,8 +57,11 @@ export async function GET(request: Request, { params }: { params: Promise<{ vide
       };
       controller.enqueue(encoder.encode("retry: 2000\n\n")); // reconnect after 2 s
       // Subscribe FIRST, then read the snapshot: an event published in between is delivered, not lost.
-      stop = await subscribeVideoEvents(videoId, send);
+      const unsubscribe = await subscribeVideoEvents(videoId, send);
+      if (closed) return void unsubscribe(); // the browser left while we were subscribing
+      stop = unsubscribe;
       const video = await Video.findById(videoId, { status: 1, stage: 1, progress: 1 }).lean();
+      if (closed) return;
       if (video) {
         send({
           type: "status",
@@ -54,22 +75,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ vide
           controller.enqueue(encoder.encode(": ping\n\n"));
         } catch {}
       }, 15_000);
-      const close = () => {
-        clearInterval(ping);
-        clearTimeout(end);
-        void stop?.();
-        try {
-          controller.close();
-        } catch {}
-      };
       end = setTimeout(close, STREAM_MS);
-      request.signal.addEventListener("abort", close);
     },
-    cancel() {
-      clearInterval(ping);
-      clearTimeout(end);
-      void stop?.();
-    },
+    cancel: cleanUp,
   });
 
   return new Response(stream, {

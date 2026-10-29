@@ -4,6 +4,7 @@ import {
   activeRunCount,
   beatWorker,
   budgetKeys,
+  budgetStatus,
   bullPrefix,
   cancelVideo,
   closeSubscriptions,
@@ -404,6 +405,26 @@ describe("review fixes", () => {
     expect(Number(await redis().get(budgetKeys.geminiRequests()))).toBe(2);
   });
 
+  it("worker startup raises a counter that's below what MongoDB recorded, never lowers it", async () => {
+    await newVideo();
+    await drain("ai", fakes()); // 2 Gemini requests recorded in MongoDB
+    await redis().set(budgetKeys.geminiRequests(), 1); // e.g. the web app reserved before the worker restored
+    const r = await rebuildBudgetCounters();
+    expect(r.restored.gemini).toBe(true);
+    expect(Number(await redis().get(budgetKeys.geminiRequests()))).toBe(2);
+  });
+
+  it("counts every environment's part of a shared provider budget", async () => {
+    const live = budgetKeys.geminiRequests(new Date(), "live");
+    await redis().set(live, 79); // live used 79 of the 80 shared Gemini requests
+    expect(await reserveGeminiRequest()).toBe(true); // this environment takes the last one
+    expect(await reserveGeminiRequest()).toBe(false);
+    expect(Number(await redis().get(live))).toBe(79); // only this environment's own part grows
+    expect(Number(await redis().get(budgetKeys.geminiRequests()))).toBe(1);
+    expect((await budgetStatus()).gemini.used).toBe(80);
+    await redis().del(live);
+  });
+
   it("only one of several simultaneous starts holds the workspace lock", async () => {
     const results = await Promise.all(
       Array.from({ length: 4 }, () =>
@@ -722,7 +743,7 @@ describe("hosting: environments share one Redis", () => {
     await takeDaily("u-ns", "videos");
     expect(await redis().keys("limit:*")).toEqual([]);
     expect((await redis().keys("test:limit:u-ns:*")).length).toBe(1);
-    expect(budgetKeys.geminiRequests()).toMatch(/^global:/); // same API keys → one shared count
+    expect(budgetKeys.geminiRequests()).toMatch(/^global:.*:test$/); // same API keys → one shared count, own part
   });
 
   it("serves every open video page from one Redis connection", async () => {
@@ -755,5 +776,31 @@ describe("hosting: environments share one Redis", () => {
     await stopB();
     await stopC();
     expect(await redis().pubsub("NUMSUB", "test:video:v1")).toEqual(["test:video:v1", 0]);
+  });
+
+  it("a second page opened at the same moment gets events as soon as its subscription returns", async () => {
+    await closeSubscriptions();
+    const a: VideoEvent[] = [];
+    const b: VideoEvent[] = [];
+    // Both start before the first SUBSCRIBE has finished; neither may return before events are flowing.
+    const [stopA, stopB] = await Promise.all([
+      subscribeVideoEvents("v3", (e) => a.push(e)),
+      subscribeVideoEvents("v3", (e) => b.push(e)),
+    ]);
+    expect(await redis().pubsub("NUMSUB", "test:video:v3")).toEqual(["test:video:v3", 1]);
+    const status: VideoEvent = { type: "status", status: "voicing", stage: "voice", progress: 50 };
+    await publishVideoEvent("v3", status);
+    await new Promise((r) => setTimeout(r, 50));
+    expect(a).toEqual([status]);
+    expect(b).toEqual([status]);
+    await stopA();
+    await stopB();
+    // Reopening after everyone left subscribes again.
+    const c: VideoEvent[] = [];
+    const stopC = await subscribeVideoEvents("v3", (e) => c.push(e));
+    await publishVideoEvent("v3", status);
+    await new Promise((r) => setTimeout(r, 50));
+    expect(c).toEqual([status]);
+    await stopC();
   });
 });

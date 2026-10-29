@@ -70,7 +70,12 @@ Same names as `.env.example`. "✓" = needed there.
 Notes:
 - `BETTER_AUTH_SECRET` must be different for staging and live (`openssl rand -base64 32`).
 - The Gemini and ElevenLabs free quotas are shared by staging and live, and the budget counters are deliberately
-  shared too, so staging tests use the same daily allowance as live.
+  shared too, so staging tests use the same daily allowance as live. Each environment keeps its own part of the
+  count (`global:…:staging` / `global:…:live`) and every check adds the parts up, so a worker restoring its part
+  after Redis lost data never forgets what the other environment spent.
+- The web app checks `REDIS_NAMESPACE` and the database in `MONGODB_URI` against `NEXT_PUBLIC_CLIPWISE_ENV` on every
+  server start. A mismatch doesn't stop the site, but it is logged (`[web] settings are not set up for …`) and sent
+  to Sentry. The worker refuses to start on the same mismatch.
 - `MONGODB_MAX_POOL=3` on Vercel: every serverless copy opens its own connections, and M0 allows 500.
 - Changing a `NEXT_PUBLIC_*` setting needs a new deployment (it is built into the page).
 

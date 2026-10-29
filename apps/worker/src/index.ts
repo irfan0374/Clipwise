@@ -1,6 +1,7 @@
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { environmentProblems } from "@clipwise/shared";
 import { config } from "dotenv";
 import { flushMonitoring, initMonitoring } from "./monitoring";
 
@@ -17,22 +18,15 @@ if (env && !existsSync(envFile) && !process.env.MONGODB_URI) {
 config({ path: envFile, quiet: true });
 
 // Guard against mixing environments: each worker must use its own Redis namespace and database.
-if (env) {
-  const expected = ({ staging: "clipwise_staging", live: "clipwise" } as Record<string, string>)[env];
-  const database = /\/([^/?]+)(\?|$)/.exec(
-    (process.env.MONGODB_URI ?? "").replace(/^mongodb(\+srv)?:\/\/[^/]+/, ""),
-  )?.[1];
-  const problems = [
-    !expected && `CLIPWISE_ENV must be "staging" or "live", not "${env}"`,
-    process.env.REDIS_NAMESPACE !== `${env}:` && `REDIS_NAMESPACE must be "${env}:"`,
-    expected && database !== expected && `MONGODB_URI must use the "${expected}" database`,
-  ].filter(Boolean);
-  if (problems.length) {
-    console.error(
-      `[worker] settings (${path.basename(envFile)} or the environment) are not set up for ${env}:\n  - ${problems.join("\n  - ")}`,
-    );
-    process.exit(1);
-  }
+const problems = environmentProblems(env, {
+  redisNamespace: process.env.REDIS_NAMESPACE,
+  mongoUri: process.env.MONGODB_URI,
+});
+if (problems.length) {
+  console.error(
+    `[worker] settings (${path.basename(envFile)} or the environment) are not set up for ${env}:\n  - ${problems.join("\n  - ")}`,
+  );
+  process.exit(1);
 }
 const monitoring = initMonitoring();
 
