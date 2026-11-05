@@ -9,6 +9,16 @@ export {
   reserveGeminiRequest,
 } from "./budget";
 export { closeSubscriptions, publishVideoEvent, subscribeAllVideoEvents, subscribeVideoEvents } from "./events";
+export {
+  aiShareMessage,
+  fairKeys,
+  fairShare,
+  fairUsage,
+  nextMonthStart,
+  releaseFairAiRequest,
+  reserveFairAiRequest,
+  voiceShareMessage,
+} from "./fair";
 export { FinalError, startFinal, usableVoice, voiceIsCurrent } from "./finals";
 export { budgetGuards, type UsageRow } from "./guards";
 export {

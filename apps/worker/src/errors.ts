@@ -1,5 +1,5 @@
 import { WorkspaceAccessError } from "@clipwise/db";
-import { BudgetExceededError, FatalError, ScriptFailedError } from "@clipwise/pipeline";
+import { AllowanceExceededError, BudgetExceededError, FatalError, ScriptFailedError } from "@clipwise/pipeline";
 import type { ErrorCode } from "@clipwise/shared";
 import { UnrecoverableError } from "bullmq";
 
@@ -23,6 +23,7 @@ export function classify(error: unknown): JobError {
   if (error instanceof JobError) return error;
   if (error instanceof WorkspaceAccessError) return new JobError("FORBIDDEN", "This workspace is suspended.", false);
   const message = error instanceof Error ? error.message : String(error);
+  if (error instanceof AllowanceExceededError) return new JobError("LIMIT_REACHED", message, false); // user-safe
   if (error instanceof BudgetExceededError) return budgetPaused(message);
   if (error instanceof ScriptFailedError) {
     return new JobError(

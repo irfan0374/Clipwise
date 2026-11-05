@@ -10,6 +10,8 @@ import {
   closeSubscriptions,
   enqueue,
   enqueueRecheck,
+  fairKeys,
+  fairUsage,
   nsKey,
   publishVideoEvent,
   queue,
@@ -243,16 +245,18 @@ describe("safety", () => {
     expect(Number(await redis().get(budgetKeys.geminiRequests()))).toBe(80);
   });
 
-  it("reserves credits for a speed re-take too, and keeps the record of the take already paid for", async () => {
+  it("reserves credits for a speed re-take too; without enough left it keeps the first take (already paid for)", async () => {
     const { videoId } = await newVideo("final");
     await drain("ai", fakes());
     const take = Math.ceil(narrationText(validScript()).length * 0.5);
     await redis().set(budgetKeys.elevenLabsCredits(), 10_000 - take - 1); // room for exactly one take
-    await drain("voice", fakes({ voiceSeconds: [34.5, 30] })); // off length → a second take is needed
+    await drain("voice", fakes({ voiceSeconds: [34.5, 30] })); // off length → a second take is wanted
     const video = await Video.findById(videoId).lean();
-    expect(video).toMatchObject({ status: "failed", stage: "voice", error: { code: "PAUSED" } });
+    expect(video?.error).toBeNull(); // the video goes on with the first take
+    expect(video?.voice?.scriptVersion).toBe(1);
+    expect((await queue("render").getJobs(["waiting"])).map((j) => j.data.kind)).toEqual(["final"]);
     const paid = await UsageEvent.find({ videoId, provider: "elevenlabs", unit: "credits" }).lean();
-    expect(paid.map((u) => u.quantity)).toEqual([take]); // first take recorded even though the job failed
+    expect(paid.map((u) => u.quantity)).toEqual([take]); // only the first take was paid for
     expect(Number(await redis().get(budgetKeys.elevenLabsCredits()))).toBe(10_000 - 1);
   });
 
@@ -353,6 +357,68 @@ describe("cancel and retry", () => {
   it("does nothing for a video that hasn't failed", async () => {
     const { videoId } = await newVideo();
     expect(await retryVideo(videoId)).toBeNull();
+  });
+});
+
+describe("fair share", () => {
+  const workspaceOf = async (videoId: unknown) => (await Video.findById(videoId).lean())!.workspaceId;
+
+  it("counts each workspace's AI requests next to the shared budget", async () => {
+    const { videoId } = await newVideo();
+    await drain("ai", fakes());
+    const ws = await workspaceOf(videoId);
+    expect((await fairUsage(ws)).aiRequests).toEqual({ used: 2, limit: 15 }); // script + fact-check
+    expect(Number(await redis().get(budgetKeys.geminiRequests()))).toBe(2);
+  });
+
+  it("won't start a video with fewer than 3 AI requests left today", async () => {
+    const ws = await Workspace.create({ ownerUserId: "u1", name: "Test" });
+    await redis().set(fairKeys.aiRequests(ws._id), 13);
+    await expect(newVideo()).rejects.toMatchObject({ code: "LIMIT_REACHED" });
+    expect(await queue("ai").count()).toBe(0);
+  });
+
+  it("stops a job when the user's share runs out, without touching the shared budget or retrying", async () => {
+    const { videoId } = await newVideo();
+    const ws = await workspaceOf(videoId);
+    await redis().set(fairKeys.aiRequests(ws), 15);
+    await drain("ai", fakes());
+    const video = await Video.findById(videoId).lean();
+    expect(video?.status).toBe("failed");
+    expect(video?.error).toMatchObject({ code: "LIMIT_REACHED", message: expect.stringMatching(/midnight UTC/) });
+    expect(Number((await redis().get(budgetKeys.geminiRequests())) ?? 0)).toBe(0);
+    expect(Number(await redis().get(fairKeys.aiRequests(ws)))).toBe(15); // nothing taken
+  });
+
+  it("gives the user's share back when the shared budget refuses", async () => {
+    const { videoId } = await newVideo();
+    const ws = await workspaceOf(videoId);
+    await redis().set(budgetKeys.geminiRequests(), 80);
+    await drain("ai", fakes());
+    expect((await Video.findById(videoId).lean())?.error?.code).toBe("PAUSED");
+    expect(Number((await redis().get(fairKeys.aiRequests(ws))) ?? 0)).toBe(0);
+  });
+
+  it("refuses a final render whose voiceover needs more credits than the user has left this month", async () => {
+    const { videoId } = await newVideo("script");
+    await drain("ai", fakes());
+    const video = await Video.findById(videoId);
+    await redis().set(fairKeys.voiceCredits(video!.workspaceId), 1_400);
+    await expect(
+      startFinal({ videoId, workspaceId: video!.workspaceId, expectedVersion: video!.scriptVersion }),
+    ).rejects.toMatchObject({ code: "LIMIT_REACHED", message: expect.stringMatching(/100 of 1500 left/) });
+    expect(await queue("voice").count()).toBe(0);
+  });
+
+  it("stops a voice job past the monthly share and leaves both counters as they were", async () => {
+    const { videoId } = await newVideo("final");
+    await drain("ai", fakes());
+    const ws = await workspaceOf(videoId);
+    await redis().set(fairKeys.voiceCredits(ws), 1_490);
+    await drain("voice", fakes());
+    expect((await Video.findById(videoId).lean())?.error?.code).toBe("LIMIT_REACHED");
+    expect(Number(await redis().get(fairKeys.voiceCredits(ws)))).toBe(1_490);
+    expect(Number((await redis().get(budgetKeys.elevenLabsCredits())) ?? 0)).toBe(0);
   });
 });
 

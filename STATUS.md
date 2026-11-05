@@ -2,9 +2,11 @@
 
 Repo: https://github.com/irfan0374/Clipwise (public). Updated before every commit and push. One feature at a time: **plan → approve → build + tests → demo → review → fix → commit**.
 
-**Last updated:** 2026-10-30
+**Last updated:** 2026-11-06
 
 ## Now
+
+**Step I (fair share, billing removed) approved on 2026-11-06** — see "Step I validation". Before that: **Step H5 (live) online on 2026-10-30**: https://clipwise-kappa.vercel.app (Vercel Production), live worker on the Mac (`pnpm worker:live`), MongoDB `clipwise`, R2 bucket `clipwise-live`; the owner signed up and made a real promo video on live; first live backup taken.
 
 **Step H4 (staging test) passed on 2026-10-29** — a real video was made on the staging website end to end (see "Step H4 validation"). Before that: **Step H1–H3 complete and approved** (polish, Sentry, deploy setup). User approved committing and pushing on 2026-10-28, after a real video was made end to end on the Mac worker with this code (voice 31.3s, 252 credits; render 31.8s). Validation: 187 passing tests, lint, typechecks, production build, browser QA, accessibility pass, backup/restore test and a tested worker Docker image.
 
@@ -12,7 +14,7 @@ Repo: https://github.com/irfan0374/Clipwise (public). Updated before every commi
 
 ## Next up
 
-**Step H5 — go live (private beta).** Staging passed (H4). Next: a limited live MongoDB user, a live R2 bucket and token, `.env.live`, Vercel Production settings, owner admin on live, first backup, invite steps.
+**Feature 18 — Instagram, scheduling and calendar:** plan first (Meta developer app, Instagram Business/Creator account, Meta app review, posting from the worker). H5 leftovers: owner admin on live, ElevenLabs paid plan, invite steps, `staging` branch brought up to `main`, optional Sentry DSNs. Owner: run `CLIPWISE_ENV=staging pnpm db:indexes` and `CLIPWISE_ENV=live pnpm db:indexes` (drops the old Stripe index; harmless until then).
 
 ## Build plan
 
@@ -38,7 +40,8 @@ Legend: ✅ done · 🔍 in review · 🛠 building · ⏳ not started. Small fe
 | E | 10 Editing | ✅ QA complete | `2188ec8` | Stitch Studio Editor: scene list, live preview, Script/Visual inspector, fact-check strip. Autosave, undo/redo + history, add/delete/reorder, AI rewrite, re-check of edited scenes, rename, conflict banner |
 | F | 11 Render and download · 12 Library | ✅ approved | F + G checkpoint | Final-render action, safe voice reuse/retry, playback/download, version labels, searchable/filterable list/grid library; combined E + F QA passed |
 | G | 13 Limits and settings · 14 Admin | ✅ approved | F + G checkpoint | Defaults/account/usage settings; admin queues, users, running/failed pipelines, suspension/reset/retry and audit; 180 tests + production build passed |
-| H | 15 Polish and Sentry · 16 Deploy and private beta | 🔨 H1–H4 done · H5 next | | Vercel (web) · worker on the owner's Mac · Redis Cloud · Backblaze B2 · Sentry; staging + live |
+| H | 15 Polish and Sentry · 16 Deploy and private beta | ✅ live 2026-10-30 (small leftovers in "Next up") | `5326485` | Vercel (web) · worker on the owner's Mac · Redis Cloud · Backblaze B2 · Sentry; staging + live |
+| I | Fair share · billing removed | ✅ approved | this commit | Each workspace's own share of the shared Gemini/ElevenLabs budgets; Clipwise stays free (no plans, no Stripe) |
 
 ### v1 (regrouped later)
 
@@ -46,7 +49,6 @@ Legend: ✅ done · 🔍 in review · 🛠 building · ⏳ not started. Small fe
 | --- | --- | --- |
 | 17 | Brand kit | ⏳ |
 | 18 | Instagram, scheduling and calendar | ⏳ |
-| 19 | Stripe billing | ⏳ |
 
 ## Step H plan
 
@@ -59,6 +61,16 @@ Hosting (chosen 2026-10-28): web on **Vercel free** (Preview deployments = stagi
 5. **H5 Beta checklist:** promote to live, make the owner admin, confirm beta limits, ElevenLabs paid plan (owner), final secrets check before the push, invite steps for the first users.
 
 Owner actions (accounts and keys are never entered by Claude): create the Vercel, Redis Cloud, Backblaze B2 and Sentry accounts and put each key straight into Vercel or the Mac's env files, following `design/deploy.md`.
+
+## Step I validation — 2026-11-06
+
+- **Fair share:** every workspace gets 15 Gemini requests per UTC day (`LIMIT_AI_REQUESTS_PER_DAY`) and 1,500 ElevenLabs credits per UTC month (`LIMIT_VOICE_CREDITS_PER_MONTH`), reserved atomically before the global budget and given back if the global budget refuses. Used up → a "limit reached" message that says when it resets; the job is not retried and isn't reported to Sentry.
+- A video isn't started with fewer than 3 AI requests left today; a final render isn't started when its voiceover needs more credits than are left this month (the message says how many). Without credits for a speed re-take, the first voice take is kept instead of failing the video.
+- Idea suggestions and AI rewrites lowered from 30 to 10 per user per day.
+- Settings → Usage shows "AI requests today" and "Voice credits this month"; checked in the browser on the local app.
+- **Billing removed:** Upgrade Plan button, Settings "Billing" tab, Stripe fields and index on `workspaces`, paid plan names (`Plans` is just `beta`), Stripe settings in `.env.example`; home page "Pricing" links renamed "Free beta".
+- `pnpm check`: lint, typechecks and **201 tests passed** (6 new fair-share tests; the voice re-take test now expects the first take to be kept). Old Stripe index dropped on `clipwise_dev`. Temporary test user removed from `clipwise_dev`.
+- Local `.env` had a second `REDIS_URL` line with the `redis-cli -u` prefix (removed with the owner's OK).
 
 ## Step H4 validation — 2026-10-29
 
@@ -120,6 +132,7 @@ Owner actions (accounts and keys are never entered by Claude): create the Vercel
 
 | Date | Decision |
 | --- | --- |
+| 2026-11-06 | Clipwise stays free: no paid plans, no Stripe (Feature 19 dropped). Fairness comes from a per-workspace share of the shared AI and voice budgets (15 Gemini requests/day, 1,500 ElevenLabs credits/month, both settings) |
 | 2026-10-29 | Every Redis connection and BullMQ queue has an error listener (one short line per 30s per source): cloud Redis resets connections now and then and ioredis/BullMQ reconnect by themselves. The subscriber test counts only its own connection |
 | 2026-10-29 | H4 passed on staging. File storage: Cloudflare R2 instead of Backblaze B2 (owner's Cloudflare account already has payment set up; R2 downloads are free). Redis Cloud free kept for the beta without TLS (only ids and progress numbers pass through it). Staging reuses the owner's Atlas login (owner's choice); live gets a limited user |
 | 2026-10-28 | User approved H1–H3; committed and pushed. H4 waits for the owner's accounts |
@@ -150,12 +163,11 @@ Owner actions (accounts and keys are never entered by Claude): create the Vercel
 | 2026-10-23 | Build feature by feature; one commit per approved feature; STATUS.md updated before each commit and push |
 | 2026-10-23 | Editing: every edit is saved with the version the page last saw (`expectedVersion`); a different version is refused ("This video changed. Reload"). Typing autosaves ~1s after the user stops. Each edit is a new script version, so undo/redo and history restore old versions |
 | 2026-10-23 | Edited scenes are re-checked automatically: they go to `factcheck.pendingScenes` and a delayed `recheck` job (4s, one per version) checks only those scenes; an older job stops before calling Gemini. A failed re-check never fails the video: the scene gets a "couldn't be checked" note to review |
-| 2026-10-23 | AI rewrite / AI scene runs in the web server action (one Gemini call, same budget guards as the worker), limit 30 per user per day (`LIMIT_AI_EDITS_PER_DAY`). A video keeps 3–10 scenes while editing; the hook stays first |
+| 2026-10-23 | AI rewrite / AI scene runs in the web server action (one Gemini call, same budget guards as the worker), limit 10 per user per day since 2026-11-06 (`LIMIT_AI_EDITS_PER_DAY`). A video keeps 3–10 scenes while editing; the hook stays first |
 | 2026-10-23 | Biome for lint + format (not ESLint + Prettier). `noNonNullAssertion` off (works with strict index typing); array-index keys and SVG titles allowed in video frames |
 | 2026-10-23 | TypeScript 7 kept — verified with Next.js 16.4 build |
 | 2026-10-23 | MongoDB Atlas M0 connected. Databases: `clipwise_dev` (local), `clipwise_staging`, `clipwise` (production; seed refuses it) |
 | 2026-10-23 | Enums live once in `@clipwise/shared` (Zod + Mongoose); visual enums stay in `@clipwise/video` |
-| 2026-10-23 | `workspaces.stripeCustomerId` unique index is partial (strings only), not sparse — sparse would block a second workspace with `null` |
 | 2026-10-23 | DB tests use mongodb-memory-server (in-memory, no Atlas needed) |
 | 2026-10-23 | UI: Tailwind v4 + shadcn/ui (Radix base). Light only; `dark:` bound to a `.dark` class so the OS dark setting doesn't leak in |
 | 2026-10-23 | Mobile: top bar + menu button opens the sidebar. Calendar and Brand kit shown greyed with "Soon" |
@@ -165,6 +177,7 @@ Owner actions (accounts and keys are never entered by Claude): create the Vercel
 ## Open items
 
 - ElevenLabs free plan is non-commercial — upgrade before real users (Feature 16).
-- Make yourself admin: create your account in the app, then run `pnpm user:admin you@example.com`.
+- Make yourself admin on live: `CLIPWISE_ENV=live pnpm user:admin you@example.com`.
+- Change the Redis Cloud password (it was shown in a tool log on 2026-11-06), then update `.env.staging`, `.env.live` and Vercel.
 - Redis Cloud free plan has no TLS and 5 GB traffic/month — upgrade before a wider launch.
 - While the worker runs on the Mac, videos are only made while the Mac is on and awake. Move it to a server (Railway or a VPS, needs a card) before a wider launch.

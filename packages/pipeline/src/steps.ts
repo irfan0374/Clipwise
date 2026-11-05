@@ -3,6 +3,7 @@
 // Provider calls are injectable so tests never spend credits.
 
 import type { VideoFormat } from "./formats";
+import { BudgetExceededError } from "./guards";
 import { estimateAlignment, lengthVerdict, spokenSeconds } from "./stages/align";
 import {
   type Claim,
@@ -253,8 +254,19 @@ export async function recordVoice(
   let credits = 0;
   let attempts = 0;
   let speed = 1;
+  let first: VoiceStepResult | undefined;
   for (let take = 1; ; take++) {
-    const voice: VoiceResult = await providers.generateVoice(narrationText(script), { final, speed, voiceId });
+    let voice: VoiceResult;
+    try {
+      voice = await providers.generateVoice(narrationText(script), { final, speed, voiceId });
+    } catch (error) {
+      // No credits left for the speed correction: keep the first take (already paid) instead of failing the video.
+      if (first && error instanceof BudgetExceededError) {
+        log("no credits left for a speed correction; keeping the first take");
+        return first;
+      }
+      throw error;
+    }
     attempts += voice.attempts;
     characters += voice.characters;
     credits += creditsFor(voice.characters, voice.model);
@@ -274,6 +286,16 @@ export async function recordVoice(
         attempts,
       };
     }
+    first = {
+      audio: voice.audio,
+      alignment: voice.alignment,
+      characters,
+      credits,
+      model: voice.model,
+      seconds: Number(seconds.toFixed(2)),
+      speed,
+      attempts,
+    };
     // Faster when too long, slower when too short (ElevenLabs allows 0.7–1.2; we stay within 0.8–1.2).
     speed = clampSpeed(verdict.action === "adjustSpeed" ? verdict.speed : seconds / length);
   }

@@ -1,8 +1,8 @@
-import { Bell, CircleHelp, Clapperboard, Sparkles, Zap } from "lucide-react";
+import { Bell, CircleHelp, Clapperboard, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { Soon } from "./soon";
 
-/** Stitch top bar: breadcrumb on the left; Upgrade, notifications, help and Generate on the right. */
+/** Stitch top bar: breadcrumb on the left; notifications, help and Generate on the right. */
 export function TopBar({ title }: { title: string }) {
   return (
     <header className="z-30 flex h-16 w-full items-center justify-between gap-4 border-b border-line bg-paper px-4 sm:px-6 lg:sticky lg:top-0">
@@ -16,16 +16,6 @@ export function TopBar({ title }: { title: string }) {
       </div>
       <div className="flex shrink-0 items-center gap-3">
         <span className="hidden items-center gap-3 sm:flex">
-          <Soon>
-            <button
-              type="button"
-              disabled
-              className="flex items-center gap-1.5 rounded-lg border border-line bg-panel px-3 py-1.5 text-[13px]/[18px] font-medium text-ink"
-            >
-              <Zap className="size-4 text-teal-ink" strokeWidth={1.75} />
-              Upgrade Plan
-            </button>
-          </Soon>
           <Soon>
             <button
               type="button"

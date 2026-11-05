@@ -17,6 +17,9 @@ export type ProviderGuards = {
 
 export class BudgetExceededError extends FatalError {}
 
+/** A user's own share of the budgets is used up (not everyone's). `message` is user-safe and says when it resets. */
+export class AllowanceExceededError extends BudgetExceededError {}
+
 let guards: ProviderGuards = {};
 
 export const setProviderGuards = (next: ProviderGuards) => {

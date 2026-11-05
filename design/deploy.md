@@ -64,6 +64,7 @@ Same names as `.env.example`. "✓" = needed there.
 | `GEMINI_API_KEY`, `GEMINI_MODEL`, `GEMINI_DAILY_REQUESTS` | ✓ | ✓ | ✓ | ✓ |
 | `ELEVENLABS_API_KEY`, `ELEVENLABS_VOICE_ID`, `ELEVENLABS_MODEL_DRAFT`, `ELEVENLABS_MODEL_FINAL`, `ELEVENLABS_MONTHLY_CREDITS` | ✓ | ✓ | ✓ | ✓ |
 | `LIMIT_FINALS_PER_WEEK` | ✓ | ✓ | ✓ | ✓ |
+| `LIMIT_AI_REQUESTS_PER_DAY`, `LIMIT_VOICE_CREDITS_PER_MONTH` (optional; default 15 and 1,500 per user) | ✓ | ✓ | ✓ | ✓ |
 | `NEXT_PUBLIC_SENTRY_DSN` | web DSN | web DSN | — | — |
 | `SENTRY_DSN` | — | — | worker DSN | worker DSN |
 

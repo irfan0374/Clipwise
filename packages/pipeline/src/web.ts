@@ -1,6 +1,8 @@
 // The small part of the pipeline the web app uses (no Remotion, no file reads), so Next.js can bundle it.
+
+export { creditsFor } from "./credits";
 export { autoLength, formatGuides, type VideoFormat } from "./formats";
-export { BudgetExceededError, type ProviderGuards, setProviderGuards } from "./guards";
+export { AllowanceExceededError, BudgetExceededError, type ProviderGuards, setProviderGuards } from "./guards";
 export { buildTimeline, estimateAlignment } from "./stages/align";
 export { type Idea, suggestIdeas } from "./stages/ideas";
 

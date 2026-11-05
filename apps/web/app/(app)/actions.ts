@@ -1,7 +1,7 @@
 "use server";
 
 import { connectDb, Video } from "@clipwise/db";
-import { BudgetExceededError, suggestIdeas } from "@clipwise/pipeline/web";
+import { AllowanceExceededError, BudgetExceededError, suggestIdeas } from "@clipwise/pipeline/web";
 import {
   activeRunCount,
   cancelVideo as cancelRun,
@@ -73,6 +73,8 @@ export const brainstormIdeas = action(
       return { ideas };
     } catch (error) {
       await refundDaily(user.id, "ai", allowanceAt);
+      if (error instanceof AllowanceExceededError)
+        throw new ActionError("LIMIT_REACHED", error.message, secondsUntilReset());
       if (error instanceof BudgetExceededError || /quota/i.test(String(error))) {
         throw new ActionError("PAUSED", "Idea suggestions are paused for a moment. Try again later.");
       }

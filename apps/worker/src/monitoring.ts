@@ -25,7 +25,7 @@ export function reportJobFailure(
   error: unknown,
   job: { name: string; videoId: string; attempt: number; code: string },
 ) {
-  if (job.code === "PAUSED" || job.code === "FORBIDDEN") return;
+  if (job.code === "PAUSED" || job.code === "FORBIDDEN" || job.code === "LIMIT_REACHED") return;
   Sentry.withScope((scope) => {
     scope.setTags({ job: job.name, code: job.code });
     scope.setContext("job", { videoId: job.videoId, attempt: job.attempt });

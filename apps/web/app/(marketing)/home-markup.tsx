@@ -24,7 +24,7 @@ export function HomeMarkup() {
               Formats
             </a>
             <a className="hover:text-[#0F0F0F] transition-colors" href="#early-access">
-              Pricing
+              Free beta
             </a>
           </div>
           <div className="flex items-center gap-3">
@@ -832,7 +832,7 @@ export function HomeMarkup() {
             Formats
           </a>
           <a className="hover:text-[#0F0F0F] transition-colors" href="#early-access">
-            Pricing
+            Free beta
           </a>
         </div>
         <div className="text-xs text-[#8A8A84]">© 2026 Clipwise</div>

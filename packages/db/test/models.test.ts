@@ -59,14 +59,10 @@ describe("videos", () => {
 });
 
 describe("unique rules", () => {
-  it("allows one workspace per user, and many without a Stripe customer", async () => {
+  it("allows one workspace per user", async () => {
     await Workspace.create({ ownerUserId: "u1", name: "Maya" });
-    await Workspace.create({ ownerUserId: "u2", name: "Sam" }); // both stripeCustomerId null
+    await Workspace.create({ ownerUserId: "u2", name: "Sam" });
     await expect(Workspace.create({ ownerUserId: "u1", name: "Again" })).rejects.toThrow(/duplicate key/);
-    await Workspace.create({ ownerUserId: "u3", name: "A", stripeCustomerId: "cus_1" });
-    await expect(Workspace.create({ ownerUserId: "u4", name: "B", stripeCustomerId: "cus_1" })).rejects.toThrow(
-      /duplicate key/,
-    );
   });
 
   it("allows one script version number per video", async () => {

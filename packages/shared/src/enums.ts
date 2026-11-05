@@ -4,8 +4,8 @@ export const LengthModes = ["30", "60", "auto"] as const;
 export const LengthSeconds = [30, 60] as const;
 export const Formats = ["promo", "explainer", "story", "tips", "recap", "quote"] as const;
 
-export const Plans = ["beta", "free", "creator", "pro", "business"] as const;
-export const PaymentStatuses = ["none", "active", "past_due", "canceled"] as const;
+// Clipwise is free (no paid plans); every workspace is on "beta" with the same fair share (packages/queue/src/fair.ts).
+export const Plans = ["beta"] as const;
 
 export const VideoStatuses = [
   "draft", // created, script job queued

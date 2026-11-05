@@ -92,16 +92,10 @@ export function SettingsPanel({
               {t}
             </Link>
           ))}
-          {["Connections", "Billing"].map((t) => (
-            <span
-              key={t}
-              aria-disabled="true"
-              className="flex items-center gap-2 rounded-lg px-3.5 py-2 text-sm text-ink-3"
-            >
-              {t}
-              <span className="text-[10px]">Soon</span>
-            </span>
-          ))}
+          <span aria-disabled="true" className="flex items-center gap-2 rounded-lg px-3.5 py-2 text-sm text-ink-3">
+            Connections
+            <span className="text-[10px]">Soon</span>
+          </span>
         </nav>
         <div className="min-w-0 space-y-6">
           {tab === "usage" && (
@@ -109,13 +103,16 @@ export function SettingsPanel({
               <section className={card}>
                 <h2 className="text-lg font-semibold">Your allowances</h2>
                 <p className="mb-5 mt-1 text-sm text-ink-2">
-                  Daily allowances reset at midnight UTC. Final renders reset on Monday.
+                  Daily allowances reset at midnight UTC, final renders on Monday and voice credits on the 1st of the
+                  month.
                 </p>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <Meter label="Final renders this week" {...usage.finals} reset={usage.weeklyResetAt} />
                   <Meter label="New videos today" {...usage.videos} reset={usage.dailyResetAt} />
                   <Meter label="Idea suggestions today" {...usage.ideas} reset={usage.dailyResetAt} />
                   <Meter label="AI rewrites today" {...usage.aiEdits} reset={usage.dailyResetAt} />
+                  <Meter label="AI requests today" {...usage.aiRequests} reset={usage.dailyResetAt} />
+                  <Meter label="Voice credits this month" {...usage.voiceCredits} reset={usage.monthlyResetAt} />
                 </div>
                 <button
                   type="button"
@@ -130,9 +127,9 @@ export function SettingsPanel({
                   <ShieldCheck className="size-3.5" />
                   Beta
                 </span>
-                <h2 className="mt-3 font-semibold">Free during the beta</h2>
+                <h2 className="mt-3 font-semibold">Clipwise is free</h2>
                 <p className="mt-1 text-sm text-ink-2">
-                  Your workspace has access to the current video creation tools.
+                  Everyone gets the same fair share above, so the AI and voice services stay available for all users.
                 </p>
               </section>
               <section className={card}>

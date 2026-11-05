@@ -3,6 +3,7 @@ import type { Format, LengthMode, RunTarget } from "@clipwise/shared";
 import type { Types } from "mongoose";
 import { finalsPerWeek, weeklyFinalCount } from "./allowances";
 import { publishVideoEvent } from "./events";
+import { aiShareMessage, fairUsage } from "./fair";
 import { FinalError, usableVoice } from "./finals";
 import { activeRunCount, userLimits, withWorkspaceLock } from "./limits";
 import { isGenerationPaused } from "./pause";
@@ -19,11 +20,17 @@ export type StartVideoInput = {
   target?: RunTarget;
 };
 
+export const MIN_AI_REQUESTS_PER_VIDEO = 3;
+
 /** Creates the video and its pipeline run, then queues the script job. Returns at once; work happens in the worker. */
 export async function startVideo(input: StartVideoInput) {
   await connectDb();
   await assertWorkspaceActive(input.workspaceId);
   if (await isGenerationPaused("ai")) throw new FinalError("PAUSED", "Generation is paused. Try again later.");
+  // Writing and checking a script takes about 3 AI requests; don't start one that would stop halfway.
+  const { aiRequests } = await fairUsage(input.workspaceId);
+  if (aiRequests.limit - aiRequests.used < MIN_AI_REQUESTS_PER_VIDEO)
+    throw new FinalError("LIMIT_REACHED", aiShareMessage());
   const video = await Video.create({
     workspaceId: input.workspaceId,
     createdByUserId: input.userId,

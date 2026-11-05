@@ -1,8 +1,10 @@
 import { assertWorkspaceActive, connectDb, PipelineRun, Render, Video } from "@clipwise/db";
+import { creditsFor } from "@clipwise/pipeline/web";
 import { storage } from "@clipwise/storage";
 import type { Types } from "mongoose";
 import { finalsPerWeek, weeklyFinalCount } from "./allowances";
 import { publishVideoEvent } from "./events";
+import { fairUsage, voiceShareMessage } from "./fair";
 import { activeRunCount, userLimits, withWorkspaceLock } from "./limits";
 import { isGenerationPaused } from "./pause";
 import { enqueue } from "./queues";
@@ -70,6 +72,14 @@ export async function startFinal(input: {
     if ((await weeklyFinalCount(video.workspaceId)) >= finalsPerWeek())
       throw new FinalError("LIMIT_REACHED", "You have reached the beta rendering limit. Try again next week.");
     const voiced = await usableVoice(video);
+    if (!voiced) {
+      // One take of the narration with the final voice model (a speed re-take is skipped if credits run out).
+      const narration = video.script.scenes.map((s) => s.narration.trim()).join(" ");
+      const needed = creditsFor(narration.length, process.env.ELEVENLABS_MODEL_FINAL || "eleven_multilingual_v2");
+      const { voiceCredits } = await fairUsage(input.workspaceId);
+      const left = voiceCredits.limit - voiceCredits.used;
+      if (needed > left) throw new FinalError("LIMIT_REACHED", voiceShareMessage(needed, left));
+    }
     const status = voiced ? "rendering" : "voicing";
     const saved = await Video.updateOne(
       { _id: video._id, scriptVersion: input.expectedVersion, status: video.status },

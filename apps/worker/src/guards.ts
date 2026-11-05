@@ -15,6 +15,7 @@ export function installBudgetGuards() {
         const ctx = jobContext.getStore();
         if (ctx) await assertWorkspaceActive(ctx.video.workspaceId);
       },
+      () => jobContext.getStore()?.video.workspaceId.toString(), // each workspace's fair share
     ),
   );
 }

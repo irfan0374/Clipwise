@@ -7,9 +7,9 @@ import { redis } from "./redis";
 // Per-user limits for the beta (open sign-up). Counters are reserved atomically, like the global budgets.
 export const userLimits = () => ({
   videosPerDay: Number(process.env.LIMIT_VIDEOS_PER_DAY ?? 10),
-  ideasPerDay: Number(process.env.LIMIT_IDEAS_PER_DAY ?? 30),
+  ideasPerDay: Number(process.env.LIMIT_IDEAS_PER_DAY ?? 10),
   activeVideos: Number(process.env.LIMIT_ACTIVE_VIDEOS ?? 2),
-  aiEditsPerDay: Number(process.env.LIMIT_AI_EDITS_PER_DAY ?? 30),
+  aiEditsPerDay: Number(process.env.LIMIT_AI_EDITS_PER_DAY ?? 10),
 });
 
 type DailyKind = "videos" | "ai" | "edits";

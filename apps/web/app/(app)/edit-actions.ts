@@ -5,6 +5,7 @@
 
 import { connectDb, ScriptVersion, Video } from "@clipwise/db";
 import {
+  AllowanceExceededError,
   addScene as addSceneTo,
   afterEdit,
   BudgetExceededError,
@@ -143,6 +144,8 @@ async function withAiEdit<T>(ctx: Ctx, fn: () => Promise<T>): Promise<T> {
     if (error instanceof ActionError && error.code === "CONFLICT") throw error;
     await refundDaily(ctx.user.id, "edits", allowanceAt);
     if (error instanceof ActionError) throw error;
+    if (error instanceof AllowanceExceededError)
+      throw new ActionError("LIMIT_REACHED", error.message, secondsUntilReset());
     if (error instanceof BudgetExceededError || /quota/i.test(String(error))) {
       throw new ActionError("PAUSED", "AI rewrites are paused for a moment. Try again later.");
     }

@@ -1,11 +1,20 @@
 import "server-only";
 import { PipelineRun, Video } from "@clipwise/db";
-import { dailyUsage, finalsPerWeek, secondsUntilReset, weeklyFinalCount, weekWindow } from "@clipwise/queue";
+import {
+  dailyUsage,
+  fairUsage,
+  finalsPerWeek,
+  nextMonthStart,
+  secondsUntilReset,
+  weeklyFinalCount,
+  weekWindow,
+} from "@clipwise/queue";
 import type { Types } from "mongoose";
 export async function settingsUsage(userId: string, workspaceId: Types.ObjectId) {
   const now = new Date();
-  const [daily, used, runs] = await Promise.all([
+  const [daily, fair, used, runs] = await Promise.all([
     dailyUsage(userId),
+    fairUsage(workspaceId),
     weeklyFinalCount(workspaceId, now),
     PipelineRun.find({ workspaceId, trigger: { $ne: "recheck" } })
       .sort({ createdAt: -1 })
@@ -19,7 +28,9 @@ export async function settingsUsage(userId: string, workspaceId: Types.ObjectId)
   const names = new Map(videos.map((v) => [v._id.toString(), v.title || v.topic]));
   return {
     ...daily,
+    ...fair,
     finals: { used, limit: finalsPerWeek() },
+    monthlyResetAt: nextMonthStart(now).toISOString(),
     dailyResetAt: new Date(now.getTime() + secondsUntilReset(now) * 1000).toISOString(),
     weeklyResetAt: weekWindow(now).reset.toISOString(),
     activity: runs.map((r) => ({
