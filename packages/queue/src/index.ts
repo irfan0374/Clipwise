@@ -55,7 +55,21 @@ export {
 } from "./limits";
 export { bullPrefix, ns, nsKey } from "./namespace";
 export { isGenerationPaused, setGenerationPaused } from "./pause";
-export { createPost, postableRender, retryPost, type VideoPost, videoPosts } from "./posts";
+export {
+  type CalendarPost,
+  calendarPosts,
+  cancelPost,
+  createPost,
+  type PostableVideo,
+  postableRender,
+  postableVideos,
+  reschedulePost,
+  retryPost,
+  scheduleRules,
+  type VideoPost,
+  videoPosts,
+  waitingCount,
+} from "./posts";
 export {
   allQueues,
   closeQueues,
@@ -68,6 +82,7 @@ export {
   jobIdFor,
   queue,
   recheckDelayMs,
+  removeJob,
 } from "./queues";
 export { closeRedis, newRedis, redis, redisUrl } from "./redis";
 export { cancelVideo, retryVideo, type StartVideoInput, startVideo } from "./videos";

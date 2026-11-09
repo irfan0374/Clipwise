@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { encryptSecret, Render, SocialAccount, SocialPost, UsageEvent, Video, Workspace } from "@clipwise/db";
-import { createPost, queue, retryPost } from "@clipwise/queue";
+import { cancelPost, createPost, queue, reschedulePost, retryPost, scheduleRules } from "@clipwise/queue";
 import type { Job } from "bullmq";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { makeProcessor } from "../src/processor";
@@ -230,5 +230,104 @@ describe("posting to Instagram", () => {
     await SocialPost.updateOne({ _id: postId }, { $set: { publishAt: new Date(Date.now() - 60 * 60_000) } });
     await drainPublish(fakeInstagram(happy).fetcher);
     expect(await SocialPost.findById(postId).lean()).toMatchObject({ status: "posted", postedLate: true });
+  });
+});
+
+describe("scheduling Instagram posts", () => {
+  const inHours = (h: number) => new Date(Date.now() + h * 3600_000);
+  const publishCalls = (ig: ReturnType<typeof fakeInstagram>) =>
+    ig.calls.filter((c) => c.method === "POST" && c.path.endsWith("media_publish")).length;
+
+  it("waits as a delayed job until its time", async () => {
+    const { input } = await setup();
+    const publishAt = inHours(3);
+    const { postId } = await createPost({ ...input, publishAt });
+    const [job] = (await queue("publish").getJobs(["delayed"])) as Job[];
+    expect(job?.id).toBe(`post_${postId}_a1`);
+    expect(job?.opts.delay ?? 0).toBeGreaterThan(3 * 3600_000 - 60_000);
+    expect(await SocialPost.findById(postId).lean()).toMatchObject({ status: "queued", publishAt });
+  });
+
+  it("refuses a time that is too soon or too far ahead", async () => {
+    const { input } = await setup();
+    await expect(createPost({ ...input, publishAt: new Date(Date.now() + 60_000) })).rejects.toMatchObject({
+      code: "VALIDATION",
+    });
+    await expect(createPost({ ...input, publishAt: inHours(61 * 24) })).rejects.toMatchObject({ code: "VALIDATION" });
+    expect(await SocialPost.countDocuments()).toBe(0);
+  });
+
+  it("moves a scheduled post: the old job is dropped and the post goes out once", async () => {
+    const { input } = await setup();
+    const { postId } = await createPost({ ...input, publishAt: inHours(3) });
+    const later = inHours(30);
+    await reschedulePost({ workspaceId: input.workspaceId, postId, publishAt: later });
+    const jobs = (await queue("publish").getJobs(["delayed"])) as Job[];
+    expect(jobs.map((j) => j.id)).toEqual([`post_${postId}_a2`]);
+    expect(await SocialPost.findById(postId).lean()).toMatchObject({ status: "queued", attempt: 2, publishAt: later });
+
+    const ig = fakeInstagram(happy);
+    await drainPublish(ig.fetcher);
+    expect(publishCalls(ig)).toBe(1);
+    expect(await SocialPost.findById(postId).lean()).toMatchObject({ status: "posted" });
+  });
+
+  it("an old job left behind by a move stops without posting", async () => {
+    const { input } = await setup();
+    const { postId } = await createPost({ ...input, publishAt: inHours(3) });
+    // As if the old job couldn't be removed (a worker held it): the post has moved on to attempt 2.
+    await SocialPost.updateOne({ _id: postId }, { $set: { attempt: 2 } });
+    const ig = fakeInstagram(happy);
+    await drainPublish(ig.fetcher);
+    expect(ig.calls).toHaveLength(0);
+    expect(await SocialPost.findById(postId).lean()).toMatchObject({ status: "queued" });
+  });
+
+  it("cancels a scheduled post, and a cancelled post is never published", async () => {
+    const { input } = await setup();
+    const { postId } = await createPost({ ...input, publishAt: inHours(3) });
+    await cancelPost({ workspaceId: input.workspaceId, postId });
+    expect(await queue("publish").count()).toBe(0);
+    expect(await SocialPost.findById(postId).lean()).toMatchObject({ status: "cancelled" });
+    await expect(cancelPost({ workspaceId: input.workspaceId, postId })).rejects.toMatchObject({ code: "CONFLICT" });
+    await expect(
+      reschedulePost({ workspaceId: input.workspaceId, postId, publishAt: inHours(5) }),
+    ).rejects.toMatchObject({ code: "CONFLICT" });
+
+    // A job that slipped through (cancelled after the worker fetched it) still stops at the claim.
+    const second = await createPost({ ...input, publishAt: inHours(3) });
+    await SocialPost.updateOne({ _id: second.postId }, { $set: { status: "cancelled" } });
+    const ig = fakeInstagram(happy);
+    await drainPublish(ig.fetcher);
+    expect(ig.calls).toHaveLength(0);
+  });
+
+  it("can't move or cancel a post once it is publishing, or another workspace's post", async () => {
+    const { input } = await setup();
+    const { postId } = await createPost({ ...input, publishAt: inHours(3) });
+    await SocialPost.updateOne({ _id: postId }, { $set: { status: "publishing" } });
+    await expect(cancelPost({ workspaceId: input.workspaceId, postId })).rejects.toMatchObject({ code: "CONFLICT" });
+    await SocialPost.updateOne({ _id: postId }, { $set: { status: "queued" } });
+    const other = await Workspace.create({ ownerUserId: "u2", name: "Other" });
+    await expect(cancelPost({ workspaceId: other._id, postId })).rejects.toMatchObject({ code: "CONFLICT" });
+  });
+
+  it(`keeps at most ${scheduleRules.maxWaiting} posts waiting per workspace`, async () => {
+    const { input, video, account } = await setup();
+    const render = await Render.findOne({ videoId: video._id });
+    await SocialPost.insertMany(
+      Array.from({ length: scheduleRules.maxWaiting }, () => ({
+        workspaceId: input.workspaceId,
+        videoId: video._id,
+        renderId: render!._id,
+        accountId: account._id,
+        username: "brand",
+        publishAt: inHours(10),
+        createdByUserId: "u1",
+      })),
+    );
+    await expect(createPost({ ...input, publishAt: inHours(3) })).rejects.toMatchObject({ code: "LIMIT_REACHED" });
+    // Posting now is still allowed.
+    await expect(createPost(input)).resolves.toMatchObject({ postId: expect.any(String) });
   });
 });

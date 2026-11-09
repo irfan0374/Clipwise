@@ -19,8 +19,8 @@ export const connectionsUrl = (requestUrl: string, result: Record<string, string
   return url;
 };
 
-/** What the video page needs for "Post to Instagram": connected accounts (no keys) and this video's posts. */
-export async function instagramForVideo(workspaceId: Types.ObjectId, videoId: string) {
+/** The workspace's Instagram accounts (no keys), and whether this server can connect Instagram at all. */
+export async function instagramAccounts(workspaceId: Types.ObjectId) {
   await connectDb();
   const accounts = await SocialAccount.find({ workspaceId }).sort({ connectedAt: 1 }).lean();
   return {
@@ -31,7 +31,11 @@ export async function instagramForVideo(workspaceId: Types.ObjectId, videoId: st
       pictureUrl: a.pictureUrl ?? null,
       connected: a.status === "connected",
     })),
-    posts: await videoPosts(workspaceId, videoId),
   };
+}
+
+/** What the video page needs for "Post to Instagram": connected accounts and this video's posts. */
+export async function instagramForVideo(workspaceId: Types.ObjectId, videoId: string) {
+  return { ...(await instagramAccounts(workspaceId)), posts: await videoPosts(workspaceId, videoId) };
 }
 export type InstagramForVideo = Awaited<ReturnType<typeof instagramForVideo>>;

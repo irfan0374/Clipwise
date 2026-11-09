@@ -75,6 +75,15 @@ export async function enqueue<N extends JobName>(name: N, data: JobData<N>, opts
   return queue(def.queue).add(name, payload, { jobId: jobIdFor(name, payload), ...opts });
 }
 
+/** Drops a waiting job (a scheduled post that was moved or cancelled). A job already running is left alone. */
+export async function removeJob<N extends JobName>(name: N, data: JobData<N>) {
+  try {
+    await queue(JobDefs[name].queue).remove(jobIdFor(name, data));
+  } catch {
+    // Locked by a worker: the job sees the post's new state and stops by itself.
+  }
+}
+
 /** Wait after the last edit before re-checking facts, so typing doesn't trigger a check per keystroke. */
 export const recheckDelayMs = () => Number(process.env.RECHECK_DELAY_MS ?? 4000);
 

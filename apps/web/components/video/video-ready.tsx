@@ -116,12 +116,13 @@ export function VideoReady({
               )}
               {final.url && (
                 <PostToInstagram
-                  videoId={video.id}
-                  title={video.title}
-                  durationMs={final.durationMs}
-                  thumbnailUrl={final.thumbnailUrl ?? null}
+                  video={{
+                    id: video.id,
+                    title: video.title,
+                    durationMs: final.durationMs,
+                    thumbnailUrl: final.thumbnailUrl ?? null,
+                  }}
                   instagram={instagram}
-                  fallbackCaption={video.title}
                 />
               )}
               <Link

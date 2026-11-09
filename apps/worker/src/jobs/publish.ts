@@ -47,7 +47,12 @@ export async function publishJob(job: Job, data: JobData<"publish">, fetcher: ty
       throw new PublishFailure(`Reconnect @${account.username} in Settings → Connections, then try again.`);
     const token = decryptSecret(account.tokenEnc);
 
-    await SocialPost.updateOne({ _id: post._id }, { $set: { status: "publishing", error: null } });
+    // Claim the post: a post cancelled or moved since this job was queued no longer matches, and stops here.
+    const claimed = await SocialPost.updateOne(
+      { _id: post._id, attempt: data.attempt, status: { $in: ["queued", "publishing"] } },
+      { $set: { status: "publishing", error: null } },
+    );
+    if (!claimed.matchedCount) return;
 
     let containerId = post.containerId;
     if (!containerId) {

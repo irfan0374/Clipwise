@@ -11,7 +11,7 @@ export type NavItem = {
 export const navItems: NavItem[] = [
   { label: "Create", href: "/create", icon: Sparkles },
   { label: "Videos", href: "/videos", icon: Clapperboard },
-  { label: "Calendar", href: "/calendar", icon: CalendarDays, soon: true }, // Feature 18
+  { label: "Calendar", href: "/calendar", icon: CalendarDays },
   { label: "Brand kit", href: "/brand", icon: Palette, soon: true }, // Feature 17
   { label: "Settings", href: "/settings", icon: Settings },
 ];

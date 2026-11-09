@@ -6,6 +6,8 @@ Repo: https://github.com/irfan0374/Clipwise (public). Updated before every commi
 
 ## Now
 
+**Step J2 (scheduling + Calendar) built on 2026-11-09, in review** — schedule a Reel up to 60 days ahead, reschedule, cancel, and a Calendar page (month view, day panel, phone layout). See "Step J2 validation".
+
 **Step J1 (Instagram connect + Post now) passed on staging on 2026-11-09 and is going live** — the owner connected @nafiyeh_ with "Continue with Instagram" (no Facebook) and posted a real Reel from staging; the access key is stored encrypted. See "Step J1 validation".
 
 **Step I (fair share, billing removed) approved on 2026-11-06** — see "Step I validation". Before that: **Step H5 (live) online on 2026-10-30**: https://clipwise-kappa.vercel.app (Vercel Production), live worker on the Mac (`pnpm worker:live`), MongoDB `clipwise`, R2 bucket `clipwise-live`; the owner signed up and made a real promo video on live; first live backup taken.
@@ -16,7 +18,7 @@ Repo: https://github.com/irfan0374/Clipwise (public). Updated before every commi
 
 ## Next up
 
-**Step J1 live:** Vercel Production settings added (2026-11-09); owner runs `CLIPWISE_ENV=live pnpm db:indexes`, restarts `pnpm worker:live`, connects and posts on live. Then **Step J2** — scheduling, reschedule/cancel, Calendar page. H5 leftovers: owner admin on live, ElevenLabs paid plan, invite steps, `staging` branch brought up to `main`, optional Sentry DSNs.
+**Step J1 live:** Vercel Production settings added (2026-11-09); owner runs `CLIPWISE_ENV=live pnpm db:indexes`, restarts `pnpm worker:live`, connects and posts on live. Then **Step J2 staging test** — schedule a real Reel ~10 minutes ahead (owner restarts the staging and live workers for the new publish code). H5 leftovers: owner admin on live, ElevenLabs paid plan, invite steps, `staging` branch brought up to `main`, optional Sentry DSNs.
 
 ## Build plan
 
@@ -50,7 +52,7 @@ Legend: ✅ done · 🔍 in review · 🛠 building · ⏳ not started. Small fe
 | # | Feature | Status |
 | --- | --- | --- |
 | 17 | Brand kit | ⏳ |
-| 18 | Instagram, scheduling and calendar | ✅ J1 (connect + post now) passed on staging, going live · J2 (scheduling + calendar) ⏳ |
+| 18 | Instagram, scheduling and calendar | ✅ J1 (connect + post now) passed on staging, going live · J2 (scheduling + calendar) 🔍 |
 
 ## Step H plan
 
@@ -63,6 +65,15 @@ Hosting (chosen 2026-10-28): web on **Vercel free** (Preview deployments = stagi
 5. **H5 Beta checklist:** promote to live, make the owner admin, confirm beta limits, ElevenLabs paid plan (owner), final secrets check before the push, invite steps for the first users.
 
 Owner actions (accounts and keys are never entered by Claude): create the Vercel, Redis Cloud, Backblaze B2 and Sentry accounts and put each key straight into Vercel or the Mac's env files, following `design/deploy.md`.
+
+## Step J2 validation — 2026-11-09
+
+- **Schedule (video page and Calendar):** the Post window has "Post now / Schedule"; Schedule shows date + time in the person's own time zone (e.g. "Asia/Dubai (GMT+4)") and the button becomes "Schedule Reel". Rules (same in browser and server): at least 5 minutes ahead, at most 60 days ahead, at most 50 waiting posts per workspace (`LIMIT_SCHEDULED_POSTS`). A scheduled post is a delayed `publish` job (`post_{id}_a{attempt}`).
+- **Reschedule / Cancel:** only while the post is waiting. Reschedule raises the attempt number, removes the old job and adds a new one; an old job that still runs finds no match and stops. Cancel marks the post "cancelled" and removes the job. The worker now claims a post atomically (same attempt, still queued), so a post can never go out twice or after a cancel.
+- **Calendar page (enabled in the sidebar):** Stitch month view (Monday first), today marked in lime, chips with times, "+N more", filters All / Scheduled / Posted / Failed with counts, account picker, Week shown as "Soon". Day panel with Reschedule / Cancel, "View on Instagram", "Open video to try again", and "Nothing scheduled" with a Schedule button. "This month" summary (scheduled · posted · failed) and "Waiting to post N / 50". "Schedule a video" opens a video picker, then the Post window in Schedule mode. Phones: dots per day, next-day row, sticky lime "Schedule a video" button. Reloads every 8 seconds while a post is going out.
+- Left out on purpose (decided with the owner): Week view (Soon) and the Stitch "Audience peak / Recommended time" cards (no real data yet). Cancel has no "are you sure" step, as in Stitch.
+- **Manual QA (browser, 2026-11-09, dev):** counts, reschedule, cancel, picker → schedule, video-page cancel, desktop at 1440 and 1024, phone at 375 (header fixes: account chip beside the title, month name on one line).
+- `pnpm check`: lint, typechecks and **226 tests passed** (7 new scheduling tests: delayed job, too soon / too far, reschedule posts once, old job stops, cancel, other workspace refused, waiting cap). Temporary test user, posts and the leftover dev job removed.
 
 ## Step J1 validation — 2026-11-07
 

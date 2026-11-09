@@ -11,7 +11,7 @@ import { enqueue } from "./queues";
 
 export class FinalError extends Error {
   constructor(
-    readonly code: "NOT_FOUND" | "CONFLICT" | "BUSY" | "LIMIT_REACHED" | "PAUSED",
+    readonly code: "NOT_FOUND" | "CONFLICT" | "BUSY" | "LIMIT_REACHED" | "PAUSED" | "VALIDATION",
     message: string,
   ) {
     super(message);
