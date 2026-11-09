@@ -11,8 +11,11 @@ const sameText = (a: string, b: string) => a.length === b.length && timingSafeEq
 
 /** Meta sends people back here after Instagram login: save the shared accounts, then show Settings → Connections. */
 export async function GET(request: NextRequest) {
+  const [state, stateUser, mode] = (request.cookies.get(STATE_COOKIE)?.value ?? "").split(".");
   const done = (result: Record<string, string>) => {
-    const response = NextResponse.redirect(connectionsUrl(request.url, result));
+    const response = NextResponse.redirect(
+      connectionsUrl(request.url, mode === "popup" ? { ...result, popup: "1" } : result),
+    );
     response.cookies.set(STATE_COOKIE, "", { path: STATE_COOKIE_PATH, maxAge: 0 });
     return response;
   };
@@ -21,7 +24,6 @@ export async function GET(request: NextRequest) {
   if (session.user.suspendedAt) return NextResponse.redirect(new URL("/suspended", request.url));
 
   const params = request.nextUrl.searchParams;
-  const [state, stateUser] = (request.cookies.get(STATE_COOKIE)?.value ?? "").split(".");
   if (!state || stateUser !== session.user.id || !sameText(state, params.get("state") ?? ""))
     return done({ error: "state" });
   if (params.get("error")) return done({ error: "denied" }); // "Cancel" on Meta's page

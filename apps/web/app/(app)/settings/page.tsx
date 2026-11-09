@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "Settings" };
 export default async function SettingsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string; connected?: string; error?: string }>;
+  searchParams: Promise<{ tab?: string; connected?: string; error?: string; popup?: string }>;
 }) {
   const { user, workspace } = await requireUser();
   const query = await searchParams;
@@ -25,7 +25,7 @@ export default async function SettingsPage({
       defaults={defaults}
       usage={await settingsUsage(user.id, workspace._id)}
       connections={await settingsConnections(workspace._id)}
-      result={{ connected: query.connected, error: query.error }}
+      result={{ connected: query.connected, error: query.error, popup: query.popup === "1" }}
       user={{ name: user.name, email: user.email }}
     />
   );

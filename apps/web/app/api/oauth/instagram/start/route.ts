@@ -6,7 +6,8 @@ import { getSession } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
-/** "Connect Instagram": sends the signed-in user to Meta's login with a one-time state. */
+/** "Connect Instagram": sends the signed-in user to Meta's login with a one-time state. `?popup=1` when Clipwise
+ * opened it in a small window (computers), so the callback can hand the result back and close it. */
 export async function GET(request: Request) {
   const session = await getSession();
   if (!session) return NextResponse.redirect(new URL("/sign-in", request.url));
@@ -18,7 +19,8 @@ export async function GET(request: Request) {
   }
   const state = randomBytes(24).toString("base64url");
   const response = NextResponse.redirect(instagramLoginUrl(instagramRedirectUri(request.url), state));
-  response.cookies.set(STATE_COOKIE, `${state}.${session.user.id}`, {
+  const mode = new URL(request.url).searchParams.get("popup") === "1" ? "popup" : "page";
+  response.cookies.set(STATE_COOKIE, `${state}.${session.user.id}.${mode}`, {
     httpOnly: true,
     secure: true,
     sameSite: "lax", // sent on Meta's top-level redirect back to us

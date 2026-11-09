@@ -58,7 +58,7 @@ export function SettingsPanel({
   defaults: Defaults;
   usage: SettingsUsage;
   connections: SettingsConnections;
-  result: { connected?: string; error?: string };
+  result: { connected?: string; error?: string; popup?: boolean };
   user: { name: string; email: string };
 }) {
   const router = useRouter();

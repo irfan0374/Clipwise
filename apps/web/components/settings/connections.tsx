@@ -1,7 +1,7 @@
 "use client";
-import { Check, Info, Loader2 } from "lucide-react";
+import { Check, ExternalLink, Info, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { disconnectSocialAccount } from "@/app/(app)/settings/actions";
 import type { SettingsConnections } from "@/lib/settings";
@@ -53,6 +53,24 @@ const errors: Record<string, string> = {
   setup: "Instagram connections aren't set up on this server yet.",
   unknown: "Instagram couldn't be connected. Try again.",
 };
+
+const START = "/api/oauth/instagram/start";
+// The popup and this page talk over a same-origin channel: Meta's pages cut the popup's link to its opener.
+const CHANNEL = "clipwise-instagram";
+type Result = { connected?: string; error?: string };
+
+/** On computers Connect opens Meta's login in a small window; phones (and blocked popups) use the whole page. */
+function openLoginWindow() {
+  if (typeof BroadcastChannel === "undefined" || !window.matchMedia("(min-width: 768px) and (pointer: fine)").matches)
+    return false;
+  const w = 520;
+  const h = 720;
+  const left = Math.round(window.screenX + (window.outerWidth - w) / 2);
+  const top = Math.round(window.screenY + (window.outerHeight - h) / 2);
+  const popup = window.open(`${START}?popup=1`, CHANNEL, `popup,width=${w},height=${h},left=${left},top=${top}`);
+  popup?.focus();
+  return Boolean(popup);
+}
 
 const lime =
   "shrink-0 rounded-lg bg-lime px-4 py-2 text-xs font-medium text-ink shadow-[0_4px_14px_0_rgba(198,244,50,0.35)] transition-all hover:brightness-105 active:scale-[0.98]";
@@ -112,26 +130,52 @@ function ComingSoon({ name, text, children }: { name: string; text: string; chil
   );
 }
 
-export function Connections({
-  data,
-  result,
-}: {
-  data: SettingsConnections;
-  result: { connected?: string; error?: string };
-}) {
+export function Connections({ data, result }: { data: SettingsConnections; result: Result & { popup?: boolean } }) {
   const router = useRouter();
   const [pending, start] = useTransition();
+  const [waiting, setWaiting] = useState(false);
   const shown = useRef(false);
 
-  // One message for the result of the Instagram login, then clean the address bar.
+  const announce = useCallback((r: Result) => {
+    if (r.connected) toast.success(Number(r.connected) > 1 ? "Instagram accounts connected" : "Instagram connected");
+    else toast.error(errors[r.error ?? ""] ?? errors.unknown);
+  }, []);
+
+  // Back from Meta's login. In the small window: hand the result to the Clipwise tab and close. Otherwise (or if
+  // the window can't close itself) one message here, then clean the address bar.
   useEffect(() => {
     if (shown.current || (!result.connected && !result.error)) return;
     shown.current = true;
-    if (result.connected)
-      toast.success(Number(result.connected) > 1 ? "Instagram accounts connected" : "Instagram connected");
-    else toast.error(errors[result.error ?? ""] ?? errors.unknown);
-    router.replace("/settings?tab=connections", { scroll: false });
-  }, [result, router]);
+    const finish = () => {
+      announce(result);
+      router.replace("/settings?tab=connections", { scroll: false });
+    };
+    if (!result.popup || typeof BroadcastChannel === "undefined") return finish();
+    const channel = new BroadcastChannel(CHANNEL);
+    channel.postMessage({ connected: result.connected, error: result.error } satisfies Result);
+    channel.close();
+    window.close();
+    const stillOpen = setTimeout(finish, 500);
+    return () => clearTimeout(stillOpen);
+  }, [result, router, announce]);
+
+  // The Clipwise tab: show the small window's result and reload the accounts.
+  useEffect(() => {
+    if (result.popup || typeof BroadcastChannel === "undefined") return;
+    const channel = new BroadcastChannel(CHANNEL);
+    channel.onmessage = (e: MessageEvent<Result>) => {
+      setWaiting(false);
+      announce(e.data);
+      router.refresh();
+    };
+    return () => channel.close();
+  }, [result.popup, router, announce]);
+
+  const connect = (e: React.MouseEvent) => {
+    if (!openLoginWindow()) return; // follow the link instead
+    e.preventDefault();
+    setWaiting(true);
+  };
 
   const disconnect = (id: string, username: string) =>
     start(async () => {
@@ -175,19 +219,45 @@ export function Connections({
                 <p className="mt-0.5 text-[11px] text-ink-3">
                   Needs a Creator or Business account (free to switch in the Instagram app).
                 </p>
-                {/* Meta's login page always offers Facebook too; point people to the Instagram button. */}
-                <p className="mt-2 inline-flex w-fit items-center gap-1.5 rounded-lg bg-wash px-2.5 py-1.5 text-[11px] text-ink-2">
-                  <Info className="size-3.5 shrink-0 text-ink-3" />
-                  <span>
-                    On Meta&apos;s next screen, choose{" "}
-                    <span className="font-semibold text-ink">Continue with Instagram</span>.
-                  </span>
-                </p>
+                {/* Meta's login page always offers Facebook too, and its screens are Meta's own: say what to expect. */}
+                {waiting ? (
+                  <div className="mt-2 flex w-fit flex-col gap-1 rounded-lg border border-teal/20 bg-teal-soft/50 px-3 py-2 text-[11px] text-ink-2">
+                    <span className="flex items-center gap-1.5 font-medium text-teal-ink">
+                      <Loader2 className="size-3.5 animate-spin" />
+                      Finish connecting in the Instagram window
+                    </span>
+                    <span className="text-ink-3">
+                      Window closed or didn&apos;t open?{" "}
+                      <a href={START} className="font-medium text-ink underline underline-offset-2">
+                        Continue here
+                      </a>
+                    </span>
+                  </div>
+                ) : (
+                  <ol className="mt-2 flex w-fit flex-col gap-1 rounded-lg bg-wash px-3 py-2 text-[11px] text-ink-2">
+                    {[
+                      <>
+                        Choose <span className="font-semibold text-ink">Continue with Instagram</span>
+                      </>,
+                      <>Log in to your Creator or Business account</>,
+                      <>Allow Clipwise to post for you</>,
+                    ].map((step, i) => (
+                      // biome-ignore lint/suspicious/noArrayIndexKey: fixed list
+                      <li key={i} className="flex items-center gap-2">
+                        <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-panel text-[10px] font-semibold text-ink shadow-2xs">
+                          {i + 1}
+                        </span>
+                        <span>{step}</span>
+                      </li>
+                    ))}
+                  </ol>
+                )}
               </div>
             </div>
             {data.available ? (
-              <a href="/api/oauth/instagram/start" className={`${lime} self-start text-center`}>
+              <a href={START} onClick={connect} className={`${lime} flex items-center gap-1.5 self-start`}>
                 {data.accounts.length ? "Connect another" : "Connect Instagram"}
+                <ExternalLink className="hidden size-3.5 md:block" />
               </a>
             ) : (
               <span className="self-start text-[11px] text-ink-3">Not available yet</span>
@@ -214,7 +284,7 @@ export function Connections({
                   </div>
                 </div>
                 {data.available && (
-                  <a href="/api/oauth/instagram/start" className={`${lime} self-start text-center`}>
+                  <a href={START} onClick={connect} className={`${lime} self-start text-center`}>
                     Reconnect
                   </a>
                 )}

@@ -6,7 +6,9 @@ Repo: https://github.com/irfan0374/Clipwise (public). Updated before every commi
 
 ## Now
 
-**Step J2 (scheduling + Calendar) built on 2026-11-09, in review** — schedule a Reel up to 60 days ahead, reschedule, cancel, and a Calendar page (month view, day panel, phone layout). See "Step J2 validation".
+**Step J2 (scheduling + Calendar) passed on staging on 2026-11-09** — the owner scheduled real Reels on staging; scheduling, reschedule, cancel and the Calendar all worked. See "Step J2 validation".
+
+**Easier Instagram connect (in review, 2026-11-09):** on computers Connect opens Meta's login in a small window; when it finishes the window closes and Connections updates. A 1-2-3 guide shows what to choose on Meta's screens.
 
 **Step J1 (Instagram connect + Post now) passed on staging on 2026-11-09 and is going live** — the owner connected @nafiyeh_ with "Continue with Instagram" (no Facebook) and posted a real Reel from staging; the access key is stored encrypted. See "Step J1 validation".
 
@@ -52,7 +54,7 @@ Legend: ✅ done · 🔍 in review · 🛠 building · ⏳ not started. Small fe
 | # | Feature | Status |
 | --- | --- | --- |
 | 17 | Brand kit | ⏳ |
-| 18 | Instagram, scheduling and calendar | ✅ J1 (connect + post now) passed on staging, going live · J2 (scheduling + calendar) 🔍 |
+| 18 | Instagram, scheduling and calendar | ✅ J1 (connect + post now) passed on staging, going live · J2 (scheduling + calendar) ✅ passed on staging |
 
 ## Step H plan
 
@@ -65,6 +67,13 @@ Hosting (chosen 2026-10-28): web on **Vercel free** (Preview deployments = stagi
 5. **H5 Beta checklist:** promote to live, make the owner admin, confirm beta limits, ElevenLabs paid plan (owner), final secrets check before the push, invite steps for the first users.
 
 Owner actions (accounts and keys are never entered by Claude): create the Vercel, Redis Cloud, Backblaze B2 and Sentry accounts and put each key straight into Vercel or the Mac's env files, following `design/deploy.md`.
+
+## Easier Instagram connect — 2026-11-09
+
+- Owner asked for a simpler connect. Not possible: logging in for the person in the background (Meta requires the person to log in and allow it on Meta's own pages), or hiding Meta's Facebook button and screens (new Meta apps only get Unified login). The screens get simpler after Meta App Review (no tester / not-reviewed notices).
+- **Small window on computers:** `/api/oauth/instagram/start?popup=1` remembers "popup" in the state cookie; the callback adds `popup=1` to the Connections link; that page sends the result to the Clipwise tab over a same-origin `BroadcastChannel` (Meta's pages cut `window.opener`) and closes itself. If it can't close, it shows the normal message. Phones, blocked popups and browsers without `BroadcastChannel` use the whole page as before. While waiting: "Finish connecting in the Instagram window" with "Continue here".
+- **1-2-3 guide** under Instagram: Continue with Instagram → log in to the Creator/Business account → allow Clipwise to post.
+- **Local QA:** guide shown, a blocked popup falls back to the full page (Meta's login opened), the result reached the Clipwise tab and the small tab closed itself, waiting box shown. The real login in a popup can only be checked on staging (Meta refuses `localhost`). `pnpm check`: 226 tests passed.
 
 ## Step J2 validation — 2026-11-09
 
