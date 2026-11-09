@@ -10,9 +10,11 @@ export const userLimits = () => ({
   ideasPerDay: Number(process.env.LIMIT_IDEAS_PER_DAY ?? 10),
   activeVideos: Number(process.env.LIMIT_ACTIVE_VIDEOS ?? 2),
   aiEditsPerDay: Number(process.env.LIMIT_AI_EDITS_PER_DAY ?? 10),
+  /** Instagram posts per user per UTC day (Instagram itself allows 100 per account). */
+  postsPerDay: Number(process.env.LIMIT_POSTS_PER_DAY ?? 10),
 });
 
-type DailyKind = "videos" | "ai" | "edits";
+type DailyKind = "videos" | "ai" | "edits" | "posts";
 const today = (now = new Date()) => now.toISOString().slice(0, 10);
 const dailyKey = (userId: string, kind: DailyKind, at = new Date()) => nsKey(`limit:${userId}:${kind}:${today(at)}`);
 
@@ -28,7 +30,12 @@ export const takeDaily = (userId: string, kind: DailyKind, at = new Date()) =>
   reserve(
     dailyKey(userId, kind, at),
     1,
-    { videos: userLimits().videosPerDay, ai: userLimits().ideasPerDay, edits: userLimits().aiEditsPerDay }[kind],
+    {
+      videos: userLimits().videosPerDay,
+      ai: userLimits().ideasPerDay,
+      edits: userLimits().aiEditsPerDay,
+      posts: userLimits().postsPerDay,
+    }[kind],
     2 * 24 * 3600,
   );
 

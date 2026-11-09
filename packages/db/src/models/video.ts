@@ -15,6 +15,8 @@ const VideoSchema = new Schema(
     topic: { type: String, required: true, trim: true, maxlength: 300 },
     format: { type: String, enum: Formats, default: "explainer" },
     title: { type: String, maxlength: 60 }, // copied from script.title
+    // The AI's Instagram caption for the video, saved so reopening "Post to Instagram" doesn't spend another request.
+    postCaption: { type: String, default: null, maxlength: 2200 },
     lengthMode: { type: String, enum: LengthModes, required: true },
     lengthSeconds: { type: Number, enum: [...LengthSeconds, null], default: null }, // resolved when the script is written
     voiceId: { type: String, required: true },

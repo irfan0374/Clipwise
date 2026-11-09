@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { LiveVideo } from "@/components/video/live-video";
 import { Studio } from "@/components/video/studio";
 import { VideoReady } from "@/components/video/video-ready";
+import { instagramForVideo } from "@/lib/instagram";
 import { requireUser } from "@/lib/session";
 import { finalForOwner, videoForOwner } from "@/lib/videos";
 
@@ -23,7 +24,7 @@ export default async function VideoPage({
   if (!video) notFound();
   const final = await finalForOwner(id, workspace._id);
   if (final && video.status === "rendered" && query.tab !== "edit" && query.tab !== "storyboard")
-    return <VideoReady video={video} final={final} />;
+    return <VideoReady video={video} final={final} instagram={await instagramForVideo(workspace._id, id)} />;
   // Script written and checked: the Storyboard and Editor. Anything still running, stopped or failed: the progress view.
   const ready =
     video.timeline && video.steps.factcheck.state === "done" && ["previewed", "rendered"].includes(video.status);

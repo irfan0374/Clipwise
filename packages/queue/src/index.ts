@@ -30,6 +30,21 @@ export {
   workerStatus,
 } from "./heartbeat";
 export {
+  type ContainerStatus,
+  connectWithCode,
+  containerStatus,
+  createReelContainer,
+  graphError,
+  type InstagramAccount,
+  InstagramError,
+  instagramLoginUrl,
+  instagramSettings,
+  latestMedia,
+  mediaPermalink,
+  missingInstagramSettings,
+  publishContainer,
+} from "./instagram";
+export {
   activeRunCount,
   dailyUsage,
   refundDaily,
@@ -40,6 +55,7 @@ export {
 } from "./limits";
 export { bullPrefix, ns, nsKey } from "./namespace";
 export { isGenerationPaused, setGenerationPaused } from "./pause";
+export { createPost, postableRender, retryPost, type VideoPost, videoPosts } from "./posts";
 export {
   allQueues,
   closeQueues,

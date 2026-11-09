@@ -7,7 +7,8 @@ import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { updateSettings } from "@/app/(app)/settings/actions";
 import { authClient } from "@/lib/auth-client";
-import type { SettingsUsage } from "@/lib/settings";
+import type { SettingsConnections, SettingsUsage } from "@/lib/settings";
+import { Connections } from "./connections";
 
 export type Defaults = {
   name: string;
@@ -49,11 +50,15 @@ export function SettingsPanel({
   tab,
   defaults,
   usage,
+  connections,
+  result,
   user,
 }: {
-  tab: "account" | "defaults" | "usage";
+  tab: "account" | "defaults" | "usage" | "connections";
   defaults: Defaults;
   usage: SettingsUsage;
+  connections: SettingsConnections;
+  result: { connected?: string; error?: string };
   user: { name: string; email: string };
 }) {
   const router = useRouter();
@@ -82,7 +87,7 @@ export function SettingsPanel({
       </header>
       <div className="grid gap-6 md:grid-cols-[180px_minmax(0,1fr)]">
         <nav aria-label="Settings" className="flex gap-1 overflow-x-auto md:flex-col">
-          {(["account", "defaults", "usage"] as const).map((t) => (
+          {(["account", "defaults", "usage", "connections"] as const).map((t) => (
             <Link
               key={t}
               href={`/settings?tab=${t}`}
@@ -92,12 +97,9 @@ export function SettingsPanel({
               {t}
             </Link>
           ))}
-          <span aria-disabled="true" className="flex items-center gap-2 rounded-lg px-3.5 py-2 text-sm text-ink-3">
-            Connections
-            <span className="text-[10px]">Soon</span>
-          </span>
         </nav>
         <div className="min-w-0 space-y-6">
+          {tab === "connections" && <Connections data={connections} result={result} />}
           {tab === "usage" && (
             <>
               <section className={card}>

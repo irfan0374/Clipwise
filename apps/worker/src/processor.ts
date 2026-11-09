@@ -6,6 +6,7 @@ import { type Job, UnrecoverableError } from "bullmq";
 import { emit, jobContext, type Loaded, load } from "./context";
 import { classify } from "./errors";
 import { factcheckJob } from "./jobs/factcheck";
+import { publishJob } from "./jobs/publish";
 import { recheckJob } from "./jobs/recheck";
 import { renderJob } from "./jobs/render";
 import { scriptJob } from "./jobs/script";
@@ -18,6 +19,7 @@ const stageOf: Record<JobName, Stage> = {
   recheck: "factcheck",
   voice: "voice",
   render: "render",
+  publish: "render", // not a video stage; publish jobs never mark the video failed
 };
 
 /** Marks the video and run failed with a user-safe message (full error kept in the run report). */
@@ -60,13 +62,17 @@ export async function markFailed(job: Job, error: unknown) {
 }
 
 /** One processor for every queue: validates the payload, runs the job, and decides retry vs fail. */
-export const makeProcessor = (providers?: Providers) => async (job: Job) => {
+/** `instagramFetch` replaces the Graph API in tests. */
+export const makeProcessor = (providers?: Providers, instagramFetch?: typeof fetch) => async (job: Job) => {
   const name = job.name as JobName;
   const def = JobDefs[name];
   if (!def) throw new UnrecoverableError(`unknown job ${job.name}`);
   const data = def.schema.parse(job.data);
   // Re-checks of edited scenes have no pipeline run of their own yet and never fail the video.
   if (name === "recheck") return recheckJob(job, data as JobData<"recheck">, providers);
+  // Instagram posts belong to a SocialPost, not a pipeline run.
+  if (name === "publish") return publishJob(job, data as JobData<"publish">, instagramFetch);
+  const { videoId } = data as { videoId: string };
   const ctx = await load(data as { videoId: string; runId: string });
   if (!ctx) return; // video deleted or run missing: nothing to do
   if (ctx.run.status !== "running") return; // the user cancelled this run
@@ -77,9 +83,9 @@ export const makeProcessor = (providers?: Providers) => async (job: Job) => {
   } catch (error) {
     const failure = classify(error);
     const last = !failure.retry || attempt >= (job.opts.attempts ?? 1);
-    console.error(`[worker] ${name} failed for video ${data.videoId} (attempt ${attempt}): ${failure.message}`);
+    console.error(`[worker] ${name} failed for video ${videoId} (attempt ${attempt}): ${failure.message}`);
     if (last) {
-      reportJobFailure(error, { name, videoId: data.videoId, attempt, code: failure.code });
+      reportJobFailure(error, { name, videoId, attempt, code: failure.code });
       await markFailed(job, error);
       throw new UnrecoverableError(failure.message);
     }
@@ -98,6 +104,7 @@ function runJob(name: JobName, ctx: Loaded, data: unknown, attempt: number, prov
     case "render":
       return renderJob(ctx, data as JobData<"render">, attempt);
     case "recheck":
+    case "publish":
       return; // handled before a run is loaded
   }
 }

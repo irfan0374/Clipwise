@@ -7,6 +7,13 @@ export const Formats = ["promo", "explainer", "story", "tips", "recap", "quote"]
 // Clipwise is free (no paid plans); every workspace is on "beta" with the same fair share (packages/queue/src/fair.ts).
 export const Plans = ["beta"] as const;
 
+export const SocialPlatforms = ["instagram"] as const;
+export const SocialAccountStatuses = [
+  "connected",
+  "reconnect", // the access key stopped working (app removed, account moved or made personal): connect again
+] as const;
+export const SocialPostStatuses = ["queued", "publishing", "posted", "failed", "cancelled"] as const;
+
 export const VideoStatuses = [
   "draft", // created, script job queued
   "scripting", // script job running
@@ -44,6 +51,7 @@ export const Providers = ["gemini", "elevenlabs", "r2", "instagram"] as const;
 export const UsageUnits = ["tokens", "characters", "credits", "requests", "bytes"] as const;
 
 export type Plan = (typeof Plans)[number];
+export type SocialPostStatus = (typeof SocialPostStatuses)[number];
 export type VideoStatus = (typeof VideoStatuses)[number];
 export type Stage = (typeof Stages)[number];
 export type ClaimVerdict = (typeof ClaimVerdicts)[number];

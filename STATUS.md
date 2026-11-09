@@ -2,9 +2,11 @@
 
 Repo: https://github.com/irfan0374/Clipwise (public). Updated before every commit and push. One feature at a time: **plan → approve → build + tests → demo → review → fix → commit**.
 
-**Last updated:** 2026-11-06
+**Last updated:** 2026-11-07
 
 ## Now
+
+**Step J1 (Instagram connect + Post now) approved for staging on 2026-11-09** — see "Step J1 validation". Meta's login offers "Continue with Instagram" (checked by the owner); Meta refuses `localhost` redirect URLs, so the full connect + real Reel post is tested on staging.
 
 **Step I (fair share, billing removed) approved on 2026-11-06** — see "Step I validation". Before that: **Step H5 (live) online on 2026-10-30**: https://clipwise-kappa.vercel.app (Vercel Production), live worker on the Mac (`pnpm worker:live`), MongoDB `clipwise`, R2 bucket `clipwise-live`; the owner signed up and made a real promo video on live; first live backup taken.
 
@@ -14,7 +16,7 @@ Repo: https://github.com/irfan0374/Clipwise (public). Updated before every commi
 
 ## Next up
 
-**Feature 18 — Instagram, scheduling and calendar:** plan first (Meta developer app, Instagram Business/Creator account, Meta app review, posting from the worker). H5 leftovers: owner admin on live, ElevenLabs paid plan, invite steps, `staging` branch brought up to `main`, optional Sentry DSNs. Owner: run `CLIPWISE_ENV=staging pnpm db:indexes` and `CLIPWISE_ENV=live pnpm db:indexes` (drops the old Stripe index; harmless until then).
+**Step J1 staging test:** Vercel Preview settings (META_APP_ID, META_LOGIN_CONFIG_ID, META_APP_SECRET, TOKEN_ENCRYPTION_KEY), owner runs `CLIPWISE_ENV=staging pnpm db:indexes` and restarts `pnpm worker:staging`, connects @nafiyeh_ (Instagram Tester invite still "Pending" in Meta on 2026-11-09), one real Reel post (owner OK first). Then live settings, then **Step J2** — scheduling, reschedule/cancel, Calendar page. H5 leftovers: owner admin on live, ElevenLabs paid plan, invite steps, `staging` branch brought up to `main`, optional Sentry DSNs.
 
 ## Build plan
 
@@ -41,14 +43,14 @@ Legend: ✅ done · 🔍 in review · 🛠 building · ⏳ not started. Small fe
 | F | 11 Render and download · 12 Library | ✅ approved | F + G checkpoint | Final-render action, safe voice reuse/retry, playback/download, version labels, searchable/filterable list/grid library; combined E + F QA passed |
 | G | 13 Limits and settings · 14 Admin | ✅ approved | F + G checkpoint | Defaults/account/usage settings; admin queues, users, running/failed pipelines, suspension/reset/retry and audit; 180 tests + production build passed |
 | H | 15 Polish and Sentry · 16 Deploy and private beta | ✅ live 2026-10-30 (small leftovers in "Next up") | `5326485` | Vercel (web) · worker on the owner's Mac · Redis Cloud · Backblaze B2 · Sentry; staging + live |
-| I | Fair share · billing removed | ✅ approved | this commit | Each workspace's own share of the shared Gemini/ElevenLabs budgets; Clipwise stays free (no plans, no Stripe) |
+| I | Fair share · billing removed | ✅ approved | `e15624c` | Each workspace's own share of the shared Gemini/ElevenLabs budgets; Clipwise stays free (no plans, no Stripe) |
 
 ### v1 (regrouped later)
 
 | # | Feature | Status |
 | --- | --- | --- |
 | 17 | Brand kit | ⏳ |
-| 18 | Instagram, scheduling and calendar | ⏳ |
+| 18 | Instagram, scheduling and calendar | 🛠 J1 (connect + post now) on staging · J2 (scheduling + calendar) ⏳ |
 
 ## Step H plan
 
@@ -61,6 +63,16 @@ Hosting (chosen 2026-10-28): web on **Vercel free** (Preview deployments = stagi
 5. **H5 Beta checklist:** promote to live, make the owner admin, confirm beta limits, ElevenLabs paid plan (owner), final secrets check before the push, invite steps for the first users.
 
 Owner actions (accounts and keys are never entered by Claude): create the Vercel, Redis Cloud, Backblaze B2 and Sentry accounts and put each key straight into Vercel or the Mac's env files, following `design/deploy.md`.
+
+## Step J1 validation — 2026-11-07
+
+- **Connect (Settings → Connections):** Meta "Instagram API with Unified login" (config `Clipwise Instagram`); the person signs in with Instagram only. State cookie tied to the signed-in user (15 min, compared in constant time). The access key is stored encrypted (AES-256-GCM, `TOKEN_ENCRYPTION_KEY`, one key per environment) and is never sent to the browser. Disconnect deletes the account. TikTok and YouTube rows show "Coming soon".
+- **Post now (video page):** Stitch modal with account picker, AI caption (saved on the video; "Rewrite caption" uses one AI request from the fair share), 2,200-character counter, "Schedule" shown as Soon. Posts are a `publish` job on the worker: upload from a 1-hour signed R2 link → wait for Instagram to process → publish → permalink. Each step is saved, so a retry never posts twice. Expired access → account marked "Reconnect". 10 posts per user per day (`LIMIT_POSTS_PER_DAY`). A post that goes out more than 15 minutes late (Mac was off) is marked "Posted late".
+- History panel on the video page: Posted / Queued / Posting… / Failed, "View on Instagram", "Try again".
+- **Manual QA (browser, 2026-11-07):** Connections page vs Stitch (connected, reconnect, coming soon rows; phone size), success and error messages, Disconnect, a forged login link is refused, AI caption written once then reused, Post window on computer and phone. Fixes from QA: on phones the Post window is now the Stitch bottom sheet (small video card, Cancel / Post now always visible); with only a broken account the video page says "Reconnect @name to post".
+- **Login check with Meta (2026-11-09):** a private window shows Meta's "Continue with Facebook / Continue with Instagram" page; Instagram login worked, then Meta blocked the return to `localhost` (not allowed as a redirect URL). The login URL now also sends `prompt=login` and `override_default_response_type=true` (as Meta's own login URL does), so people already logged into Facebook still get the Instagram choice instead of the business-portfolio screen.
+- Posting only works where files are in R2 (staging, live); local dev refuses with a clear message — checked in the browser end to end with the dev worker.
+- `pnpm check`: lint, typechecks and **219 tests passed** (encryption, Meta login/code exchange with a fake Graph API, 8 publish-job tests). Production build OK. Dev database indexes synced. Temporary test user and fake account removed from `clipwise_dev`.
 
 ## Step I validation — 2026-11-06
 
@@ -132,6 +144,7 @@ Owner actions (accounts and keys are never entered by Claude): create the Vercel
 
 | Date | Decision |
 | --- | --- |
+| 2026-11-07 | Instagram: Meta Unified login (new Meta apps can't use the old Instagram-only app; people still sign in with Instagram only). Access keys encrypted in MongoDB. Posting only from R2 environments. Deauthorize / data-deletion callbacks deferred to Meta App Review (Unified login docs don't describe them yet). Until App Review only app testers can connect. Meta doesn't allow `localhost` redirect URLs, so connecting is tested on staging |
 | 2026-11-06 | Clipwise stays free: no paid plans, no Stripe (Feature 19 dropped). Fairness comes from a per-workspace share of the shared AI and voice budgets (15 Gemini requests/day, 1,500 ElevenLabs credits/month, both settings) |
 | 2026-10-29 | Every Redis connection and BullMQ queue has an error listener (one short line per 30s per source): cloud Redis resets connections now and then and ioredis/BullMQ reconnect by themselves. The subscriber test counts only its own connection |
 | 2026-10-29 | H4 passed on staging. File storage: Cloudflare R2 instead of Backblaze B2 (owner's Cloudflare account already has payment set up; R2 downloads are free). Redis Cloud free kept for the beta without TLS (only ids and progress numbers pass through it). Staging reuses the owner's Atlas login (owner's choice); live gets a limited user |

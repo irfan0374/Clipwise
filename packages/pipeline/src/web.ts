@@ -4,6 +4,7 @@ export { creditsFor } from "./credits";
 export { autoLength, formatGuides, type VideoFormat } from "./formats";
 export { AllowanceExceededError, BudgetExceededError, type ProviderGuards, setProviderGuards } from "./guards";
 export { buildTimeline, estimateAlignment } from "./stages/align";
+export { writeCaption } from "./stages/caption";
 export { type Idea, suggestIdeas } from "./stages/ideas";
 
 import { buildTimeline, estimateAlignment } from "./stages/align";

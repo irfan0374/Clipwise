@@ -29,7 +29,8 @@ export const RenderJob = z.object({
   scriptVersion: z.number().int(),
   kind: z.enum(["final", "preview"]),
 });
-export const PublishJob = z.object({ postId: Id }); // v1, delayed until publishAt
+/** Posts one SocialPost to Instagram; delayed until publishAt. `attempt` changes on "Try again" (new job id). */
+export const PublishJob = z.object({ postId: Id, attempt: z.number().int().min(1).default(1) });
 
 /** Deterministic job IDs make double clicks and retries harmless. */
 export const jobId = {
@@ -38,5 +39,5 @@ export const jobId = {
   factcheck: (videoId: string, version: number) => `vid:${videoId}:factcheck:v${version}`,
   voice: (videoId: string, version: number) => `vid:${videoId}:voice:v${version}`,
   render: (videoId: string, version: number) => `vid:${videoId}:render:v${version}`,
-  publish: (postId: string) => `post_${postId}`,
+  publish: (postId: string, attempt = 1) => `post_${postId}_a${attempt}`,
 };

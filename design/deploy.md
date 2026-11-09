@@ -65,6 +65,7 @@ Same names as `.env.example`. "✓" = needed there.
 | `ELEVENLABS_API_KEY`, `ELEVENLABS_VOICE_ID`, `ELEVENLABS_MODEL_DRAFT`, `ELEVENLABS_MODEL_FINAL`, `ELEVENLABS_MONTHLY_CREDITS` | ✓ | ✓ | ✓ | ✓ |
 | `LIMIT_FINALS_PER_WEEK` | ✓ | ✓ | ✓ | ✓ |
 | `LIMIT_AI_REQUESTS_PER_DAY`, `LIMIT_VOICE_CREDITS_PER_MONTH` (optional; default 15 and 1,500 per user) | ✓ | ✓ | ✓ | ✓ |
+| `META_APP_ID`, `META_LOGIN_CONFIG_ID` (public), `META_APP_SECRET`, `TOKEN_ENCRYPTION_KEY` (own key per environment) | ✓ | ✓ | ✓ | ✓ |
 | `NEXT_PUBLIC_SENTRY_DSN` | web DSN | web DSN | — | — |
 | `SENTRY_DSN` | — | — | worker DSN | worker DSN |
 
@@ -163,3 +164,18 @@ CLIPWISE_ENV=live pnpm db:backup
 3. `CLIPWISE_ENV=live pnpm db:backup`.
 4. Merge `staging` into `main`, then restart `pnpm worker:live` on the new code.
 5. Open the live site and the admin page (worker online, queue healthy).
+
+## Instagram (Meta app, Unified login)
+
+Set up on 2026-11-06. New Meta apps can't use the older "Instagram login" setup any more; they get **API setup with
+Unified login** (people log in with Instagram or Facebook, no Facebook Page needed).
+
+1. developers.facebook.com → app **Clipwise** (App ID `1807496470457706`), type Business, use case **Manage messaging
+   & content on Instagram**.
+2. The app must be owned by a **business portfolio** (ours: "Clipwise"), otherwise the Unified login tab is missing.
+3. Use cases → Customize → **API setup with Unified login** → configuration "Clipwise Instagram" (system-user access
+   token, never expires, Instagram account asset; ID `1646239256902224` = `META_LOGIN_CONFIG_ID`).
+4. Redirect URLs: `<APP_URL>/api/oauth/instagram/callback` for live, staging and local (`https://localhost:3001`).
+   The URL in Clipwise's login link must match the one selected in the configuration exactly.
+5. App secret: App settings → Basic → `META_APP_SECRET` (env files and Vercel only).
+6. Until App Review: only people with a role on the app (Instagram Testers) can connect.

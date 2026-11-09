@@ -1,9 +1,10 @@
 import "server-only";
-import { PipelineRun, Video } from "@clipwise/db";
+import { PipelineRun, SocialAccount, Video } from "@clipwise/db";
 import {
   dailyUsage,
   fairUsage,
   finalsPerWeek,
+  missingInstagramSettings,
   nextMonthStart,
   secondsUntilReset,
   weeklyFinalCount,
@@ -43,3 +44,21 @@ export async function settingsUsage(userId: string, workspaceId: Types.ObjectId)
   };
 }
 export type SettingsUsage = Awaited<ReturnType<typeof settingsUsage>>;
+
+/** Settings → Connections: the workspace's connected accounts (never the access key) and whether Connect works. */
+export async function settingsConnections(workspaceId: Types.ObjectId) {
+  const accounts = await SocialAccount.find({ workspaceId }).sort({ connectedAt: 1 }).lean();
+  return {
+    available: missingInstagramSettings().length === 0,
+    accounts: accounts.map((a) => ({
+      id: a._id.toString(),
+      username: a.username,
+      name: a.name ?? null,
+      pictureUrl: a.pictureUrl ?? null,
+      status: a.status ?? "connected",
+      statusReason: a.statusReason ?? null,
+      connectedAt: a.connectedAt?.toISOString() ?? null,
+    })),
+  };
+}
+export type SettingsConnections = Awaited<ReturnType<typeof settingsConnections>>;

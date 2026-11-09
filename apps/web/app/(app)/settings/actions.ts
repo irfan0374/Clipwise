@@ -1,6 +1,6 @@
 "use server";
-import { Workspace } from "@clipwise/db";
-import { Format, LengthMode, VoiceId } from "@clipwise/shared";
+import { SocialAccount, Workspace } from "@clipwise/db";
+import { Format, Id, LengthMode, VoiceId } from "@clipwise/shared";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { action } from "@/lib/action";
@@ -18,3 +18,10 @@ export const updateSettings = action(
     return { saved: true };
   },
 );
+
+/** Forgets a connected Instagram account and its access key. Scheduled posts for it come in Step J2. */
+export const disconnectSocialAccount = action(z.object({ accountId: Id }), async ({ accountId }, { workspace }) => {
+  await SocialAccount.deleteOne({ _id: accountId, workspaceId: workspace._id });
+  revalidatePath("/settings");
+  return { disconnected: true };
+});

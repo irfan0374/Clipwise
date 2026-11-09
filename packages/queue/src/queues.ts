@@ -1,4 +1,13 @@
-import { FactcheckJob, type QueueName, Queues, RecheckJob, RenderJob, ScriptJob, VoiceJob } from "@clipwise/shared";
+import {
+  FactcheckJob,
+  PublishJob,
+  type QueueName,
+  Queues,
+  RecheckJob,
+  RenderJob,
+  ScriptJob,
+  VoiceJob,
+} from "@clipwise/shared";
 import { type JobsOptions, Queue } from "bullmq";
 import type { z } from "zod";
 import { bullPrefix } from "./namespace";
@@ -11,6 +20,7 @@ export const JobDefs = {
   recheck: { queue: Queues.ai, schema: RecheckJob },
   voice: { queue: Queues.voice, schema: VoiceJob },
   render: { queue: Queues.render, schema: RenderJob },
+  publish: { queue: Queues.publish, schema: PublishJob },
 } as const;
 export type JobName = keyof typeof JobDefs;
 export type JobData<N extends JobName> = z.infer<(typeof JobDefs)[N]["schema"]>;
@@ -43,6 +53,7 @@ export const allQueues = () => (Object.keys(Queues) as QueueName[]).filter((n) =
  */
 export const jobIdFor = <N extends JobName>(name: N, data: JobData<N>): string => {
   const d = data as Record<string, unknown>;
+  if (name === "publish") return `post_${d.postId}_a${d.attempt ?? 1}`;
   const base = `vid_${d.videoId}_${name}`;
   switch (name) {
     case "script":

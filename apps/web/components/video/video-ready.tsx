@@ -1,17 +1,24 @@
 "use client";
-import { ArrowLeft, CalendarDays, Check, Copy, Download, Pencil, Plus, RefreshCw } from "lucide-react";
+import { ArrowLeft, Check, Download, Pencil, Plus, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
-import { Soon } from "@/components/app/soon";
 import { TopBar } from "@/components/app/top-bar";
+import type { InstagramForVideo } from "@/lib/instagram";
 import type { FinalView, VideoView } from "@/lib/videos";
+import { InstagramPosts, PostToInstagram } from "./post-instagram";
 
-export function VideoReady({ video, final }: { video: VideoView; final: FinalView }) {
+export function VideoReady({
+  video,
+  final,
+  instagram,
+}: {
+  video: VideoView;
+  final: FinalView;
+  instagram: InstagramForVideo;
+}) {
   const router = useRouter();
   const [failed, setFailed] = useState(false);
-  const [caption, setCaption] = useState(video.title);
   // Signed playback URLs expire. Refresh them without another generation or render.
   useEffect(() => {
     const timer = setInterval(() => router.refresh(), 45 * 60 * 1000);
@@ -107,17 +114,16 @@ export function VideoReady({ video, final }: { video: VideoView; final: FinalVie
               ) : (
                 <span className="text-sm text-red-ink">Download unavailable: file missing.</span>
               )}
-              <Soon>
-                <button
-                  type="button"
-                  disabled
-                  className="flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-line text-sm text-ink-2"
-                >
-                  <CalendarDays className="size-4" />
-                  Schedule to Instagram{" "}
-                  <span className="rounded bg-teal-soft px-1.5 text-[10px] text-teal-ink">Soon</span>
-                </button>
-              </Soon>
+              {final.url && (
+                <PostToInstagram
+                  videoId={video.id}
+                  title={video.title}
+                  durationMs={final.durationMs}
+                  thumbnailUrl={final.thumbnailUrl ?? null}
+                  instagram={instagram}
+                  fallbackCaption={video.title}
+                />
+              )}
               <Link
                 href={`/videos/${video.id}?tab=edit`}
                 className="flex h-9 items-center justify-center gap-2 rounded-lg text-sm text-ink-2 hover:bg-paper"
@@ -125,36 +131,6 @@ export function VideoReady({ video, final }: { video: VideoView; final: FinalVie
                 <Pencil className="size-4" />
                 Edit and re-render
               </Link>
-            </div>
-            <div className="rounded-xl border border-line bg-paper/60 p-4">
-              <div className="mb-2 flex items-center justify-between">
-                <label htmlFor="post-caption" className="text-sm font-semibold">
-                  Post caption
-                </label>
-                <button
-                  type="button"
-                  className="flex items-center gap-1 text-xs text-ink-2"
-                  onClick={async () => {
-                    try {
-                      await navigator.clipboard.writeText(caption);
-                      toast.success("Caption copied");
-                    } catch {
-                      toast.error("Couldn't copy. Select the text to copy it.");
-                    }
-                  }}
-                >
-                  <Copy className="size-3.5" />
-                  Copy
-                </button>
-              </div>
-              <textarea
-                id="post-caption"
-                value={caption}
-                onChange={(e) => setCaption(e.target.value)}
-                className="min-h-24 w-full resize-y rounded-lg border border-line bg-panel p-3 text-sm"
-                maxLength={2200}
-              />
-              <p className="mt-2 text-xs text-ink-3">Draft caption · copy it before leaving this page.</p>
             </div>
             <dl className="divide-y divide-line text-sm">
               {[
@@ -178,6 +154,7 @@ export function VideoReady({ video, final }: { video: VideoView; final: FinalVie
             </p>
           </section>
         </div>
+        <InstagramPosts videoId={video.id} initial={instagram.posts} />
         <Link
           href="/create"
           className="flex items-center justify-between rounded-xl border border-line bg-panel p-5 text-sm font-medium"

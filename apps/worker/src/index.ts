@@ -58,8 +58,9 @@ console.log(
 
 const processor = makeProcessor();
 // Rendering is heavy (Chrome + ffmpeg): one at a time. Voice: one, to stay inside ElevenLabs' limits.
-const concurrency = { ai: 2, voice: 1, render: 1 } as const;
-const workers = (["ai", "voice", "render"] as const).map(
+// Publish: one Instagram post at a time (mostly waiting for Instagram to process the video).
+const concurrency = { ai: 2, voice: 1, render: 1, publish: 1 } as const;
+const workers = (["ai", "voice", "render", "publish"] as const).map(
   (name) =>
     new Worker(Queues[name], processor, {
       connection: newRedis(`worker:${name}`),
@@ -90,7 +91,7 @@ await sendBeat();
 const heartbeat = setInterval(() => void sendBeat(), HEARTBEAT_MS);
 
 console.log(
-  `[worker] ready (${env ?? "development"}, node ${process.version}, pid ${process.pid}) · queues: ai×2, voice×1, render×1${monitoring ? " · error reports on" : ""}`,
+  `[worker] ready (${env ?? "development"}, node ${process.version}, pid ${process.pid}) · queues: ai×2, voice×1, render×1, publish×1${monitoring ? " · error reports on" : ""}`,
 );
 
 let stopping = false;

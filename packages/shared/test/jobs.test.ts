@@ -16,7 +16,8 @@ describe("job payloads", () => {
     expect(jobId.script(id, 1)).toBe(`vid:${id}:script:v1`);
     expect(jobId.scene(id, 3, 4)).toBe(`vid:${id}:scene3:v4`);
     expect(jobId.render(id, 2)).toBe(`vid:${id}:render:v2`);
-    expect(jobId.publish(id)).toBe(`post_${id}`);
+    expect(jobId.publish(id)).toBe(`post_${id}_a1`);
+    expect(jobId.publish(id, 2)).toBe(`post_${id}_a2`); // "Try again" is a new job
   });
 
   it("names the four queues", () => {
