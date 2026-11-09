@@ -175,6 +175,14 @@ export function Connections({
                 <p className="mt-0.5 text-[11px] text-ink-3">
                   Needs a Creator or Business account (free to switch in the Instagram app).
                 </p>
+                {/* Meta's login page always offers Facebook too; point people to the Instagram button. */}
+                <p className="mt-2 inline-flex w-fit items-center gap-1.5 rounded-lg bg-wash px-2.5 py-1.5 text-[11px] text-ink-2">
+                  <Info className="size-3.5 shrink-0 text-ink-3" />
+                  <span>
+                    On Meta&apos;s next screen, choose{" "}
+                    <span className="font-semibold text-ink">Continue with Instagram</span>.
+                  </span>
+                </p>
               </div>
             </div>
             {data.available ? (

@@ -2,11 +2,11 @@
 
 Repo: https://github.com/irfan0374/Clipwise (public). Updated before every commit and push. One feature at a time: **plan → approve → build + tests → demo → review → fix → commit**.
 
-**Last updated:** 2026-11-07
+**Last updated:** 2026-11-09
 
 ## Now
 
-**Step J1 (Instagram connect + Post now) approved for staging on 2026-11-09** — see "Step J1 validation". Meta's login offers "Continue with Instagram" (checked by the owner); Meta refuses `localhost` redirect URLs, so the full connect + real Reel post is tested on staging.
+**Step J1 (Instagram connect + Post now) passed on staging on 2026-11-09 and is going live** — the owner connected @nafiyeh_ with "Continue with Instagram" (no Facebook) and posted a real Reel from staging; the access key is stored encrypted. See "Step J1 validation".
 
 **Step I (fair share, billing removed) approved on 2026-11-06** — see "Step I validation". Before that: **Step H5 (live) online on 2026-10-30**: https://clipwise-kappa.vercel.app (Vercel Production), live worker on the Mac (`pnpm worker:live`), MongoDB `clipwise`, R2 bucket `clipwise-live`; the owner signed up and made a real promo video on live; first live backup taken.
 
@@ -16,7 +16,7 @@ Repo: https://github.com/irfan0374/Clipwise (public). Updated before every commi
 
 ## Next up
 
-**Step J1 staging test:** Vercel Preview settings (META_APP_ID, META_LOGIN_CONFIG_ID, META_APP_SECRET, TOKEN_ENCRYPTION_KEY), owner runs `CLIPWISE_ENV=staging pnpm db:indexes` and restarts `pnpm worker:staging`, connects @nafiyeh_ (Instagram Tester invite still "Pending" in Meta on 2026-11-09), one real Reel post (owner OK first). Then live settings, then **Step J2** — scheduling, reschedule/cancel, Calendar page. H5 leftovers: owner admin on live, ElevenLabs paid plan, invite steps, `staging` branch brought up to `main`, optional Sentry DSNs.
+**Step J1 live:** Vercel Production settings added (2026-11-09); owner runs `CLIPWISE_ENV=live pnpm db:indexes`, restarts `pnpm worker:live`, connects and posts on live. Then **Step J2** — scheduling, reschedule/cancel, Calendar page. H5 leftovers: owner admin on live, ElevenLabs paid plan, invite steps, `staging` branch brought up to `main`, optional Sentry DSNs.
 
 ## Build plan
 
@@ -50,7 +50,7 @@ Legend: ✅ done · 🔍 in review · 🛠 building · ⏳ not started. Small fe
 | # | Feature | Status |
 | --- | --- | --- |
 | 17 | Brand kit | ⏳ |
-| 18 | Instagram, scheduling and calendar | 🛠 J1 (connect + post now) on staging · J2 (scheduling + calendar) ⏳ |
+| 18 | Instagram, scheduling and calendar | ✅ J1 (connect + post now) passed on staging, going live · J2 (scheduling + calendar) ⏳ |
 
 ## Step H plan
 
@@ -71,6 +71,7 @@ Owner actions (accounts and keys are never entered by Claude): create the Vercel
 - History panel on the video page: Posted / Queued / Posting… / Failed, "View on Instagram", "Try again".
 - **Manual QA (browser, 2026-11-07):** Connections page vs Stitch (connected, reconnect, coming soon rows; phone size), success and error messages, Disconnect, a forged login link is refused, AI caption written once then reused, Post window on computer and phone. Fixes from QA: on phones the Post window is now the Stitch bottom sheet (small video card, Cancel / Post now always visible); with only a broken account the video page says "Reconnect @name to post".
 - **Login check with Meta (2026-11-09):** a private window shows Meta's "Continue with Facebook / Continue with Instagram" page; Instagram login worked, then Meta blocked the return to `localhost` (not allowed as a redirect URL). The login URL now also sends `prompt=login` and `override_default_response_type=true` (as Meta's own login URL does), so people already logged into Facebook still get the Instagram choice instead of the business-portfolio screen.
+- **Staging test (2026-11-09):** connected with Instagram only, a real Reel posted and checked on Instagram. Meta's login page always shows "Continue with Facebook" as well (`enable_fb_login=0` from the old Instagram Login is ignored), so Settings → Connections now says: "On Meta's next screen, choose Continue with Instagram".
 - Posting only works where files are in R2 (staging, live); local dev refuses with a clear message — checked in the browser end to end with the dev worker.
 - `pnpm check`: lint, typechecks and **219 tests passed** (encryption, Meta login/code exchange with a fake Graph API, 8 publish-job tests). Production build OK. Dev database indexes synced. Temporary test user and fake account removed from `clipwise_dev`.
 
@@ -144,6 +145,7 @@ Owner actions (accounts and keys are never entered by Claude): create the Vercel
 
 | Date | Decision |
 | --- | --- |
+| 2026-11-09 | Meta's Unified login page can't hide the Facebook button (old Instagram Login isn't offered to new apps); Clipwise tells people to choose "Continue with Instagram". Other users can connect only after Meta App Review |
 | 2026-11-07 | Instagram: Meta Unified login (new Meta apps can't use the old Instagram-only app; people still sign in with Instagram only). Access keys encrypted in MongoDB. Posting only from R2 environments. Deauthorize / data-deletion callbacks deferred to Meta App Review (Unified login docs don't describe them yet). Until App Review only app testers can connect. Meta doesn't allow `localhost` redirect URLs, so connecting is tested on staging |
 | 2026-11-06 | Clipwise stays free: no paid plans, no Stripe (Feature 19 dropped). Fairness comes from a per-workspace share of the shared AI and voice budgets (15 Gemini requests/day, 1,500 ElevenLabs credits/month, both settings) |
 | 2026-10-29 | Every Redis connection and BullMQ queue has an error listener (one short line per 30s per source): cloud Redis resets connections now and then and ioredis/BullMQ reconnect by themselves. The subscriber test counts only its own connection |
