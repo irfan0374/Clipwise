@@ -81,23 +81,28 @@ export function SettingsPanel({
     });
   return (
     <div>
-      <header className="mb-8">
+      <header className="mb-6">
         <h1 className="text-h1">Settings</h1>
         <p className="mt-2 text-sm text-ink-2">Manage your workspace, defaults and beta allowances.</p>
       </header>
-      <div className="grid gap-6 md:grid-cols-[180px_minmax(0,1fr)]">
-        <nav aria-label="Settings" className="flex gap-1 overflow-x-auto md:flex-col">
-          {(["account", "defaults", "usage", "connections"] as const).map((t) => (
-            <Link
-              key={t}
-              href={`/settings?tab=${t}`}
-              aria-current={tab === t ? "page" : undefined}
-              className={`rounded-lg px-3.5 py-2 text-sm font-medium capitalize ${tab === t ? "bg-ink text-white" : "text-ink-2 hover:bg-wash"}`}
-            >
-              {t}
-            </Link>
-          ))}
-        </nav>
+      {/* Tabs across the top (Stitch "Settings > Connections"): the open one is a black pill with a lime dot. */}
+      <nav
+        aria-label="Settings"
+        className="-mx-4 mb-8 flex gap-0.5 overflow-x-auto border-b border-line px-4 pb-4 [scrollbar-width:none] sm:mx-0 sm:gap-2 sm:px-0"
+      >
+        {(["account", "defaults", "usage", "connections"] as const).map((t) => (
+          <Link
+            key={t}
+            href={`/settings?tab=${t}`}
+            aria-current={tab === t ? "page" : undefined}
+            className={`flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-[13px] font-medium capitalize sm:gap-2 sm:px-4 sm:text-sm transition-colors ${tab === t ? "bg-ink text-white shadow-xs" : "text-ink-2 hover:bg-wash hover:text-ink"}`}
+          >
+            {t}
+            {tab === t && <span className="size-1.5 rounded-full bg-lime" />}
+          </Link>
+        ))}
+      </nav>
+      <div>
         <div className="min-w-0 space-y-6">
           {tab === "connections" && <Connections data={connections} result={result} />}
           {tab === "usage" && (

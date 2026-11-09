@@ -8,7 +8,11 @@ Repo: https://github.com/irfan0374/Clipwise (public). Updated before every commi
 
 **Step J2 (scheduling + Calendar) passed on staging on 2026-11-09** — the owner scheduled real Reels on staging; scheduling, reschedule, cancel and the Calendar all worked. See "Step J2 validation".
 
-**Easier Instagram connect (in review, 2026-11-09):** on computers Connect opens Meta's login in a small window; when it finishes the window closes and Connections updates. A 1-2-3 guide shows what to choose on Meta's screens.
+**Easier Instagram connect (passed on staging, 2026-11-10):** on computers Connect opens Meta's login in a small window; when it finishes the window closes and Connections updates. A 1-2-3 guide shows what to choose on Meta's screens. The owner connected @nafiyeh_ in the small window on staging; it closed by itself and Connections updated. Meta's "Select the business assets" screen stays (Meta's own consent step).
+
+**Settings tabs on top (2026-11-10):** Account / Defaults / Usage / Connections now run across the top (Stitch "Settings > Connections"), black pill with a lime dot; they fit on a 375px phone.
+
+**Next: Step K1 Brand kit** (logo, colors, font, title casing, caption style, voice shared with Defaults, call-to-action, live preview). K2 later: own intro/outro clips.
 
 **Step J1 (Instagram connect + Post now) passed on staging on 2026-11-09 and is going live** — the owner connected @nafiyeh_ with "Continue with Instagram" (no Facebook) and posted a real Reel from staging; the access key is stored encrypted. See "Step J1 validation".
 
