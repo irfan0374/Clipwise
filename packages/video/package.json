@@ -5,7 +5,9 @@
   "exports": {
     ".": "./src/types.ts",
     "./icons": "./src/visuals/icons.ts",
-    "./explainer": "./src/Explainer.tsx"
+    "./explainer": "./src/Explainer.tsx",
+    "./brand-sample": "./src/brand-sample.ts",
+    "./brand": "./src/brand.tsx"
   },
   "scripts": {
     "studio": "remotion studio src/index.ts",

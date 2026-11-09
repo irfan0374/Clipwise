@@ -1,6 +1,7 @@
 import { Formats, LengthModes, LengthSeconds, Stages, VideoStatuses } from "@clipwise/shared";
 import { type InferSchemaType, Schema } from "mongoose";
 import { baseOptions, defineModel, ownerFields } from "../base";
+import { VideoBrandSchema } from "./brand";
 import { ClaimSchema, ScriptSchema } from "./video.parts";
 
 /**
@@ -20,6 +21,8 @@ const VideoSchema = new Schema(
     lengthMode: { type: String, enum: LengthModes, required: true },
     lengthSeconds: { type: Number, enum: [...LengthSeconds, null], default: null }, // resolved when the script is written
     voiceId: { type: String, required: true },
+    // Brand kit copied at creation (null = Clipwise's own look); later Brand kit changes don't restyle this video.
+    brand: { type: VideoBrandSchema, default: null },
 
     status: { type: String, enum: VideoStatuses, default: "draft" },
     stage: { type: String, enum: [...Stages, null], default: null }, // stage running or failed

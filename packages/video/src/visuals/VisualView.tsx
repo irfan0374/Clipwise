@@ -1,4 +1,4 @@
-import { theme } from "../theme";
+import { useBrand } from "../brand";
 import type { Visual } from "../types";
 import { Bars } from "./Bars";
 import { Compare } from "./Compare";
@@ -12,7 +12,8 @@ import { BOX, colorOf } from "./palette";
 import { Waves } from "./Waves";
 
 const Body = ({ visual, duration }: { visual: Visual; duration: number }) => {
-  const color = colorOf(visual.color, theme.accent);
+  const brand = useBrand();
+  const color = colorOf(visual.color, brand.accent);
   const items = visual.items ?? [];
   switch (visual.type) {
     case "icon":

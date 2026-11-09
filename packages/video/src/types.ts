@@ -62,4 +62,40 @@ export type Timeline = {
   scenes: TimelineScene[];
   words: TimelineWord[];
   captionPages: CaptionPage[];
+  /** Missing on videos made before Brand kit: they render with `defaultBrandStyle`. */
+  brand?: BrandStyle;
+};
+
+// Brand kit: how one video looks. Saved on the video when it is created, so later Brand kit changes never
+// restyle videos that already exist.
+export const BrandFonts = ["geist", "inter", "poppins", "montserrat", "dmSans"] as const;
+export type BrandFont = (typeof BrandFonts)[number];
+export const TitleCasings = ["upper", "title", "sentence"] as const;
+export type TitleCasing = (typeof TitleCasings)[number];
+export const CaptionStyles = ["outline", "pill", "minimal"] as const;
+export type CaptionStyle = (typeof CaptionStyles)[number];
+export const LogoCorners = ["topRight", "topLeft", "bottomRight", "bottomLeft"] as const;
+export type LogoCorner = (typeof LogoCorners)[number];
+
+export type BrandStyle = {
+  /** Highlights: hook accent bar, bullets, stats, the spoken caption word, progress bar. "#RRGGBB". */
+  accent: string;
+  /** Background and cards. "#RRGGBB". */
+  base: string;
+  font: BrandFont;
+  /** Hook titles only. "sentence" keeps the text as written. */
+  casing: TitleCasing;
+  captionStyle: CaptionStyle;
+  /** `src` is a file name inside the render's public folder, or a full URL in the browser. */
+  logo: { src: string; corner: LogoCorner } | null;
+};
+
+/** Clipwise's own look: what every video had before Brand kit, and what a video without a brand gets. */
+export const defaultBrandStyle: BrandStyle = {
+  accent: "#3B82F6",
+  base: "#0B0B0F",
+  font: "geist",
+  casing: "sentence",
+  captionStyle: "outline",
+  logo: null,
 };

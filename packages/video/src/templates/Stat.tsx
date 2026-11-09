@@ -1,8 +1,10 @@
 import { AbsoluteFill, interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
+import { useBrand } from "../brand";
 import { theme } from "../theme";
 import { formatStat, parseStat } from "./stat-number";
 
 export const Stat = ({ value, label }: { value: string; label: string }) => {
+  const brand = useBrand();
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const parsed = parseStat(value);
@@ -26,7 +28,7 @@ export const Stat = ({ value, label }: { value: string; label: string }) => {
           fontWeight: 800,
           lineHeight: 1,
           letterSpacing: -10,
-          color: theme.accent,
+          color: brand.accent,
           fontVariantNumeric: "tabular-nums",
         }}
       >
@@ -38,7 +40,7 @@ export const Stat = ({ value, label }: { value: string; label: string }) => {
           fontSize: 60,
           fontWeight: 500,
           lineHeight: 1.2,
-          color: theme.textSecondary,
+          color: brand.textSecondary,
           opacity: labelIn,
           transform: `translateY(${(1 - labelIn) * 24}px)`,
         }}

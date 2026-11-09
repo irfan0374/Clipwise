@@ -42,7 +42,10 @@ export async function renderJob(ctx: Loaded, data: JobData<"render">, attempt: n
       alignment = previewAlignment(script);
     }
 
-    const timeline = buildTimeline({ script, alignment, audioFile: final ? "voice.mp3" : null, imageFiles: {} });
+    const timeline = {
+      ...buildTimeline({ script, alignment, audioFile: final ? "voice.mp3" : null, imageFiles: {} }),
+      brand: await brandForRender(video.brand, media),
+    };
     const timelineKey = keys.timeline(workspaceId, videoId, data.scriptVersion);
     await store.put(timelineKey, JSON.stringify(timeline), { contentType: "application/json" });
 
@@ -91,6 +94,32 @@ export async function renderJob(ctx: Loaded, data: JobData<"render">, attempt: n
   } finally {
     await rm(work, { recursive: true, force: true });
   }
+}
+
+type BrandStyle = NonNullable<Parameters<typeof renderVideo>[0]["brand"]>;
+
+/** The video's saved Brand kit for the renderer, with its logo copied into the render's public folder. A logo
+ * that can't be read is left out (the video still renders) rather than failing the render. */
+export async function brandForRender(brand: Loaded["video"]["brand"], media: string): Promise<BrandStyle | undefined> {
+  if (!brand) return undefined;
+  let logo: BrandStyle["logo"] = null;
+  if (brand.logoKey) {
+    const file = `logo${path.extname(brand.logoKey)}`;
+    try {
+      await storage().getToFile(brand.logoKey, path.join(media, file));
+      logo = { src: file, corner: brand.logoCorner };
+    } catch (error) {
+      console.warn(`  [render] brand logo skipped: ${(error as Error).message}`);
+    }
+  }
+  return {
+    accent: brand.accent,
+    base: brand.base,
+    font: brand.font,
+    casing: brand.casing,
+    captionStyle: brand.captionStyle,
+    logo,
+  };
 }
 
 /**

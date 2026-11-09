@@ -12,7 +12,7 @@ Repo: https://github.com/irfan0374/Clipwise (public). Updated before every commi
 
 **Settings tabs on top (2026-11-10):** Account / Defaults / Usage / Connections now run across the top (Stitch "Settings > Connections"), black pill with a lime dot; they fit on a 375px phone.
 
-**Next: Step K1 Brand kit** (logo, colors, font, title casing, caption style, voice shared with Defaults, call-to-action, live preview). K2 later: own intro/outro clips.
+**Step K1 Brand kit built on 2026-11-10, in review** — logo, colors, font, title casing, caption style, voice (shared with Settings → Defaults), call-to-action and a live preview; a real test render matched the preview. See "Step K1 validation". K2 later: own intro/outro clips.
 
 **Step J1 (Instagram connect + Post now) passed on staging on 2026-11-09 and is going live** — the owner connected @nafiyeh_ with "Continue with Instagram" (no Facebook) and posted a real Reel from staging; the access key is stored encrypted. See "Step J1 validation".
 
@@ -57,7 +57,7 @@ Legend: ✅ done · 🔍 in review · 🛠 building · ⏳ not started. Small fe
 
 | # | Feature | Status |
 | --- | --- | --- |
-| 17 | Brand kit | ⏳ |
+| 17 | Brand kit | 🔍 K1 (logo, colors, font, captions, voice, call-to-action, live preview) in review · K2 (intro/outro clips) ⏳ |
 | 18 | Instagram, scheduling and calendar | ✅ J1 (connect + post now) passed on staging, going live · J2 (scheduling + calendar) ✅ passed on staging |
 
 ## Step H plan
@@ -71,6 +71,15 @@ Hosting (chosen 2026-10-28): web on **Vercel free** (Preview deployments = stagi
 5. **H5 Beta checklist:** promote to live, make the owner admin, confirm beta limits, ElevenLabs paid plan (owner), final secrets check before the push, invite steps for the first users.
 
 Owner actions (accounts and keys are never entered by Claude): create the Vercel, Redis Cloud, Backblaze B2 and Sentry accounts and put each key straight into Vercel or the Mac's env files, following `design/deploy.md`.
+
+## Step K1 validation — 2026-11-10
+
+- **Page (Brand kit in the sidebar, Stitch "Brand Kit"):** logo upload (PNG, SVG or WebP up to 2 MB; Replace / Remove; on/off switch; corner), accent and background colors (swatch picker or hex) with the 6 Stitch presets, 5 fonts (Geist, Inter, Poppins, Montserrat, DM Sans), title casing (Uppercase / Title Case / Sentence case = as written), caption style (Bold outline / Pill badge / Minimal), default voice (the same setting as Settings → Defaults), call-to-action (40 characters), live 9:16 preview (Remotion player with a short sample), "All changes saved / Unsaved changes", docked Save bar with "Reset to default", intro/outro shown as Soon. Phones: preview on top (smaller), sections stacked.
+- **How it works:** the kit is saved on the workspace (`brandKit`; the unused `brandKitId` field is gone). Each new video copies it (`video.brand`) when it is created, so later changes never restyle existing videos or their re-renders; no kit = Clipwise's own look. The render job copies the logo into the render folder (an unreadable logo is skipped, the video still renders). The script prompt uses the call-to-action word for word. Storyboard and editor previews show the video's brand. Text switches to dark on a light background color.
+- **Logo safety:** the file type is read from the file's first bytes, not its name; SVGs with scripts, event handlers or outside links are refused. Logo files get a new name per upload and are not deleted on Replace/Remove, so older videos keep their logo. Server actions now accept up to 3 MB (`next.config`).
+- **Voice samples:** the play buttons use the same route as the Create page, which needs Voices access on the ElevenLabs key (owner turned it on 2026-11-10; samples checked for all 3 voices with the dev, staging and live keys). Voice labels are the real ElevenLabs voices: Liam (US), Jessica (US), George (UK) — Stitch said UK/US/AU.
+- **Manual QA (local, 2026-11-10):** presets, font, casing, caption style, logo drop, call-to-action and voice all saved and reloaded; the voice showed in Settings → Defaults and on Create; a script-laden SVG and a GIF were refused; computer 1440px and phone 375px. A real 30s test video (local worker) used the kit: the AI ended with "Follow Acme for daily science.", the MP4 showed the logo, navy/pink colors, Poppins, UPPERCASE hook and pill captions. Cost: 2 Gemini requests, 382 ElevenLabs credits. Test account, video and files removed.
+- `pnpm check`: lint, typechecks and **239 tests passed** (13 new: brand copied to new videos, call-to-action in the prompt, logo copied into renders, colour/casing helpers, preview sample, logo and form checks).
 
 ## Easier Instagram connect — 2026-11-09
 
@@ -214,6 +223,7 @@ Owner actions (accounts and keys are never entered by Claude): create the Vercel
 | 2026-10-23 | Next.js 16 changed APIs: read `node_modules/next/dist/docs/` before writing Next code (see `apps/web/AGENTS.md`) |
 
 ## Open items
+
 
 - ElevenLabs free plan is non-commercial — upgrade before real users (Feature 16).
 - Make yourself admin on live: `CLIPWISE_ENV=live pnpm user:admin you@example.com`.

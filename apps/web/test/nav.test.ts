@@ -12,8 +12,14 @@ describe("sidebar nav", () => {
   });
 
   it("lists working pages first-class and v1 pages as soon", () => {
-    expect(navItems.filter((i) => !i.soon).map((i) => i.label)).toEqual(["Create", "Videos", "Calendar", "Settings"]);
-    expect(navItems.filter((i) => i.soon).map((i) => i.label)).toEqual(["Brand kit"]);
+    expect(navItems.filter((i) => !i.soon).map((i) => i.label)).toEqual([
+      "Create",
+      "Videos",
+      "Calendar",
+      "Brand kit",
+      "Settings",
+    ]);
+    expect(navItems.filter((i) => i.soon).map((i) => i.label)).toEqual([]);
   });
 });
 

@@ -1,6 +1,8 @@
 import { AbsoluteFill, Audio, interpolate, Sequence, staticFile, useCurrentFrame } from "remotion";
+import { BrandProvider, fontFamilyFor, resolveBrand } from "./brand";
 import { Background } from "./layers/Background";
 import { Captions } from "./layers/Captions";
+import { Logo } from "./layers/Logo";
 import { ProgressBar } from "./layers/ProgressBar";
 import { Bullets } from "./templates/Bullets";
 import { ImageFocus } from "./templates/ImageFocus";
@@ -52,27 +54,35 @@ const Fade = ({
   return <AbsoluteFill style={{ opacity: Math.min(opacityIn, opacityOut) }}>{children}</AbsoluteFill>;
 };
 
-export const Explainer = (timeline: Timeline) => (
-  <AbsoluteFill style={{ backgroundColor: theme.background, fontFamily: theme.fontFamily, color: theme.text }}>
-    <Background />
-    {timeline.audioFile ? <Audio src={staticFile(timeline.audioFile)} /> : null}
-    {timeline.scenes.map((scene, i) => {
-      const isLast = i === timeline.scenes.length - 1;
-      const length = scene.endFrame - scene.startFrame;
-      return (
-        <Sequence
-          key={scene.index}
-          from={scene.startFrame}
-          durationInFrames={length + (isLast ? 0 : theme.transitionFrames)}
-          name={`Scene ${scene.index} · ${scene.visual?.type ?? scene.template}`}
-        >
-          <Fade fadeIn={i > 0} fadeOutAt={isLast ? null : length}>
-            <SceneBody scene={scene} />
-          </Fade>
-        </Sequence>
-      );
-    })}
-    <Captions words={timeline.words} pages={timeline.captionPages} />
-    <ProgressBar />
-  </AbsoluteFill>
-);
+export const Explainer = (timeline: Timeline) => {
+  const brand = resolveBrand(timeline.brand);
+  return (
+    <BrandProvider value={brand}>
+      <AbsoluteFill
+        style={{ backgroundColor: brand.background, fontFamily: fontFamilyFor(brand.font), color: brand.text }}
+      >
+        <Background />
+        {timeline.audioFile ? <Audio src={staticFile(timeline.audioFile)} /> : null}
+        {timeline.scenes.map((scene, i) => {
+          const isLast = i === timeline.scenes.length - 1;
+          const length = scene.endFrame - scene.startFrame;
+          return (
+            <Sequence
+              key={scene.index}
+              from={scene.startFrame}
+              durationInFrames={length + (isLast ? 0 : theme.transitionFrames)}
+              name={`Scene ${scene.index} · ${scene.visual?.type ?? scene.template}`}
+            >
+              <Fade fadeIn={i > 0} fadeOutAt={isLast ? null : length}>
+                <SceneBody scene={scene} />
+              </Fade>
+            </Sequence>
+          );
+        })}
+        <Captions words={timeline.words} pages={timeline.captionPages} />
+        <Logo />
+        <ProgressBar />
+      </AbsoluteFill>
+    </BrandProvider>
+  );
+};

@@ -1,14 +1,5 @@
-import { loadFont } from "@remotion/google-fonts/Geist";
-
-const { fontFamily } = loadFont("normal", { weights: ["500", "700", "800"], subsets: ["latin"] });
-
+// Layout for every video. Colours and the font come from the video's Brand kit (brand.tsx, useBrand).
 export const theme = {
-  background: "#0B0B0F",
-  surface: "#16161D",
-  text: "#FFFFFF",
-  textSecondary: "#A1A1AA",
-  accent: "#3B82F6",
-  fontFamily,
   // 9:16 safe zones: keep content clear of Reels / TikTok / Shorts UI.
   safe: { side: 80, top: 220, bottom: 380 },
   // Main content sits above the caption band.

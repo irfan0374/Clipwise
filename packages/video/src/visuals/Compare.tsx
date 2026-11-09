@@ -1,5 +1,5 @@
 import { spring, useCurrentFrame, useVideoConfig } from "remotion";
-import { theme } from "../theme";
+import { useBrand } from "../brand";
 import type { VisualItem } from "../types";
 import { IconBadge } from "./IconBadge";
 import { Label } from "./Label";
@@ -7,6 +7,7 @@ import { BOX, colorOf, colors } from "./palette";
 
 // Two cards slide in from opposite sides with a "vs" badge between them.
 export const Compare = ({ items }: { items: VisualItem[] }) => {
+  const brand = useBrand();
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const [left, right] = [items[0] ?? {}, items[1] ?? {}];
@@ -28,7 +29,7 @@ export const Compare = ({ items }: { items: VisualItem[] }) => {
           width: cardW,
           height: cardH,
           borderRadius: 32,
-          backgroundColor: theme.surface,
+          backgroundColor: brand.surface,
           border: `3px solid ${c}66`,
           display: "flex",
           flexDirection: "column",
@@ -57,14 +58,14 @@ export const Compare = ({ items }: { items: VisualItem[] }) => {
           width: 110,
           height: 110,
           borderRadius: 55,
-          backgroundColor: theme.background,
-          border: `3px solid ${theme.textSecondary}`,
+          backgroundColor: brand.background,
+          border: `3px solid ${brand.textSecondary}`,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           fontSize: 40,
           fontWeight: 800,
-          color: theme.text,
+          color: brand.text,
           transform: `scale(${vs})`,
         }}
       >

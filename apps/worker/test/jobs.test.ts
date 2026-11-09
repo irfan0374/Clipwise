@@ -1,3 +1,6 @@
+import { mkdtemp, readFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { PipelineRun, Render, ScriptVersion, UsageEvent, Video, Workspace } from "@clipwise/db";
 import { type FactCheck, type Providers, providerGuards } from "@clipwise/pipeline";
 import {
@@ -38,6 +41,7 @@ import type { Job } from "bullmq";
 import { describe, expect, it, vi } from "vitest";
 import { narrationText } from "../../../packages/pipeline/src/stages/voice";
 import { fakeAlignment, validScript as fixtureScript } from "../../../packages/pipeline/test/fixtures";
+import { brandForRender } from "../src/jobs/render";
 import { makeProcessor } from "../src/processor";
 
 /** The pipeline fixture without its photo scene: the worker plans no photos (no stock-photo provider). */
@@ -868,5 +872,69 @@ describe("hosting: environments share one Redis", () => {
     await new Promise((r) => setTimeout(r, 50));
     expect(c).toEqual([status]);
     await stopC();
+  });
+});
+
+describe("brand kit", () => {
+  const kit = {
+    accent: "#EC4899",
+    base: "#0F172A",
+    font: "poppins",
+    casing: "upper",
+    captionStyle: "pill",
+    logoCorner: "bottomLeft",
+    logoKey: "ws/x/brand/logo-abc.png",
+    showLogo: true,
+    cta: "Follow Acme for more",
+  } as const;
+
+  it("a new video keeps a copy of the Brand kit; later changes and a switched-off logo are respected", async () => {
+    await Workspace.create({ ownerUserId: "u1", name: "Test", brandKit: kit });
+    const { videoId } = await newVideo("script");
+    await Workspace.updateOne(
+      { ownerUserId: "u1" },
+      { $set: { "brandKit.accent": "#10B981", "brandKit.showLogo": false } },
+    );
+    const { videoId: second } = await newVideo("script");
+    const [first, later] = await Promise.all([Video.findById(videoId).lean(), Video.findById(second).lean()]);
+    expect(first?.brand).toMatchObject({ accent: "#EC4899", logoKey: kit.logoKey, cta: kit.cta, font: "poppins" });
+    expect(later?.brand).toMatchObject({ accent: "#10B981", logoKey: null });
+  });
+
+  it("a workspace without a Brand kit makes videos with Clipwise's own look", async () => {
+    const { videoId } = await newVideo("script");
+    expect((await Video.findById(videoId).lean())?.brand).toBeNull();
+  });
+
+  it("asks the AI for the Brand kit call-to-action", async () => {
+    await Workspace.create({ ownerUserId: "u1", name: "Test", brandKit: kit });
+    await newVideo("script");
+    const asked: (string | undefined)[] = [];
+    const providers = fakes();
+    const real = providers.generateScript;
+    providers.generateScript = (topic, length, feedback, opts) => {
+      asked.push(opts?.cta);
+      return real(topic, length, feedback, opts);
+    };
+    await drain("ai", providers);
+    expect(asked).toEqual(["Follow Acme for more"]);
+  });
+
+  it("renders with the video's brand and its logo copied into the render folder; a missing logo is left out", async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), "clipwise-brand-"));
+    await storage().put(kit.logoKey, Buffer.from("png"), { contentType: "image/png" });
+    const brand = await brandForRender({ ...kit, logoKey: kit.logoKey }, dir);
+    expect(brand).toEqual({
+      accent: "#EC4899",
+      base: "#0F172A",
+      font: "poppins",
+      casing: "upper",
+      captionStyle: "pill",
+      logo: { src: "logo.png", corner: "bottomLeft" },
+    });
+    expect((await readFile(path.join(dir, "logo.png"))).toString()).toBe("png");
+    const missing = await brandForRender({ ...kit, logoKey: "ws/x/brand/logo-gone.png" }, dir);
+    expect(missing?.logo).toBeNull();
+    expect(await brandForRender(null, dir)).toBeUndefined();
   });
 });

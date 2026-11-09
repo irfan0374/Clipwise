@@ -1,5 +1,5 @@
 import { interpolate, useCurrentFrame } from "remotion";
-import { theme } from "../theme";
+import { useBrand } from "../brand";
 import type { VisualItem } from "../types";
 import { BOX, colorOf, colors } from "./palette";
 
@@ -7,6 +7,7 @@ const defaultColors = [colors.blue, colors.green, colors.red];
 
 // 1–3 travelling sine waves stacked; `value` 1–10 sets the wavelength (1 = short, 10 = long).
 export const Waves = ({ items, color }: { items: VisualItem[]; color: string }) => {
+  const brand = useBrand();
   const frame = useCurrentFrame();
   const rows = (items.length ? items : [{}]).slice(0, 3);
   const rowH = BOX.height / rows.length;
@@ -56,7 +57,7 @@ export const Waves = ({ items, color }: { items: VisualItem[]; color: string }) 
               top: rowH * i + 4,
               fontSize: 36,
               fontWeight: 700,
-              color: theme.text,
+              color: brand.text,
             }}
           >
             {item.label}

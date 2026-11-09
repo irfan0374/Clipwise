@@ -85,4 +85,4 @@ export {
   removeJob,
 } from "./queues";
 export { closeRedis, newRedis, redis, redisUrl } from "./redis";
-export { cancelVideo, retryVideo, type StartVideoInput, startVideo } from "./videos";
+export { cancelVideo, retryVideo, type StartVideoInput, startVideo, videoBrand } from "./videos";

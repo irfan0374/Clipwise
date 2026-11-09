@@ -1,5 +1,3 @@
-import { theme } from "../theme";
-
 export const Label = ({
   text,
   width,
@@ -19,7 +17,6 @@ export const Label = ({
         fontSize: size,
         fontWeight: 700,
         lineHeight: 1.12,
-        color: theme.text,
         letterSpacing: -0.5,
         ...style,
       }}

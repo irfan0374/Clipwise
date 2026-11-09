@@ -15,6 +15,14 @@ describe("formats", () => {
     expect(tips).not.toMatch(/Never invent prices/);
   });
 
+  it("uses the Brand kit call-to-action word for word instead of the format's suggestion", async () => {
+    const branded = await buildPrompt("Sleep better", 30, [], { format: "tips", cta: ' Follow "Acme" daily ' });
+    expect(branded).toContain(`Use exactly this call to action as the \`cta\` sentence: "Follow 'Acme' daily".`);
+    expect(branded).not.toMatch(/Save this so you don't forget/);
+    const plain = await buildPrompt("Sleep better", 30, [], { format: "tips", cta: "  " });
+    expect(plain).toMatch(/Save this so you don't forget/);
+  });
+
   it("chooses 30s for short formats and 60s for formats that need room", () => {
     expect([autoLength("promo"), autoLength("tips"), autoLength("quote")]).toEqual([30, 30, 30]);
     expect([autoLength("explainer"), autoLength("story"), autoLength("recap")]).toEqual([60, 60, 60]);

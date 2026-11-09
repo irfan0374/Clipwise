@@ -1,4 +1,4 @@
-import { assertWorkspaceActive, connectDb, PipelineRun, Render, Video } from "@clipwise/db";
+import { assertWorkspaceActive, connectDb, PipelineRun, Render, Video, Workspace } from "@clipwise/db";
 import type { Format, LengthMode, RunTarget } from "@clipwise/shared";
 import type { Types } from "mongoose";
 import { finalsPerWeek, weeklyFinalCount } from "./allowances";
@@ -22,6 +22,22 @@ export type StartVideoInput = {
 
 export const MIN_AI_REQUESTS_PER_VIDEO = 3;
 
+type BrandKit = NonNullable<Workspace["brandKit"]>;
+/** The Brand kit as a new video keeps it: no logo when the logo is switched off. */
+export const videoBrand = (kit: BrandKit | null | undefined) =>
+  kit
+    ? {
+        accent: kit.accent,
+        base: kit.base,
+        font: kit.font,
+        casing: kit.casing,
+        captionStyle: kit.captionStyle,
+        logoCorner: kit.logoCorner,
+        logoKey: kit.showLogo ? (kit.logoKey ?? null) : null,
+        cta: kit.cta ?? "",
+      }
+    : null;
+
 /** Creates the video and its pipeline run, then queues the script job. Returns at once; work happens in the worker. */
 export async function startVideo(input: StartVideoInput) {
   await connectDb();
@@ -31,6 +47,7 @@ export async function startVideo(input: StartVideoInput) {
   const { aiRequests } = await fairUsage(input.workspaceId);
   if (aiRequests.limit - aiRequests.used < MIN_AI_REQUESTS_PER_VIDEO)
     throw new FinalError("LIMIT_REACHED", aiShareMessage());
+  const workspace = await Workspace.findById(input.workspaceId, { brandKit: 1 }).lean();
   const video = await Video.create({
     workspaceId: input.workspaceId,
     createdByUserId: input.userId,
@@ -38,6 +55,7 @@ export async function startVideo(input: StartVideoInput) {
     format: input.format,
     lengthMode: input.lengthMode,
     voiceId: input.voiceId,
+    brand: videoBrand(workspace?.brandKit),
     status: "draft",
   });
   const run = await PipelineRun.create({

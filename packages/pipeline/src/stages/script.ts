@@ -12,15 +12,19 @@ export const buildPrompt = async (
   topic: string,
   length: Length,
   feedback: string[] = [],
-  { images = true, format = "explainer" as VideoFormat } = {},
+  { images = true, format = "explainer" as VideoFormat, cta = "" } = {},
 ) => {
   const guide = formatGuides[format];
+  // Brand kit call-to-action: used word for word instead of the format's suggestion.
+  const ctaHint = cta.trim()
+    ? `Use exactly this call to action as the \`cta\` sentence: "${cta.trim().replaceAll('"', "'")}".`
+    : guide.cta;
   const rules = lengthRules[length];
   let prompt = (await readFile(promptPath, "utf8"))
     .replaceAll("{{topic}}", topic)
     .replaceAll("{{format}}", format)
     .replaceAll("{{formatGuide}}", guide.guide)
-    .replaceAll("{{ctaHint}}", guide.cta)
+    .replaceAll("{{ctaHint}}", ctaHint)
     .replaceAll("{{length}}", String(length))
     .replaceAll("{{minWords}}", String(rules.minWords))
     .replaceAll("{{maxWords}}", String(rules.maxWords))
@@ -48,9 +52,9 @@ export const generateScript = async (
   topic: string,
   length: Length,
   feedback: string[] = [],
-  { images = true, format = "explainer" as VideoFormat } = {},
+  { images = true, format = "explainer" as VideoFormat, cta = "" } = {},
 ): Promise<ScriptAttempt> => {
-  const prompt = await buildPrompt(topic, length, feedback, { images, format });
+  const prompt = await buildPrompt(topic, length, feedback, { images, format, cta });
   // JSON mode without a response schema: Gemini rejects schemas this nested ("invalid argument").
   // The shape is spelled out in the prompt and every reply is checked with Zod in validate.ts.
   const answer = await askGemini({ prompt, json: true });

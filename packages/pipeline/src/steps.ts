@@ -95,10 +95,19 @@ export type ScriptResult = {
 
 /** Gemini script, validated with Zod; invalid replies are retried with the errors as feedback. */
 export async function writeScript(
-  opts: { topic: string; length: Length; format?: VideoFormat; feedback?: string[]; images?: boolean; log?: Log },
+  opts: {
+    topic: string;
+    length: Length;
+    format?: VideoFormat;
+    /** Brand kit call-to-action for the last scene ("" = the format's own suggestion). */
+    cta?: string;
+    feedback?: string[];
+    images?: boolean;
+    log?: Log;
+  },
   providers: Providers = real,
 ): Promise<ScriptResult> {
-  const { topic, length, format = "explainer", images = false, log = quiet } = opts;
+  const { topic, length, format = "explainer", cta = "", images = false, log = quiet } = opts;
   const extra = opts.feedback ?? [];
   let feedback = extra;
   let tokens = 0;
@@ -109,7 +118,7 @@ export async function writeScript(
   let best: { script: Script; off: number; model: string; attempt: number } | null = null;
   const target = (lengthRules[length].minWords + lengthRules[length].maxWords) / 2;
   for (let attempt = 1; attempt <= MAX_SCRIPT_ATTEMPTS; attempt++) {
-    const result: ScriptAttempt = await providers.generateScript(topic, length, feedback, { images, format });
+    const result: ScriptAttempt = await providers.generateScript(topic, length, feedback, { images, format, cta });
     tokens += result.tokens;
     requests += result.attempts;
     const checked = withQuoteRule(validateScript(result.raw, length, { images }), topic, format);

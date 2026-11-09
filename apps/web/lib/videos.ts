@@ -5,6 +5,7 @@ import { type ClaimVerdict, type Format, type Stage, type VideoStatus, Voices } 
 import { storage } from "@clipwise/storage";
 import type { Timeline } from "@clipwise/video";
 import type { Types } from "mongoose";
+import { brandStyleForPlayer } from "./brand";
 
 const isId = (id: string) => /^[a-f0-9]{24}$/.test(id);
 const words = (text: string) => text.trim().split(/\s+/).filter(Boolean).length;
@@ -98,7 +99,10 @@ export async function videoForOwner(id: string, workspaceId: Types.ObjectId): Pr
   let timeline: Timeline | null = null;
   if (script && v.scriptVersion > 0) {
     try {
-      timeline = previewTimeline(JSON.parse(JSON.stringify(script)));
+      timeline = {
+        ...previewTimeline(JSON.parse(JSON.stringify(script))),
+        brand: await brandStyleForPlayer(v.brand),
+      };
     } catch (error) {
       console.error("[preview] timeline failed", error);
     }

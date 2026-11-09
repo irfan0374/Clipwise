@@ -32,7 +32,13 @@ export const contentTypeFor = (key: string) =>
         ? "application/json"
         : key.endsWith(".jpg")
           ? "image/jpeg"
-          : "application/octet-stream";
+          : key.endsWith(".png")
+            ? "image/png"
+            : key.endsWith(".webp")
+              ? "image/webp"
+              : key.endsWith(".svg")
+                ? "image/svg+xml"
+                : "application/octet-stream";
 
 /** Keys never contain "..", a leading "/" or backslashes, so a local key can't escape the storage folder. */
 export const assertSafeKey = (key: string) => {

@@ -1,5 +1,5 @@
 import { interpolate, useCurrentFrame } from "remotion";
-import { theme } from "../theme";
+import { useBrand } from "../brand";
 import type { VisualItem } from "../types";
 import { Label } from "./Label";
 import { BOX, colorOf } from "./palette";
@@ -8,6 +8,7 @@ const formatValue = (v: number) => (Number.isInteger(v) ? String(v) : v.toFixed(
 
 // 2–4 bars grow from the baseline in turn; values count up above them.
 export const Bars = ({ items, color }: { items: VisualItem[]; color: string }) => {
+  const brand = useBrand();
   const frame = useCurrentFrame();
   const bars = items.slice(0, 4);
   const n = Math.max(1, bars.length);
@@ -27,7 +28,7 @@ export const Bars = ({ items, color }: { items: VisualItem[]; color: string }) =
           top: baseY,
           height: 4,
           borderRadius: 2,
-          backgroundColor: theme.textSecondary,
+          backgroundColor: brand.textSecondary,
           opacity: 0.4,
         }}
       />
@@ -64,7 +65,7 @@ export const Bars = ({ items, color }: { items: VisualItem[]; color: string }) =
                 textAlign: "center",
                 fontSize: 48,
                 fontWeight: 800,
-                color: theme.text,
+                color: brand.text,
                 opacity: grow,
               }}
             >

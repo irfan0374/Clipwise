@@ -22,7 +22,13 @@ export async function scriptJob(ctx: Loaded, data: JobData<"script">, attempt: n
   const result = await runStage(ctx, "script", attempt, async () => {
     try {
       const r = await writeScript(
-        { topic: video.topic, length, format: video.format as VideoFormat, log: (m) => console.log(`  [script] ${m}`) },
+        {
+          topic: video.topic,
+          length,
+          format: video.format as VideoFormat,
+          cta: video.brand?.cta ?? "",
+          log: (m) => console.log(`  [script] ${m}`),
+        },
         providers,
       );
       await recordUsage(ctx, [

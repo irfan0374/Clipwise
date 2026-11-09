@@ -9,6 +9,8 @@ export const keys = {
   timeline: (w: string, v: string, version: number) => `${video(w, v)}/v${version}/timeline.json`,
   render: (w: string, v: string, renderId: string) => `${video(w, v)}/renders/${renderId}.mp4`,
   thumbnail: (w: string, v: string, renderId: string) => `${video(w, v)}/thumbnails/${renderId}.jpg`,
+  /** Brand kit logo. A new name per upload: videos made earlier keep pointing at their own logo file. */
+  brandLogo: (w: string, id: string, ext: "png" | "webp" | "svg") => `${ws(w)}/brand/logo-${id}.${ext}`,
   /** Everything for a video, for hard delete. */
   videoPrefix: (w: string, v: string) => `${video(w, v)}/`,
 };

@@ -25,6 +25,8 @@ const config: NextConfig = {
   poweredByHeader: false,
   headers: async () => [{ source: "/:path*", headers: securityHeaders }],
   distDir: process.env.NEXT_DIST_DIR ?? ".next",
+  // Brand kit logos (up to 2 MB) are uploaded through a server action; the default limit is 1 MB.
+  experimental: { serverActions: { bodySizeLimit: "3mb" } },
   // Workspace packages ship TypeScript source, so Next compiles them.
   transpilePackages: [
     "@clipwise/shared",

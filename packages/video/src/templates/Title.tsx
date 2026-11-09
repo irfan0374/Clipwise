@@ -1,11 +1,13 @@
 import { AbsoluteFill, spring, useCurrentFrame, useVideoConfig } from "remotion";
+import { applyCasing, useBrand } from "../brand";
 import { theme } from "../theme";
 
 // Hook / opening question: big headline, words rise in one by one.
 export const Title = ({ text, compact = false }: { text: string; compact?: boolean }) => {
+  const brand = useBrand();
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const words = text.split(" ");
+  const words = applyCasing(text, brand.casing).split(" ");
 
   return (
     <AbsoluteFill
@@ -20,7 +22,7 @@ export const Title = ({ text, compact = false }: { text: string; compact?: boole
       }
     >
       {compact ? null : (
-        <div style={{ width: 96, height: 8, borderRadius: 4, backgroundColor: theme.accent, marginBottom: 48 }} />
+        <div style={{ width: 96, height: 8, borderRadius: 4, backgroundColor: brand.accent, marginBottom: 48 }} />
       )}
       <div style={{ margin: 0, fontSize: compact ? 92 : 112, fontWeight: 800, lineHeight: 1.05, letterSpacing: -3 }}>
         {words.map((word, i) => {

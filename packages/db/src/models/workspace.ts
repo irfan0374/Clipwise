@@ -1,6 +1,7 @@
 import { Formats, LengthModes, Plans } from "@clipwise/shared";
 import { type InferSchemaType, Schema } from "mongoose";
 import { baseOptions, defineModel } from "../base";
+import { BrandKitSchema } from "./brand";
 
 /** One per user. Owns videos and usage. Clipwise is free: there is no billing. */
 const WorkspaceSchema = new Schema(
@@ -13,7 +14,7 @@ const WorkspaceSchema = new Schema(
       defaultLength: { type: String, enum: LengthModes, default: "60" },
       defaultFormat: { type: String, enum: Formats, default: "explainer" },
     },
-    brandKitId: { type: Schema.Types.ObjectId, ref: "BrandKit", default: null },
+    brandKit: { type: BrandKitSchema, default: null },
     suspendedAt: { type: Date, default: null },
   },
   baseOptions,

@@ -1,4 +1,5 @@
 import { AbsoluteFill, spring, useCurrentFrame, useVideoConfig } from "remotion";
+import { useBrand } from "../brand";
 import { theme } from "../theme";
 
 // Lines appear in sequence across the first two-thirds of the scene.
@@ -14,6 +15,7 @@ export const Bullets = ({
   duration: number;
   compact?: boolean;
 }) => {
+  const brand = useBrand();
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
@@ -54,7 +56,7 @@ export const Bullets = ({
                 height: compact ? 16 : 20,
                 borderRadius: 10,
                 marginTop: compact ? 24 : 34,
-                backgroundColor: theme.accent,
+                backgroundColor: brand.accent,
               }}
             />
             <div style={{ fontSize: compact ? 58 : 76, fontWeight: 700, lineHeight: 1.12, letterSpacing: -1.5 }}>
